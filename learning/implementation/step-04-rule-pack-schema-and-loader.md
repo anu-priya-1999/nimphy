@@ -136,14 +136,59 @@ Following an independent post-implementation review of STEP-004, three targeted 
 
 ### 4. Updated Post-Hardening Verification Results (Local)
 
-| Suite / Check                | Command                 | Result      | Details                                                                       |
-| ---------------------------- | ----------------------- | ----------- | ----------------------------------------------------------------------------- |
-| **TypeScript Compilation**   | `pnpm typecheck`        | **Passed**  | 8 workspace projects checked; 0 errors                                        |
-| **Linting**                  | `pnpm lint`             | **Passed**  | ESLint 10 with local architecture plugin; 0 errors, 0 warnings                |
-| **Prettier Formatting**      | `pnpm format:check`     | **Passed**  | All repository files adhere to Prettier style                                 |
-| **Documentation Check**      | `pnpm docs:check`       | **Passed**  | 23 architecture documents, 94 links, 22 ADRs verified                         |
-| **Architectural Boundaries** | `pnpm boundaries:check` | **Passed**  | 58 files checked; `@nimphy/rules` imports only `@nimphy/domain`               |
-| **Unit & Integration Tests** | `pnpm test`             | **Passed**  | 330/330 tests passed across 25 test files (+18 new tests; 0 failed)           |
-| **Code Coverage**            | `pnpm test:coverage`    | **Passed**  | 99.90% Stmts (2088/2090), 98.99% Branches (689/696), 100% Funcs, 99.90% Lines |
-| **Next.js Web Build**        | `pnpm build`            | **Passed**  | App Router static prerender complete                                          |
-| **Remote CI Status**         | GitHub Actions          | **Pending** | Local verification complete; remote CI run pending push of corrective commit  |
+| Suite / Check                | Command                 | Result     | Details                                                                                                                                   |
+| ---------------------------- | ----------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **TypeScript Compilation**   | `pnpm typecheck`        | **Passed** | 8 workspace projects checked; 0 errors                                                                                                    |
+| **Linting**                  | `pnpm lint`             | **Passed** | ESLint 10 with local architecture plugin; 0 errors, 0 warnings                                                                            |
+| **Prettier Formatting**      | `pnpm format:check`     | **Passed** | All repository files adhere to Prettier style                                                                                             |
+| **Documentation Check**      | `pnpm docs:check`       | **Passed** | 23 architecture documents, 94 links, 22 ADRs verified                                                                                     |
+| **Architectural Boundaries** | `pnpm boundaries:check` | **Passed** | 58 files checked; `@nimphy/rules` imports only `@nimphy/domain`                                                                           |
+| **Unit & Integration Tests** | `pnpm test`             | **Passed** | 330/330 tests passed across 25 test files (+18 new tests; 0 failed)                                                                       |
+| **Code Coverage**            | `pnpm test:coverage`    | **Passed** | 99.90% Stmts (2100/2102), 98.99% Branches (689/696), 100% Funcs (126/126), 99.90% Lines (2100/2102)                                       |
+| **Next.js Web Build**        | `pnpm build`            | **Passed** | App Router static prerender complete                                                                                                      |
+| **Remote CI Status**         | GitHub Actions          | **Passed** | Run [43009231357](https://github.com/anu-priya-1999/nimphy/actions/runs/43009231357) on commit `04e7de2331af4abec21e78ac90f95e413bd82101` |
+
+### 5. Remote CI Execution & Verification
+
+Following the local corrective hardening pass, commit `04e7de2331af4abec21e78ac90f95e413bd82101` (`fix(rules): harden safe integers, exact semver comparison, and CI hook setup`) was pushed to `origin/main`.
+
+- **Workflow Run:** GitHub Actions [Run 43009231357](https://github.com/anu-priya-1999/nimphy/actions/runs/43009231357)
+- **Commit SHA:** `04e7de2331af4abec21e78ac90f95e413bd82101`
+- **Result:** Succeeded (exit code 0) across all workflow jobs and steps.
+- **Remote Verified Facts:**
+  - 25 test files passed
+  - 330 tests passed (0 failed, 0 skipped)
+  - Git hook configuration step passed (`pnpm setup:hooks`)
+  - Typecheck passed (`pnpm typecheck` — 8 workspace packages checked)
+  - Lint passed (`pnpm lint` — ESLint flat config with 0 errors, 0 warnings)
+  - Formatting passed (`pnpm format:check`)
+  - Documentation check passed (`pnpm docs:check` — 23 architecture documents, all links verified)
+  - Architecture boundary check passed (`pnpm boundaries:check` — clean DAG, zero unauthorized imports)
+  - Conventional commit validation passed (`pnpm commit:check --ci`)
+  - Production Next.js build passed (`pnpm build`)
+
+**Distinction Between Local Verification and Remote CI:**
+Remote CI executes the automated verification pipeline defined in `.github/workflows/ci.yml`, running `pnpm test`. It does not execute `pnpm test:coverage`. Code coverage instrumentation (`pnpm test:coverage`), patch hygiene (`git diff --check`), and working tree status (`git status --short`) are executed locally as part of Definition of Done compliance.
+
+**Reconciled V8 Code Coverage (Local Run):**
+
+- **Combined Scope (Active Packages: `@nimphy/domain` + `@nimphy/rules`):**
+  - Statements: 99.90% (2100/2102)
+  - Branches: 98.99% (689/696)
+  - Functions: 100.00% (126/126)
+  - Lines: 99.90% (2100/2102)
+- **`@nimphy/domain` Breakdown:**
+  - Statements: 100.00% (861/861)
+  - Branches: 100.00% (315/315)
+  - Functions: 100.00% (84/84)
+  - Lines: 100.00% (861/861)
+- **`@nimphy/rules` Breakdown:**
+  - Statements: 99.84% (1239/1241)
+  - Branches: 98.16% (374/381)
+  - Functions: 100.00% (42/42)
+  - Lines: 99.84% (1239/1241)
+- **Arithmetic Reconciliation:**
+  - Statements: 861 + 1239 = 2100 covered / 861 + 1241 = 2102 total
+  - Branches: 315 + 374 = 689 covered / 315 + 381 = 696 total
+  - Functions: 84 + 42 = 126 covered / 84 + 42 = 126 total
+  - Lines: 861 + 1239 = 2100 covered / 861 + 1241 = 2102 total
