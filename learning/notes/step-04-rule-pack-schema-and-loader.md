@@ -108,3 +108,17 @@ Each fixture represents an immutable Rule Pack version with independent test cas
 1. **Exact Calendar Validation:** Simply checking `new Date(str)` is insufficient in JavaScript because `new Date('2026-02-29')` silently overflows to `2026-03-01`. Exact date validation decomposes `YYYY-MM-DD` and verifies that `date.getUTCFullYear() === y && date.getUTCMonth() === m - 1 && date.getUTCDate() === d`.
 2. **Strict Index Access under TypeScript 5.8:** With `noUncheckedIndexedAccess: true`, array accesses like `matches[0]` or `parts[i]` return `T | undefined`. Non-null assertions or fallback defaults (`parts[i] ?? ''`) are required to prevent compile errors without resorting to `any`.
 3. **Immutability Protection:** The loader actively prevents accidental or malicious overwriting of a published Rule Pack. Attempting to register a different pack with an existing `(packKey, version)` throws `RulePackInvalidError` (`IMMUTABLE_OVERWRITE_FORBIDDEN`).
+
+---
+
+## 5. Corrective Hardening & Invariant Defenses
+
+1. **Safe Integer Validation (`Number.isSafeInteger`):**
+   - Financial fields representing minor units (`minPriceMinor`, `maxPriceMinor`, `baseCostMinor`, `costPerPageMinor`, `costPerMbMinor`, `minListPriceMinor`, `maxListPriceMinor`) and book specifications (`pageThreshold`, `minPages`, `maxPages`) must be safe integers within $[-2^{53} + 1, 2^{53} - 1]$.
+   - `Number.isInteger()` allows unsafe integers beyond `Number.MAX_SAFE_INTEGER` where IEEE-754 precision is lost.
+   - Enforcing `Number.isSafeInteger()` guarantees mathematical precision and prevents corrupted values from reaching downstream domain calculations.
+2. **Exact SemVer Precedence without Floating-Point Conversion:**
+   - SemVer numeric components (major, minor, patch, numeric prereleases) can legally exceed $2^{53} - 1$.
+   - Parsing them as exact decimal strings and comparing lengths first, followed by lexicographical sorting, preserves exact SemVer 2.0.0 ordering without numeric conversion errors.
+3. **CI Hook Setup Parity:**
+   - Fresh continuous integration environments must run `pnpm setup:hooks` (`git config --local core.hooksPath .githooks`) to initialize local hook configuration before executing integration tests.

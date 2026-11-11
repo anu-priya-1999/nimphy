@@ -9,7 +9,7 @@ This document is the living record of the system state, architecture decisions, 
 - **Architecture Package Version:** 0.3.0
 - **Current Phase:** Phase 1 (Deterministic Core)
 - **Current Step:** STEP-004 (Rule Pack schema and loader (synthetic))
-- **Actual Implementation Status:** Complete & Locally Verified (v1 Rule Pack schema frozen, pure schema validator, deterministic SHA-256 content hashing via domain canonical JSON, date-based SemVer selector, in-memory loader registry with nominal UUID indexing and immutable overwrite protection, filesystem loader, 4 synthetic test fixtures under `fixtures/rules/` with threshold/rounding test cases; 312/312 Tests Passed across 25 test files, 99.90% Statements / 98.52% Branches / 100% Functions / 99.90% Lines coverage, Locally Verified; awaiting repository-owner review and formal approval)
+- **Actual Implementation Status:** Complete, Hardened & Locally Verified (v1 Rule Pack schema frozen, pure schema validator hardened with Number.isSafeInteger across all financial and specification integer fields, deterministic SHA-256 content hashing via domain canonical JSON, date-based SemVer selector with exact non-lossy string comparison for large numeric identifiers, in-memory loader registry with nominal UUID indexing and immutable overwrite protection, filesystem loader, 4 synthetic test fixtures under `fixtures/rules/` with threshold/rounding test cases; CI Git hook configuration corrected in `ci.yml`; 330/330 Tests Passed across 25 test files, 99.90% Statements / 98.99% Branches / 100% Functions / 99.90% Lines coverage, Locally Verified; remote CI run pending push of corrective commit; awaiting repository-owner review and formal approval)
 - **Strategic Alignment:** Long-term product vision, competitive differentiation, customer segmentation, 6-pillar capability framework, and repository alignment documented in [product-strategy.md](product-strategy.md) (Canonical Master Product Vision & Strategy).
 - **Next Proposed Step:** STEP-005 (Engine: per-unit economics) — strictly unauthorized until explicit repository-owner review and written approval.
 
@@ -49,16 +49,16 @@ All versions confirmed against repository manifests and `pnpm-lock.yaml`:
 
 All packages established as valid TypeScript workspaces. Dependency arrows point strictly inward toward `@nimphy/domain`:
 
-| Package Name              | Location               | Responsibility & Scope                                                               | Current Package Status                                                                                                                                                   |
-| ------------------------- | ---------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **`@nimphy/domain`**      | `packages/domain`      | Pure domain types, value objects, branded primitives, errors                         | **Complete & hardened; 0 workspace dependencies; 0 external dependencies; 164 tests; 100% Stmt / 100% Br / 100% Func / 100% Line Cov (861/861 stmts, 315/315 br)**       |
-| **`@nimphy/calc-engine`** | `packages/calc-engine` | Pure financial calculation engine (P-01: zero I/O, zero AI)                          | Package stub; depends only on `@nimphy/domain`; zero I/O/AI                                                                                                              |
-| **`@nimphy/rules`**       | `packages/rules`       | Rule Pack schema, synthetic loader, date-based selection, cryptographic content hash | **Complete & frozen v1 schema; depends only on `@nimphy/domain`; zero external deps; 88 tests; 99.84% Stmt / 97.25% Br / 100% Func / 99.84% Line Cov (1224/1226 stmts)** |
-| **`@nimphy/ai`**          | `packages/ai`          | Narrative memo synthesis, provider ports, schema validation                          | Package stub; depends only on `@nimphy/domain`                                                                                                                           |
-| **`@nimphy/documents`**   | `packages/documents`   | Dossier assembly and Markdown/PDF document generation                                | Package stub; depends only on `@nimphy/domain`                                                                                                                           |
-| **`@nimphy/payments`**    | `packages/payments`    | PayPal port, payment state machine, webhook processing                               | Package stub; depends only on `@nimphy/domain`                                                                                                                           |
-| **`@nimphy/persistence`** | `packages/persistence` | PostgreSQL client, schema migrations, repositories                                   | Package stub; depends only on `@nimphy/domain`                                                                                                                           |
-| **`@nimphy/web`**         | `apps/web`             | Next.js App Router application shell and UI                                          | App shell with layout, styling, disclaimer banner, smoke tests (2 tests passed)                                                                                          |
+| Package Name              | Location               | Responsibility & Scope                                                               | Current Package Status                                                                                                                                                               |
+| ------------------------- | ---------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **`@nimphy/domain`**      | `packages/domain`      | Pure domain types, value objects, branded primitives, errors                         | **Complete & hardened; 0 workspace dependencies; 0 external dependencies; 164 tests; 100% Stmt / 100% Br / 100% Func / 100% Line Cov (861/861 stmts, 315/315 br)**                   |
+| **`@nimphy/calc-engine`** | `packages/calc-engine` | Pure financial calculation engine (P-01: zero I/O, zero AI)                          | Package stub; depends only on `@nimphy/domain`; zero I/O/AI                                                                                                                          |
+| **`@nimphy/rules`**       | `packages/rules`       | Rule Pack schema, synthetic loader, date-based selection, cryptographic content hash | **Complete & frozen v1 schema (hardened); depends only on `@nimphy/domain`; zero external deps; 106 tests; 99.84% Stmt / 97.43% Br / 100% Func / 99.84% Line Cov (1227/1229 stmts)** |
+| **`@nimphy/ai`**          | `packages/ai`          | Narrative memo synthesis, provider ports, schema validation                          | Package stub; depends only on `@nimphy/domain`                                                                                                                                       |
+| **`@nimphy/documents`**   | `packages/documents`   | Dossier assembly and Markdown/PDF document generation                                | Package stub; depends only on `@nimphy/domain`                                                                                                                                       |
+| **`@nimphy/payments`**    | `packages/payments`    | PayPal port, payment state machine, webhook processing                               | Package stub; depends only on `@nimphy/domain`                                                                                                                                       |
+| **`@nimphy/persistence`** | `packages/persistence` | PostgreSQL client, schema migrations, repositories                                   | Package stub; depends only on `@nimphy/domain`                                                                                                                                       |
+| **`@nimphy/web`**         | `apps/web`             | Next.js App Router application shell and UI                                          | App shell with layout, styling, disclaimer banner, smoke tests (2 tests passed)                                                                                                      |
 
 ---
 
@@ -345,17 +345,22 @@ nimphy/
    - Each directory contains `pack.json`, `cases.json` (threshold and rounding edge cases per doc 12 §4), and `README.md` (synthetic disclaimer).
    - Strict synthetic constraint enforcement: `isSyntheticPackKey` and `assertSyntheticPackKey` enforce `TEST_*` prefix on all test packs. Zero real Amazon KDP or commercial printing formulas are asserted or fabricated (OQ-006).
 8. **Exhaustive Testing & V8 Coverage Instrumentation:**
-   - Full monorepo test suite stands at **312 passing tests across 25 test files** (88 rules tests across 10 test files; 164 domain tests across 10 test files; 60 infra/web tests across 5 test files) with zero failures.
-   - Combined domain and rules code coverage: **99.90% Statements (2085/2087), 98.52% Branches (669/679), 100% Functions (125/125), 99.90% Lines (2085/2087)** (well exceeding the ≥95% requirement across all packages and directories).
+   - Full monorepo test suite stands at **330 passing tests across 25 test files** (106 rules tests across 10 test files; 164 domain tests across 10 test files; 60 infra/web tests across 5 test files) with zero failures.
+   - Combined domain and rules code coverage: **99.90% Statements (2088/2090), 98.99% Branches (689/696), 100% Functions (126/126), 99.90% Lines (2088/2090)** (well exceeding the ≥95% requirement across all packages and directories).
    - Package-specific coverage derived directly from V8 data:
      - `@nimphy/domain`: **100% Statements (861/861), 100% Branches (315/315), 100% Functions (84/84), 100% Lines (861/861)**.
-     - `@nimphy/rules`: **99.84% Statements (1224/1226), 97.25% Branches (354/364), 100% Functions (41/41), 99.84% Lines (1224/1226)**.
+     - `@nimphy/rules`: **99.84% Statements (1227/1229), 97.43% Branches (379/389), 100% Functions (42/42), 99.84% Lines (1227/1229)**.
    - Directory-level breakdown for `packages/rules/src`:
-     - `packages/rules/src/schema`: **99.72% Statements, 96.51% Branches, 100% Functions, 99.72% Lines** (exceeding ≥95%; uncovered branches in `semver.ts` lines 86-87, 95, 103 and uncovered lines in `validator.ts` lines 62-63).
+     - `packages/rules/src/schema`: **99.73% Statements, 97.69% Branches, 100% Functions, 99.73% Lines** (exceeding ≥95%; uncovered branch in `semver.ts` line 118 and uncovered lines in `validator.ts` lines 62-63).
      - `packages/rules/src/loader`: **100% across all metrics**.
      - `packages/rules/src/hashing`: **100% across all metrics**.
      - `packages/rules/src/errors`: **100% across all metrics**.
      - `packages/rules/src/synthetic`: **100% across all metrics**.
+9. **Corrective Hardening & Invariant Defenses (Post-Review Pass):**
+   - **Fix 1 — Safe Integer Validation (`Number.isSafeInteger`):** Hardened all 10 integer-valued financial and specification fields in `packages/rules/src/schema/validator.ts` (`minPriceMinor`, `maxPriceMinor`, `baseCostMinor`, `costPerPageMinor`, `pageThreshold`, `costPerMbMinor`, `minListPriceMinor`, `maxListPriceMinor`, `minPages`, `maxPages`). Replaces `Number.isInteger()`, which permitted unsafe integers beyond `Number.MAX_SAFE_INTEGER` ($2^{53} - 1$). Enforces exact alignment with `@nimphy/domain`'s `Money` bounds. Rejects fractional inputs, `NaN`, `Infinity`, and unsafe integers with typed validation issues.
+   - **Fix 2 — Exact SemVer Precedence Comparison:** Updated `packages/rules/src/schema/semver.ts` to preserve major, minor, and patch as exact decimal strings in `ParsedSemver`. Implemented `compareNumericIdentifiers` to compare non-negative integer decimal strings by length first, then lexicographically. Completely eliminates precision loss from `Number(str)` conversions when version numbers exceed $2^{53} - 1$, guaranteeing distinct adjacent large versions remain distinguishable and strictly ordered per SemVer 2.0.0 (§9–11).
+   - **Fix 3 — CI Workflow Hook Setup:** Corrected `.github/workflows/ci.yml` by adding a dedicated `Configure repository Git hooks` step running `pnpm setup:hooks` immediately after dependency installation. Resolves CI runner failure in `tests/setup-hooks.test.ts` where fresh clones had unconfigured local Git hooks.
+   - **Fix 4 — Documentation Consistency:** Updated `README.md` to reflect implementation through STEP-004. Updated `docs/architecture/17-implementation-roadmap.md` opening to acknowledge implementation through STEP-004 while maintaining the authoritative 33-step roadmap.
 
 ---
 
@@ -366,23 +371,24 @@ nimphy/
 | Verification Suite            | Exact Command                    | Result       | Details                                                                                                      |
 | ----------------------------- | -------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------ |
 | **Dependency Installation**   | `pnpm install --frozen-lockfile` | **Passed**   | 9 workspace projects linked; store clean and reproducible                                                    |
+| **Git Hook Setup**            | `pnpm setup:hooks`               | **Passed**   | `core.hooksPath` configured to `.githooks` locally                                                           |
 | **TypeScript Compilation**    | `pnpm typecheck`                 | **Passed**   | 8 workspace projects checked (`tsc --noEmit`); 0 errors                                                      |
 | **Code Linting**              | `pnpm lint`                      | **Passed**   | ESLint 10 with local `@nimphy` plugin; 0 errors, **0 warnings**                                              |
 | **Prettier Formatting Check** | `pnpm format:check`              | **Passed**   | All matched files use Prettier code style                                                                    |
-| **Documentation Validation**  | `pnpm docs:check`                | **Passed**   | 23 docs present, 93 links verified, 22 ADR statuses confirmed                                                |
+| **Documentation Validation**  | `pnpm docs:check`                | **Passed**   | 23 docs present, 94 links verified, 22 ADR statuses confirmed                                                |
 | **Architecture Boundaries**   | `pnpm boundaries:check`          | **Passed**   | 58 source files checked, 147 import declarations verified; `@nimphy/rules` has 1 allowed dep; clean DAG      |
-| **Full Vitest Test Suite**    | `pnpm test`                      | **Passed**   | Vitest 3.0.8, 25 test files, **312/312 tests passed** (0 failed, 0 skipped)                                  |
-| **V8 Code Coverage**          | `pnpm test:coverage`             | **Passed**   | **99.90% Stmts (2085/2087), 98.52% Branches (669/679), 100% Funcs (125/125), 99.90% Lines** (threshold: 95%) |
+| **Full Vitest Test Suite**    | `pnpm test`                      | **Passed**   | Vitest 3.0.8, 25 test files, **330/330 tests passed** (0 failed, 0 skipped; +18 new hardening tests)         |
+| **V8 Code Coverage**          | `pnpm test:coverage`             | **Passed**   | **99.90% Stmts (2088/2090), 98.99% Branches (689/696), 100% Funcs (126/126), 99.90% Lines** (threshold: 95%) |
 | **Production Build**          | `pnpm build`                     | **Passed**   | Turbopack build succeeded with 0 errors; static prerender succeeded                                          |
 | **Git Whitespace Check**      | `git diff --check`               | **Passed**   | Whitespace and patch integrity check; 0 whitespace or line ending errors reported                            |
-| **Working Tree Status**       | `git status --short`             | **Verified** | Initial repository state; all scaffolded files untracked pending initial repository commit                   |
+| **Working Tree Status**       | `git status --short`             | **Verified** | Modified files tracked cleanly; no untracked artifacts or unwanted churn                                     |
 
 ### B. Continuous Integration Status
 
-- **`.github/workflows/ci.yml`:** Unchanged from STEP-002, fully configured with full history checkout (`fetch-depth: 0`), multi-commit PR/push validation, format, typecheck, lint, docs, boundaries, multi-commit checks, unit tests, and build.
+- **`.github/workflows/ci.yml`:** Updated to include `pnpm setup:hooks` after dependency installation, guaranteeing that local repository hooks are configured before the test suite executes.
 - **Local vs Remote Execution Status:**
-  - **Local Verification:** All 10 verification suites run locally and pass cleanly with exit code 0.
-  - **Remote GitHub Actions CI:** Configured and ready in `.github/workflows/ci.yml`, but has not executed on a remote GitHub runner because the repository has not yet been pushed to a remote git remote.
+  - **Local Verification:** All 11 verification suites execute locally and pass cleanly with exit code 0.
+  - **Remote GitHub Actions CI:** Initial pushed baseline (`004a8aaa30dca9de5ba208c574af5590ce426b53`, Run 42972958895) failed exclusively on `tests/setup-hooks.test.ts` due to missing `setup:hooks`. With the CI workflow repair in place, remote verification will execute once the corrective commit is pushed by the repository owner. Remote CI status is explicitly **Pending** until an observable run on GitHub Actions completes green.
 
 ---
 

@@ -677,4 +677,362 @@ describe('Rule Pack Schema Validation & Parsing', () => {
       ),
     ).toBe(true);
   });
+
+  describe('Safe Integer Financial & Specification Validation (Fix 1)', () => {
+    const UNSAFE_INT = Number.MAX_SAFE_INTEGER + 1; // 9007199254740992
+    const UNSAFE_INT_2 = Number.MAX_SAFE_INTEGER + 2; // 9007199254740993
+    const NEG_UNSAFE_INT = Number.MIN_SAFE_INTEGER - 1;
+
+    it('rejects unsafe integers, fractional values, NaN, and Infinity in royalty minPriceMinor', () => {
+      const makeTier = (minPrice: number) => ({
+        ...validEbookRaw,
+        content: {
+          ...validEbookContent,
+          royalty: {
+            tiers: [
+              {
+                name: 'test_tier',
+                minPriceMinor: minPrice,
+                maxPriceMinor: null,
+                royaltyRateDecimal: '0.70',
+              },
+            ],
+          },
+        },
+      });
+
+      for (const val of [
+        UNSAFE_INT,
+        UNSAFE_INT_2,
+        10.5,
+        NaN,
+        Infinity,
+        -Infinity,
+        Number.MIN_SAFE_INTEGER,
+        NEG_UNSAFE_INT,
+      ]) {
+        const res = validateRulePack(makeTier(val));
+        expect(res.valid).toBe(false);
+        expect(
+          res.issues.some(
+            (i) => i.code === 'INVALID_MIN_PRICE' && i.path.includes('minPriceMinor'),
+          ),
+        ).toBe(true);
+      }
+
+      // Safe boundary integer (Number.MAX_SAFE_INTEGER) is accepted
+      const resSafe = validateRulePack(makeTier(Number.MAX_SAFE_INTEGER));
+      expect(resSafe.issues.some((i) => i.path.includes('minPriceMinor'))).toBe(false);
+    });
+
+    it('rejects unsafe integers, fractional values, NaN, and Infinity in royalty maxPriceMinor', () => {
+      const makeTier = (maxPrice: number) => ({
+        ...validEbookRaw,
+        content: {
+          ...validEbookContent,
+          royalty: {
+            tiers: [
+              {
+                name: 'test_tier',
+                minPriceMinor: 0,
+                maxPriceMinor: maxPrice,
+                royaltyRateDecimal: '0.70',
+              },
+            ],
+          },
+        },
+      });
+
+      for (const val of [
+        UNSAFE_INT,
+        UNSAFE_INT_2,
+        100.5,
+        NaN,
+        Infinity,
+        -Infinity,
+        Number.MIN_SAFE_INTEGER,
+      ]) {
+        const res = validateRulePack(makeTier(val));
+        expect(res.valid).toBe(false);
+        expect(
+          res.issues.some(
+            (i) => i.code === 'INVALID_MAX_PRICE' && i.path.includes('maxPriceMinor'),
+          ),
+        ).toBe(true);
+      }
+
+      // Safe boundary integer (Number.MAX_SAFE_INTEGER) is accepted
+      const resSafe = validateRulePack(makeTier(Number.MAX_SAFE_INTEGER));
+      expect(resSafe.issues.some((i) => i.path.includes('maxPriceMinor'))).toBe(false);
+    });
+
+    it('rejects unsafe integers, fractional values, NaN, and Infinity in printCost baseCostMinor', () => {
+      const makePrint = (baseCost: number) => ({
+        ...validPaperbackRaw,
+        content: {
+          ...validPaperbackContent,
+          printCost: {
+            ...validPaperbackContent.printCost,
+            baseCostMinor: baseCost,
+          },
+        },
+      });
+
+      for (const val of [
+        UNSAFE_INT,
+        UNSAFE_INT_2,
+        150.25,
+        NaN,
+        Infinity,
+        -Infinity,
+        Number.MIN_SAFE_INTEGER,
+      ]) {
+        const res = validateRulePack(makePrint(val));
+        expect(res.valid).toBe(false);
+        expect(res.issues.some((i) => i.code === 'INVALID_BASE_COST')).toBe(true);
+      }
+
+      const resSafe = validateRulePack(makePrint(Number.MAX_SAFE_INTEGER));
+      expect(resSafe.issues.some((i) => i.code === 'INVALID_BASE_COST')).toBe(false);
+    });
+
+    it('rejects unsafe integers, fractional values, NaN, and Infinity in printCost costPerPageMinor', () => {
+      const makePrint = (costPerPage: number) => ({
+        ...validPaperbackRaw,
+        content: {
+          ...validPaperbackContent,
+          printCost: {
+            ...validPaperbackContent.printCost,
+            costPerPageMinor: costPerPage,
+          },
+        },
+      });
+
+      for (const val of [
+        UNSAFE_INT,
+        UNSAFE_INT_2,
+        2.5,
+        NaN,
+        Infinity,
+        -Infinity,
+        Number.MIN_SAFE_INTEGER,
+      ]) {
+        const res = validateRulePack(makePrint(val));
+        expect(res.valid).toBe(false);
+        expect(res.issues.some((i) => i.code === 'INVALID_COST_PER_PAGE')).toBe(true);
+      }
+
+      const resSafe = validateRulePack(makePrint(Number.MAX_SAFE_INTEGER));
+      expect(resSafe.issues.some((i) => i.code === 'INVALID_COST_PER_PAGE')).toBe(false);
+    });
+
+    it('rejects unsafe integers, fractional values, NaN, and Infinity in printCost pageThreshold', () => {
+      const makePrint = (pageThreshold: number) => ({
+        ...validPaperbackRaw,
+        content: {
+          ...validPaperbackContent,
+          printCost: {
+            ...validPaperbackContent.printCost,
+            pageThreshold,
+          },
+        },
+      });
+
+      for (const val of [
+        UNSAFE_INT,
+        UNSAFE_INT_2,
+        24.5,
+        NaN,
+        Infinity,
+        -Infinity,
+        Number.MIN_SAFE_INTEGER,
+      ]) {
+        const res = validateRulePack(makePrint(val));
+        expect(res.valid).toBe(false);
+        expect(res.issues.some((i) => i.code === 'INVALID_PAGE_THRESHOLD')).toBe(true);
+      }
+
+      const resSafe = validateRulePack(makePrint(Number.MAX_SAFE_INTEGER));
+      expect(resSafe.issues.some((i) => i.code === 'INVALID_PAGE_THRESHOLD')).toBe(false);
+    });
+
+    it('rejects unsafe integers, fractional values, NaN, and Infinity in deliveryCost costPerMbMinor', () => {
+      const makeDelivery = (costPerMb: number) => ({
+        ...validEbookRaw,
+        content: {
+          ...validEbookContent,
+          deliveryCost: { costPerMbMinor: costPerMb },
+        },
+      });
+
+      for (const val of [
+        UNSAFE_INT,
+        UNSAFE_INT_2,
+        15.5,
+        NaN,
+        Infinity,
+        -Infinity,
+        Number.MIN_SAFE_INTEGER,
+      ]) {
+        const res = validateRulePack(makeDelivery(val));
+        expect(res.valid).toBe(false);
+        expect(res.issues.some((i) => i.code === 'INVALID_COST_PER_MB')).toBe(true);
+      }
+
+      const resSafe = validateRulePack(makeDelivery(Number.MAX_SAFE_INTEGER));
+      expect(resSafe.issues.some((i) => i.code === 'INVALID_COST_PER_MB')).toBe(false);
+    });
+
+    it('rejects unsafe integers, fractional values, NaN, and Infinity in limits minListPriceMinor', () => {
+      const makeLimits = (minPrice: number) => ({
+        ...validEbookRaw,
+        content: {
+          ...validEbookContent,
+          limits: {
+            ...validEbookContent.limits,
+            minListPriceMinor: minPrice,
+            maxListPriceMinor: UNSAFE_INT + 10,
+          },
+        },
+      });
+
+      for (const val of [
+        UNSAFE_INT,
+        UNSAFE_INT_2,
+        99.9,
+        NaN,
+        Infinity,
+        -Infinity,
+        Number.MIN_SAFE_INTEGER,
+      ]) {
+        const res = validateRulePack(makeLimits(val));
+        expect(res.valid).toBe(false);
+        expect(
+          res.issues.some(
+            (i) => i.code === 'INVALID_MIN_PRICE' && i.path === 'content.limits.minListPriceMinor',
+          ),
+        ).toBe(true);
+      }
+
+      const resSafe = validateRulePack({
+        ...validEbookRaw,
+        content: {
+          ...validEbookContent,
+          limits: {
+            ...validEbookContent.limits,
+            minListPriceMinor: Number.MAX_SAFE_INTEGER - 1,
+            maxListPriceMinor: Number.MAX_SAFE_INTEGER,
+          },
+        },
+      });
+      expect(resSafe.issues.some((i) => i.path === 'content.limits.minListPriceMinor')).toBe(false);
+    });
+
+    it('rejects unsafe integers, fractional values, NaN, and Infinity in limits maxListPriceMinor', () => {
+      const makeLimits = (maxPrice: number) => ({
+        ...validEbookRaw,
+        content: {
+          ...validEbookContent,
+          limits: {
+            ...validEbookContent.limits,
+            minListPriceMinor: 99,
+            maxListPriceMinor: maxPrice,
+          },
+        },
+      });
+
+      for (const val of [
+        UNSAFE_INT,
+        UNSAFE_INT_2,
+        5000.5,
+        NaN,
+        Infinity,
+        -Infinity,
+        Number.MIN_SAFE_INTEGER,
+      ]) {
+        const res = validateRulePack(makeLimits(val));
+        expect(res.valid).toBe(false);
+        expect(
+          res.issues.some(
+            (i) => i.code === 'INVALID_MAX_PRICE' && i.path === 'content.limits.maxListPriceMinor',
+          ),
+        ).toBe(true);
+      }
+
+      const resSafe = validateRulePack(makeLimits(Number.MAX_SAFE_INTEGER));
+      expect(resSafe.issues.some((i) => i.path === 'content.limits.maxListPriceMinor')).toBe(false);
+    });
+
+    it('rejects unsafe integers, fractional values, NaN, and Infinity in limits minPages', () => {
+      const makeLimits = (minPages: number) => ({
+        ...validPaperbackRaw,
+        content: {
+          ...validPaperbackContent,
+          limits: {
+            ...validPaperbackContent.limits,
+            minPages,
+            maxPages: UNSAFE_INT + 100,
+          },
+        },
+      });
+
+      for (const val of [
+        UNSAFE_INT,
+        UNSAFE_INT_2,
+        24.5,
+        NaN,
+        Infinity,
+        -Infinity,
+        Number.MIN_SAFE_INTEGER,
+      ]) {
+        const res = validateRulePack(makeLimits(val));
+        expect(res.valid).toBe(false);
+        expect(res.issues.some((i) => i.code === 'INVALID_MIN_PAGES')).toBe(true);
+      }
+
+      const resSafe = validateRulePack({
+        ...validPaperbackRaw,
+        content: {
+          ...validPaperbackContent,
+          limits: {
+            ...validPaperbackContent.limits,
+            minPages: Number.MAX_SAFE_INTEGER - 1,
+            maxPages: Number.MAX_SAFE_INTEGER,
+          },
+        },
+      });
+      expect(resSafe.issues.some((i) => i.code === 'INVALID_MIN_PAGES')).toBe(false);
+    });
+
+    it('rejects unsafe integers, fractional values, NaN, and Infinity in limits maxPages', () => {
+      const makeLimits = (maxPages: number) => ({
+        ...validPaperbackRaw,
+        content: {
+          ...validPaperbackContent,
+          limits: {
+            ...validPaperbackContent.limits,
+            minPages: 24,
+            maxPages,
+          },
+        },
+      });
+
+      for (const val of [
+        UNSAFE_INT,
+        UNSAFE_INT_2,
+        800.5,
+        NaN,
+        Infinity,
+        -Infinity,
+        Number.MIN_SAFE_INTEGER,
+      ]) {
+        const res = validateRulePack(makeLimits(val));
+        expect(res.valid).toBe(false);
+        expect(res.issues.some((i) => i.code === 'INVALID_MAX_PAGES')).toBe(true);
+      }
+
+      const resSafe = validateRulePack(makeLimits(Number.MAX_SAFE_INTEGER));
+      expect(resSafe.issues.some((i) => i.code === 'INVALID_MAX_PAGES')).toBe(false);
+    });
+  });
 });

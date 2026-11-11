@@ -65,3 +65,27 @@ By storing rates as exact decimal strings (e.g. `"0.70"`, `"0.35"`), the calcula
 2. **Validation Guards:** Utilities `isSyntheticPackKey` and `assertSyntheticPackKey` enforce this pattern.
 3. **CI and Database Gates (ADR-006, doc 12 §4):** A CI check and database check constraint prevent any pack with key starting with `TEST_` from being published to production environments.
 4. **Realistic but Clearly Synthetic Values:** Print costs, delivery costs, and royalty tiers use realistic structures and numbers, but are explicitly cited as `Synthetic Test Specification` with disclaimers warning against commercial reliance.
+
+### Q7: Why is `Number.isInteger()` insufficient for financial and specification fields, and why must `Number.isSafeInteger()` be enforced?
+
+**Answer:**
+
+1. **The Safe Integer Boundary:** JavaScript numbers are IEEE-754 double precision floats. Integers beyond $2^{53} - 1$ (`Number.MAX_SAFE_INTEGER` = `9007199254740991`) lose precision because the 53-bit mantissa cannot represent adjacent values uniquely. For example, `Number.isInteger(9007199254740992)` evaluates to `true`, but `9007199254740992 + 1 === 9007199254740992`.
+2. **Financial Invariant Alignment:** The `@nimphy/domain` `Money` value object strictly bounds minor units within `[Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER]`. If Rule Pack thresholds, base print costs, or list price boundaries allowed unsafe integers, downstream calculations in `packages/calc-engine` would construct invalid `Money` objects or suffer precision collapse.
+3. **Boundary Defensiveness:** Enforcing `Number.isSafeInteger()` across all 10 integer-valued schema fields guarantees that no corrupted or imprecise number enters the system at the rule ingestion boundary (Principle P-05).
+
+### Q8: Why does converting SemVer components to JavaScript numbers corrupt version precedence, and how is exact SemVer comparison implemented?
+
+**Answer:**
+
+1. **Precision Collapse in Precedence:** Valid SemVer 2.0.0 components (major, minor, patch, and numeric prereleases) can be arbitrary non-negative decimal integers. Converting them via `Number(str)` causes values exceeding `Number.MAX_SAFE_INTEGER` to lose precision. For instance, `9007199254740992.0.0` and `9007199254740993.0.0` are distinct SemVer versions where the second must strictly supersede the first; with `Number()` conversion, they compare as equal.
+2. **Exact Decimal Comparison Algorithm:** Exact comparison preserves components as decimal strings. Non-negative integer strings with no leading zeros are compared by string length first (more digits strictly means a larger value). If lengths are identical, standard ASCII lexicographical comparison is mathematically identical to numerical comparison without numeric conversion or overflow risk.
+3. **Full SemVer 2.0.0 Conformance:** The comparator respects all precedence clauses: major/minor/patch precedence, normal release > prerelease, numeric prerelease < non-numeric prerelease, numeric prerelease comparison via exact integer rules, non-numeric comparison in ASCII lexical order, longer sequence > shorter, and build metadata exclusion (§10).
+
+### Q9: Why must Git hook setup be explicitly executed in CI workflows?
+
+**Answer:**
+
+1. **Local Hook Scope:** Native Git hooks configured via `core.hooksPath = .githooks` are repository-local (`git config --local`), stored in `.git/config`. Because `.git/config` is never checked into Git (for security and portability), a fresh checkout in a continuous integration environment has default unconfigured hooks.
+2. **Integration Test Verification:** Repository integration tests (`tests/setup-hooks.test.ts`) assert that the current working tree has `core.hooksPath` configured to ensure developer workstations and CI runners maintain commit-message governance.
+3. **Workflow Parity:** By adding `pnpm setup:hooks` as an explicit step after dependency installation in `.github/workflows/ci.yml`, CI mirrors developer onboarding instructions in `README.md` and validates hook configuration hermetically without modifying global Git settings.

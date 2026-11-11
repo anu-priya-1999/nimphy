@@ -197,26 +197,26 @@ export function validateRulePackContent(
 
         if (
           typeof rawTier.minPriceMinor !== 'number' ||
-          !Number.isInteger(rawTier.minPriceMinor) ||
+          !Number.isSafeInteger(rawTier.minPriceMinor) ||
           rawTier.minPriceMinor < 0
         ) {
           issues.push({
             path: `${tierPath}.minPriceMinor`,
             code: 'INVALID_MIN_PRICE',
-            message: `${tierPath}.minPriceMinor must be an integer >= 0`,
+            message: `${tierPath}.minPriceMinor must be a safe integer >= 0`,
           });
         }
 
         if (
           rawTier.maxPriceMinor !== null &&
           (typeof rawTier.maxPriceMinor !== 'number' ||
-            !Number.isInteger(rawTier.maxPriceMinor) ||
+            !Number.isSafeInteger(rawTier.maxPriceMinor) ||
             rawTier.maxPriceMinor <= (rawTier.minPriceMinor as number))
         ) {
           issues.push({
             path: `${tierPath}.maxPriceMinor`,
             code: 'INVALID_MAX_PRICE',
-            message: `${tierPath}.maxPriceMinor must be null or an integer > minPriceMinor`,
+            message: `${tierPath}.maxPriceMinor must be null or a safe integer > minPriceMinor`,
           });
         }
 
@@ -247,7 +247,10 @@ export function validateRulePackContent(
         if (
           typeof rawTier.name === 'string' &&
           typeof rawTier.minPriceMinor === 'number' &&
-          (rawTier.maxPriceMinor === null || typeof rawTier.maxPriceMinor === 'number') &&
+          Number.isSafeInteger(rawTier.minPriceMinor) &&
+          (rawTier.maxPriceMinor === null ||
+            (typeof rawTier.maxPriceMinor === 'number' &&
+              Number.isSafeInteger(rawTier.maxPriceMinor))) &&
           isValidDecimalRate(rawTier.royaltyRateDecimal)
         ) {
           validatedTiers.push({
@@ -288,44 +291,49 @@ export function validateRulePackContent(
 
       if (
         typeof rawPrint.baseCostMinor !== 'number' ||
-        !Number.isInteger(rawPrint.baseCostMinor) ||
+        !Number.isSafeInteger(rawPrint.baseCostMinor) ||
         rawPrint.baseCostMinor < 0
       ) {
         issues.push({
           path: 'content.printCost.baseCostMinor',
           code: 'INVALID_BASE_COST',
-          message: 'content.printCost.baseCostMinor must be an integer >= 0',
+          message: 'content.printCost.baseCostMinor must be a safe integer >= 0',
         });
       }
 
       if (
         typeof rawPrint.costPerPageMinor !== 'number' ||
-        !Number.isInteger(rawPrint.costPerPageMinor) ||
+        !Number.isSafeInteger(rawPrint.costPerPageMinor) ||
         rawPrint.costPerPageMinor < 0
       ) {
         issues.push({
           path: 'content.printCost.costPerPageMinor',
           code: 'INVALID_COST_PER_PAGE',
-          message: 'content.printCost.costPerPageMinor must be an integer >= 0',
+          message: 'content.printCost.costPerPageMinor must be a safe integer >= 0',
         });
       }
 
       if (
         rawPrint.pageThreshold !== undefined &&
         (typeof rawPrint.pageThreshold !== 'number' ||
-          !Number.isInteger(rawPrint.pageThreshold) ||
+          !Number.isSafeInteger(rawPrint.pageThreshold) ||
           rawPrint.pageThreshold < 0)
       ) {
         issues.push({
           path: 'content.printCost.pageThreshold',
           code: 'INVALID_PAGE_THRESHOLD',
-          message: 'content.printCost.pageThreshold must be an integer >= 0 when provided',
+          message: 'content.printCost.pageThreshold must be a safe integer >= 0 when provided',
         });
       }
 
       if (
         typeof rawPrint.baseCostMinor === 'number' &&
+        Number.isSafeInteger(rawPrint.baseCostMinor) &&
         typeof rawPrint.costPerPageMinor === 'number' &&
+        Number.isSafeInteger(rawPrint.costPerPageMinor) &&
+        (rawPrint.pageThreshold === undefined ||
+          (typeof rawPrint.pageThreshold === 'number' &&
+            Number.isSafeInteger(rawPrint.pageThreshold))) &&
         rawPrint.baseCostMinor >= 0 &&
         rawPrint.costPerPageMinor >= 0
       ) {
@@ -350,11 +358,11 @@ export function validateRulePackContent(
     } else {
       const rawDeliv = raw.deliveryCost as Record<string, unknown>;
       const cost = rawDeliv.costPerMbMinor ?? rawDeliv.cost_per_mb_minor;
-      if (typeof cost !== 'number' || !Number.isInteger(cost) || cost < 0) {
+      if (typeof cost !== 'number' || !Number.isSafeInteger(cost) || cost < 0) {
         issues.push({
           path: 'content.deliveryCost.costPerMbMinor',
           code: 'INVALID_COST_PER_MB',
-          message: 'content.deliveryCost.costPerMbMinor must be an integer >= 0',
+          message: 'content.deliveryCost.costPerMbMinor must be a safe integer >= 0',
         });
       } else {
         deliveryCost = { costPerMbMinor: cost };
@@ -377,23 +385,23 @@ export function validateRulePackContent(
     const minPages = rawLimits.minPages ?? rawLimits.min_pages;
     const maxPages = rawLimits.maxPages ?? rawLimits.max_pages;
 
-    if (typeof minPrice !== 'number' || !Number.isInteger(minPrice) || minPrice <= 0) {
+    if (typeof minPrice !== 'number' || !Number.isSafeInteger(minPrice) || minPrice <= 0) {
       issues.push({
         path: 'content.limits.minListPriceMinor',
         code: 'INVALID_MIN_PRICE',
-        message: 'content.limits.minListPriceMinor must be an integer > 0',
+        message: 'content.limits.minListPriceMinor must be a safe integer > 0',
       });
     }
 
     if (
       typeof maxPrice !== 'number' ||
-      !Number.isInteger(maxPrice) ||
-      (typeof minPrice === 'number' && maxPrice <= minPrice)
+      !Number.isSafeInteger(maxPrice) ||
+      (typeof minPrice === 'number' && Number.isSafeInteger(minPrice) && maxPrice <= minPrice)
     ) {
       issues.push({
         path: 'content.limits.maxListPriceMinor',
         code: 'INVALID_MAX_PRICE',
-        message: 'content.limits.maxListPriceMinor must be an integer > minListPriceMinor',
+        message: 'content.limits.maxListPriceMinor must be a safe integer > minListPriceMinor',
       });
     }
 
@@ -414,30 +422,32 @@ export function validateRulePackContent(
       }
     } else {
       // Physical books require page limits
-      if (typeof minPages !== 'number' || !Number.isInteger(minPages) || minPages <= 0) {
+      if (typeof minPages !== 'number' || !Number.isSafeInteger(minPages) || minPages <= 0) {
         issues.push({
           path: 'content.limits.minPages',
           code: 'INVALID_MIN_PAGES',
-          message: `content.limits.minPages must be an integer > 0 for physical format "${format}"`,
+          message: `content.limits.minPages must be a safe integer > 0 for physical format "${format}"`,
         });
       }
 
       if (
         typeof maxPages !== 'number' ||
-        !Number.isInteger(maxPages) ||
-        (typeof minPages === 'number' && maxPages < minPages)
+        !Number.isSafeInteger(maxPages) ||
+        (typeof minPages === 'number' && Number.isSafeInteger(minPages) && maxPages < minPages)
       ) {
         issues.push({
           path: 'content.limits.maxPages',
           code: 'INVALID_MAX_PAGES',
-          message: `content.limits.maxPages must be an integer >= minPages for physical format "${format}"`,
+          message: `content.limits.maxPages must be a safe integer >= minPages for physical format "${format}"`,
         });
       }
     }
 
     if (
       typeof minPrice === 'number' &&
+      Number.isSafeInteger(minPrice) &&
       typeof maxPrice === 'number' &&
+      Number.isSafeInteger(maxPrice) &&
       minPrice > 0 &&
       maxPrice > minPrice
     ) {

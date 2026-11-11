@@ -1,6 +1,6 @@
 # 17 — Implementation Roadmap
 
-**Governs implementation order.** Nothing here has started. Do **not** begin STEP-001 until the owner explicitly approves the architecture package. Commands are intended conventions (doc 14) and are `[UNVERIFIED]` until STEP-001 establishes them.
+**Governs implementation order.** STEP-001 through STEP-004 have implementations in the repository; formal acceptance and verification status are tracked separately in `docs/DESIGN.md`. Subsequent roadmap steps require explicit repository-owner authorization. The technical roadmap itself remains authoritative. Commands are intended conventions (doc 14) and are verified as each step establishes them.
 
 Related: [02](02-product-scope-and-requirements.md), [12](12-testing-and-ai-evaluation.md), [22](22-definition-of-done.md).
 

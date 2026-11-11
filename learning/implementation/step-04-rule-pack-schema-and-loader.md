@@ -92,14 +92,58 @@ This implementation provides:
 
 ## C. Verification Summary
 
-| Suite / Check                  | Command                                  | Result     | Details                                                                  |
-| ------------------------------ | ---------------------------------------- | ---------- | ------------------------------------------------------------------------ |
-| **TypeScript Compilation**     | `pnpm typecheck`                         | **Passed** | 8 workspace projects checked; 0 errors                                   |
-| **Linting**                    | `pnpm lint`                              | **Passed** | ESLint 10 with local architecture plugin; 0 errors, 0 warnings           |
-| **Prettier Formatting**        | `pnpm format:check`                      | **Passed** | All repository files adhere to Prettier style                            |
-| **Documentation Check**        | `pnpm docs:check`                        | **Passed** | 23 architecture documents, 93 links, 22 ADRs verified                    |
-| **Architectural Boundaries**   | `pnpm boundaries:check`                  | **Passed** | 58 files checked; `@nimphy/rules` imports only `@nimphy/domain`          |
-| **Unit & Integration Tests**   | `pnpm test`                              | **Passed** | 312/312 tests passed across 25 test files (0 failed, 0 skipped)          |
-| **Code Coverage**              | `pnpm test:coverage`                     | **Passed** | 99.90% Stmts, 98.52% Branches, 100% Funcs, 99.90% Lines (threshold: 95%) |
-| **Fixtures Verification**      | `pnpm vitest run fixtures.test.ts`       | **Passed** | All 4 fixture packs match built-in synthetic packs bit-for-bit           |
-| **RFC 8785 (JCS) Conformance** | `pnpm vitest run canonical-json.test.ts` | **Passed** | Appendix E, structures, french, unicode vectors & lone surrogate checks  |
+| Suite / Check                  | Command                                  | Result     | Details                                                                                     |
+| ------------------------------ | ---------------------------------------- | ---------- | ------------------------------------------------------------------------------------------- |
+| **TypeScript Compilation**     | `pnpm typecheck`                         | **Passed** | 8 workspace projects checked; 0 errors                                                      |
+| **Linting**                    | `pnpm lint`                              | **Passed** | ESLint 10 with local architecture plugin; 0 errors, 0 warnings                              |
+| **Prettier Formatting**        | `pnpm format:check`                      | **Passed** | All repository files adhere to Prettier style                                               |
+| **Documentation Check**        | `pnpm docs:check`                        | **Passed** | 23 architecture documents, 93 links, 22 ADRs verified                                       |
+| **Architectural Boundaries**   | `pnpm boundaries:check`                  | **Passed** | 58 files checked; `@nimphy/rules` imports only `@nimphy/domain`                             |
+| **Unit & Integration Tests**   | `pnpm test`                              | **Passed** | 312/312 tests passed across 25 test files (0 failed, 0 skipped) (initial baseline)          |
+| **Code Coverage**              | `pnpm test:coverage`                     | **Passed** | 99.90% Stmts, 98.52% Branches, 100% Funcs, 99.90% Lines (threshold: 95%) (initial baseline) |
+| **Fixtures Verification**      | `pnpm vitest run fixtures.test.ts`       | **Passed** | All 4 fixture packs match built-in synthetic packs bit-for-bit                              |
+| **RFC 8785 (JCS) Conformance** | `pnpm vitest run canonical-json.test.ts` | **Passed** | Appendix E, structures, french, unicode vectors & lone surrogate checks                     |
+
+---
+
+## D. Corrective Hardening and CI Repair (Post-Review Pass)
+
+Following an independent post-implementation review of STEP-004, three targeted hardening corrections were executed:
+
+### 1. Safe Integer Validation & Financial Invariant Enforcement
+
+- **Problem:** `packages/rules/src/schema/validator.ts` previously checked integer-valued fields using `Number.isInteger()`. In JavaScript, `Number.isInteger(9007199254740992) === true` even though `9007199254740992` exceeds `Number.MAX_SAFE_INTEGER` ($2^{53} - 1$). The domain `Money` primitive strictly enforces safety within `[Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER]`; allowing unsafe integers in the Rule Pack schema breached domain financial invariants.
+- **Solution:** Replaced all integer validation across all 10 schema integer fields with `Number.isSafeInteger()`.
+  - Fields hardened: `minPriceMinor`, `maxPriceMinor`, `baseCostMinor`, `costPerPageMinor`, `pageThreshold`, `costPerMbMinor`, `minListPriceMinor`, `maxListPriceMinor`, `minPages`, `maxPages`.
+  - Guaranteed rejection of fractional inputs, `NaN`, `Infinity`, `-Infinity`, and unsafe integers $> 2^{53} - 1$ or $< -(2^{53} - 1)$.
+  - Preserved typed error structures, validation codes, and field definitions without silent clamping or floating-point arithmetic.
+  - Added 10 focused regression tests covering boundary safe integers, unsafe integers (`Number.MAX_SAFE_INTEGER + 1`), negative unsafe integers, fractional values, and non-finite numbers.
+
+### 2. Exact SemVer Identifier Comparison
+
+- **Problem:** `packages/rules/src/schema/semver.ts` previously parsed SemVer major, minor, patch and compared numeric prerelease identifiers by converting them to JavaScript `Number`. For versions with components $> 2^{53} - 1$ (e.g. `9007199254740992.0.0` vs `9007199254740993.0.0`), IEEE-754 double precision collapses distinct integers into identical floats, violating exact SemVer 2.0.0 precedence ordering.
+- **Solution:**
+  - Preserved `major`, `minor`, and `patch` in `ParsedSemver` as exact decimal strings (`readonly major: string; readonly minor: string; readonly patch: string`).
+  - Implemented exact numerical string comparison (`compareNumericIdentifiers`): compares non-negative integer decimal strings by length first, then lexicographically.
+  - Applied exact numeric comparison to numeric prerelease tags without converting to `Number`.
+  - Preserved SemVer 2.0.0 precedence rules: normal release > prerelease, numeric prerelease < non-numeric prerelease, longer matching prerelease sequences > shorter, build metadata ignored (§10).
+  - Added 8 focused regression tests covering adjacent large identifiers, length differences, identical large identifiers, and precedence edge cases.
+
+### 3. CI Workflow Git Hook Configuration Repair
+
+- **Problem:** GitHub Actions CI failed on `tests/setup-hooks.test.ts` (Run 42972958895) because the integration test asserts that the local repository has `core.hooksPath = .githooks`. On fresh CI clones, repository Git hooks were unconfigured prior to running tests.
+- **Solution:** Added a dedicated step `Configure repository Git hooks` executing `pnpm setup:hooks` immediately following dependency installation in `.github/workflows/ci.yml`.
+
+### 4. Updated Post-Hardening Verification Results (Local)
+
+| Suite / Check                | Command                 | Result      | Details                                                                       |
+| ---------------------------- | ----------------------- | ----------- | ----------------------------------------------------------------------------- |
+| **TypeScript Compilation**   | `pnpm typecheck`        | **Passed**  | 8 workspace projects checked; 0 errors                                        |
+| **Linting**                  | `pnpm lint`             | **Passed**  | ESLint 10 with local architecture plugin; 0 errors, 0 warnings                |
+| **Prettier Formatting**      | `pnpm format:check`     | **Passed**  | All repository files adhere to Prettier style                                 |
+| **Documentation Check**      | `pnpm docs:check`       | **Passed**  | 23 architecture documents, 94 links, 22 ADRs verified                         |
+| **Architectural Boundaries** | `pnpm boundaries:check` | **Passed**  | 58 files checked; `@nimphy/rules` imports only `@nimphy/domain`               |
+| **Unit & Integration Tests** | `pnpm test`             | **Passed**  | 330/330 tests passed across 25 test files (+18 new tests; 0 failed)           |
+| **Code Coverage**            | `pnpm test:coverage`    | **Passed**  | 99.90% Stmts (2088/2090), 98.99% Branches (689/696), 100% Funcs, 99.90% Lines |
+| **Next.js Web Build**        | `pnpm build`            | **Passed**  | App Router static prerender complete                                          |
+| **Remote CI Status**         | GitHub Actions          | **Pending** | Local verification complete; remote CI run pending push of corrective commit  |

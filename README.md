@@ -4,7 +4,7 @@ Nimphy is a publishing business-case and decision-intelligence product.
 
 ## Current development status
 
-The initial project foundation is being scaffolded.
+The repository contains implementation through STEP-004 (Rule Pack Schema and Loader). Formal acceptance and current verification status are tracked in [`docs/DESIGN.md`](docs/DESIGN.md).
 The first product capability is the Title Business Case.
 
 See [the architecture documentation](docs/architecture/00-README.md)
