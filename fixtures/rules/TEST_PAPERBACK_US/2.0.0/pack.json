@@ -1,0 +1,42 @@
+{
+  "id": "550e8400-e29b-41d4-a716-446655440003",
+  "packKey": "TEST_PAPERBACK_US",
+  "version": "2.0.0",
+  "status": "published",
+  "marketplace": "TEST_MARKETPLACE",
+  "format": "paperback",
+  "currency": "USD",
+  "effectiveFrom": "2026-01-01",
+  "effectiveTo": null,
+  "sourceRef": "Synthetic Test Specification SYNTH-PRINT-002",
+  "sourceRetrievedAt": "2026-01-01",
+  "content": {
+    "rounding": {
+      "mode": "round_half_even",
+      "point": "per_unit"
+    },
+    "royalty": {
+      "tiers": [
+        {
+          "name": "fixed_60",
+          "minPriceMinor": 0,
+          "maxPriceMinor": null,
+          "royaltyRateDecimal": "0.60"
+        }
+      ]
+    },
+    "printCost": {
+      "baseCostMinor": 120,
+      "costPerPageMinor": 2,
+      "pageThreshold": 24
+    },
+    "deliveryCost": null,
+    "limits": {
+      "minListPriceMinor": 500,
+      "maxListPriceMinor": 25000,
+      "minPages": 24,
+      "maxPages": 800
+    }
+  },
+  "contentHash": "sha256:f9b8875ff012e1702ac54a3c38fde1477e14c8d9674a11823c61db94f4ea3d15"
+}

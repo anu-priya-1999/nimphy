@@ -1,0 +1,28 @@
+{
+  "packKey": "TEST_PAPERBACK_US",
+  "version": "2.0.0",
+  "description": "Synthetic test cases for paperback v2.0.0 (updated base cost to 120 cents)",
+  "disclaimer": "SYNTHETIC TEST CASES ONLY. Not derived from actual retailer formulas.",
+  "cases": [
+    {
+      "id": "case_v2_min_pages",
+      "description": "Minimum pages (24 pages, updated base cost 120 cents)",
+      "listPriceMinor": 1499,
+      "pages": 24,
+      "expectedBaseCostMinor": 120,
+      "expectedPerPageCostMinor": 0,
+      "expectedTotalPrintCostMinor": 120,
+      "expectedRoyaltyRate": "0.60"
+    },
+    {
+      "id": "case_v2_standard_length",
+      "description": "Standard 200-page book under v2.0.0 rules (120 base + 352 per-page = 472 cents)",
+      "listPriceMinor": 1499,
+      "pages": 200,
+      "expectedBaseCostMinor": 120,
+      "expectedPerPageCostMinor": 352,
+      "expectedTotalPrintCostMinor": 472,
+      "expectedRoyaltyRate": "0.60"
+    }
+  ]
+}

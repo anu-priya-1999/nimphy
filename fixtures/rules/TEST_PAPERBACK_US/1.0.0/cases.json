@@ -1,0 +1,38 @@
+{
+  "packKey": "TEST_PAPERBACK_US",
+  "version": "1.0.0",
+  "description": "Synthetic test cases for paperback printing cost and royalty calculation",
+  "disclaimer": "SYNTHETIC TEST CASES ONLY. Not derived from actual retailer formulas.",
+  "cases": [
+    {
+      "id": "case_min_pages",
+      "description": "Minimum pages (24 pages, at base cost threshold)",
+      "listPriceMinor": 1299,
+      "pages": 24,
+      "expectedBaseCostMinor": 100,
+      "expectedPerPageCostMinor": 0,
+      "expectedTotalPrintCostMinor": 100,
+      "expectedRoyaltyRate": "0.60"
+    },
+    {
+      "id": "case_above_threshold",
+      "description": "Pages exceeding threshold (25 pages -> 1 page excess * 2 cents)",
+      "listPriceMinor": 1299,
+      "pages": 25,
+      "expectedBaseCostMinor": 100,
+      "expectedPerPageCostMinor": 2,
+      "expectedTotalPrintCostMinor": 102,
+      "expectedRoyaltyRate": "0.60"
+    },
+    {
+      "id": "case_standard_length",
+      "description": "Standard 200-page novel (176 pages excess * 2 cents = 352 cents)",
+      "listPriceMinor": 1499,
+      "pages": 200,
+      "expectedBaseCostMinor": 100,
+      "expectedPerPageCostMinor": 352,
+      "expectedTotalPrintCostMinor": 452,
+      "expectedRoyaltyRate": "0.60"
+    }
+  ]
+}

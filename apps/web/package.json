@@ -1,0 +1,29 @@
+{
+  "name": "@nimphy/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint --config ../../eslint.config.mjs app",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@nimphy/ai": "workspace:*",
+    "@nimphy/calc-engine": "workspace:*",
+    "@nimphy/documents": "workspace:*",
+    "@nimphy/domain": "workspace:*",
+    "@nimphy/payments": "workspace:*",
+    "@nimphy/persistence": "workspace:*",
+    "@nimphy/rules": "workspace:*",
+    "next": "16.4.5",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "autoprefixer": "10.4.20",
+    "postcss": "8.5.3",
+    "tailwindcss": "3.4.17"
+  }
+}

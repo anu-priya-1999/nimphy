@@ -1,0 +1,88 @@
+{
+  "packKey": "TEST_EBOOK_STANDARD",
+  "version": "1.0.0",
+  "description": "Synthetic threshold, boundary, and rounding test cases for ebook royalty calculation",
+  "disclaimer": "SYNTHETIC TEST CASES ONLY. Not derived from actual retailer formulas.",
+  "cases": [
+    {
+      "id": "case_min_boundary",
+      "description": "Lower boundary of list price ($0.99, tier standard_low 35%)",
+      "listPriceMinor": 99,
+      "fileSizeMb": 1,
+      "expectedRoyaltyRate": "0.35",
+      "expectedGrossRoyaltyMinor": 35,
+      "expectedDeliveryCostMinor": 15,
+      "roundingMode": "round_half_up"
+    },
+    {
+      "id": "case_tier1_upper",
+      "description": "Upper boundary of tier 1 ($2.98, tier standard_low 35%)",
+      "listPriceMinor": 298,
+      "fileSizeMb": 1,
+      "expectedRoyaltyRate": "0.35",
+      "expectedGrossRoyaltyMinor": 104,
+      "expectedDeliveryCostMinor": 15,
+      "roundingMode": "round_half_up"
+    },
+    {
+      "id": "case_tier2_lower",
+      "description": "Lower boundary of tier 2 ($2.99, tier standard_mid 70%)",
+      "listPriceMinor": 299,
+      "fileSizeMb": 1,
+      "expectedRoyaltyRate": "0.70",
+      "expectedGrossRoyaltyMinor": 209,
+      "expectedDeliveryCostMinor": 15,
+      "roundingMode": "round_half_up"
+    },
+    {
+      "id": "case_mid_standard",
+      "description": "Standard mid-tier pricing ($4.99, tier standard_mid 70%)",
+      "listPriceMinor": 499,
+      "fileSizeMb": 2,
+      "expectedRoyaltyRate": "0.70",
+      "expectedGrossRoyaltyMinor": 349,
+      "expectedDeliveryCostMinor": 30,
+      "roundingMode": "round_half_up"
+    },
+    {
+      "id": "case_half_cent_boundary",
+      "description": "Half-cent rounding boundary ($5.50 * 70% = $3.85 exact)",
+      "listPriceMinor": 550,
+      "fileSizeMb": 1,
+      "expectedRoyaltyRate": "0.70",
+      "expectedGrossRoyaltyMinor": 385,
+      "expectedDeliveryCostMinor": 15,
+      "roundingMode": "round_half_up"
+    },
+    {
+      "id": "case_tier2_upper",
+      "description": "Upper boundary of tier 2 ($9.99, tier standard_mid 70%)",
+      "listPriceMinor": 999,
+      "fileSizeMb": 1,
+      "expectedRoyaltyRate": "0.70",
+      "expectedGrossRoyaltyMinor": 699,
+      "expectedDeliveryCostMinor": 15,
+      "roundingMode": "round_half_up"
+    },
+    {
+      "id": "case_tier3_lower",
+      "description": "Lower boundary of tier 3 ($10.00, tier standard_high 35%)",
+      "listPriceMinor": 1000,
+      "fileSizeMb": 1,
+      "expectedRoyaltyRate": "0.35",
+      "expectedGrossRoyaltyMinor": 350,
+      "expectedDeliveryCostMinor": 15,
+      "roundingMode": "round_half_up"
+    },
+    {
+      "id": "case_max_price",
+      "description": "Maximum list price ($200.00, tier standard_high 35%)",
+      "listPriceMinor": 20000,
+      "fileSizeMb": 1,
+      "expectedRoyaltyRate": "0.35",
+      "expectedGrossRoyaltyMinor": 7000,
+      "expectedDeliveryCostMinor": 15,
+      "roundingMode": "round_half_up"
+    }
+  ]
+}

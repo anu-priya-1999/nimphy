@@ -1,0 +1,42 @@
+{
+  "id": "550e8400-e29b-41d4-a716-446655440004",
+  "packKey": "TEST_HARDCOVER_GLOBAL",
+  "version": "1.0.0",
+  "status": "published",
+  "marketplace": "TEST_GLOBAL",
+  "format": "hardcover",
+  "currency": "EUR",
+  "effectiveFrom": "2026-01-01",
+  "effectiveTo": null,
+  "sourceRef": "Synthetic Test Specification SYNTH-HARDCOVER-EUR-001",
+  "sourceRetrievedAt": "2026-01-01",
+  "content": {
+    "rounding": {
+      "mode": "round_down",
+      "point": "per_total"
+    },
+    "royalty": {
+      "tiers": [
+        {
+          "name": "fixed_50",
+          "minPriceMinor": 0,
+          "maxPriceMinor": null,
+          "royaltyRateDecimal": "0.50"
+        }
+      ]
+    },
+    "printCost": {
+      "baseCostMinor": 600,
+      "costPerPageMinor": 3,
+      "pageThreshold": 75
+    },
+    "deliveryCost": null,
+    "limits": {
+      "minListPriceMinor": 1500,
+      "maxListPriceMinor": 50000,
+      "minPages": 75,
+      "maxPages": 1000
+    }
+  },
+  "contentHash": "sha256:dca0b1b6c0343c957cae70130e0b1c266c6c1af06e25d337f959cf8c59012f51"
+}

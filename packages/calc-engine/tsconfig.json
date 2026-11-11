@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "paths": {
+      "@nimphy/domain": ["../domain/src"]
+    }
+  },
+  "include": ["src/**/*"]
+}

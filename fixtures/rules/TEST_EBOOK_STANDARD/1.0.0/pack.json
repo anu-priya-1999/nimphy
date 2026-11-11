@@ -1,0 +1,52 @@
+{
+  "id": "550e8400-e29b-41d4-a716-446655440001",
+  "packKey": "TEST_EBOOK_STANDARD",
+  "version": "1.0.0",
+  "status": "published",
+  "marketplace": "TEST_MARKETPLACE",
+  "format": "ebook",
+  "currency": "USD",
+  "effectiveFrom": "2026-01-01",
+  "effectiveTo": null,
+  "sourceRef": "Synthetic Test Specification SYNTH-EBOOK-001",
+  "sourceRetrievedAt": "2026-01-01",
+  "content": {
+    "rounding": {
+      "mode": "round_half_up",
+      "point": "per_unit"
+    },
+    "royalty": {
+      "tiers": [
+        {
+          "name": "standard_low",
+          "minPriceMinor": 99,
+          "maxPriceMinor": 298,
+          "royaltyRateDecimal": "0.35"
+        },
+        {
+          "name": "standard_mid",
+          "minPriceMinor": 299,
+          "maxPriceMinor": 999,
+          "royaltyRateDecimal": "0.70"
+        },
+        {
+          "name": "standard_high",
+          "minPriceMinor": 1000,
+          "maxPriceMinor": null,
+          "royaltyRateDecimal": "0.35"
+        }
+      ]
+    },
+    "printCost": null,
+    "deliveryCost": {
+      "costPerMbMinor": 15
+    },
+    "limits": {
+      "minListPriceMinor": 99,
+      "maxListPriceMinor": 20000,
+      "minPages": null,
+      "maxPages": null
+    }
+  },
+  "contentHash": "sha256:bd44021f5ba36887d329b32f56455855ed1152b9a951e64e1f04dea4eaeeb627"
+}

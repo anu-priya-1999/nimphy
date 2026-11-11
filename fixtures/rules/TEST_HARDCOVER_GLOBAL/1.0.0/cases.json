@@ -1,0 +1,28 @@
+{
+  "packKey": "TEST_HARDCOVER_GLOBAL",
+  "version": "1.0.0",
+  "description": "Synthetic test cases for international EUR hardcover rules (round_down, per_total)",
+  "disclaimer": "SYNTHETIC TEST CASES ONLY. Not derived from actual retailer formulas.",
+  "cases": [
+    {
+      "id": "case_eur_hardcover_min",
+      "description": "Minimum 75 pages (€6.00 base cost)",
+      "listPriceMinor": 2500,
+      "pages": 75,
+      "expectedBaseCostMinor": 600,
+      "expectedPerPageCostMinor": 0,
+      "expectedTotalPrintCostMinor": 600,
+      "expectedRoyaltyRate": "0.50"
+    },
+    {
+      "id": "case_eur_hardcover_standard",
+      "description": "200 pages (600 base + 125 * 3 = 975 cents = €9.75)",
+      "listPriceMinor": 2999,
+      "pages": 200,
+      "expectedBaseCostMinor": 600,
+      "expectedPerPageCostMinor": 375,
+      "expectedTotalPrintCostMinor": 975,
+      "expectedRoyaltyRate": "0.50"
+    }
+  ]
+}

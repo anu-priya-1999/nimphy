@@ -1,0 +1,12 @@
+node_modules
+.next
+dist
+build
+coverage
+pnpm-lock.yaml
+.pnpm-store
+.git
+
+docs/architecture/**
+
+**/next-env.d.ts

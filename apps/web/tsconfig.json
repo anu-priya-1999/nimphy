@@ -1,0 +1,23 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "preserve",
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./*"],
+      "@nimphy/domain": ["../../packages/domain/src"],
+      "@nimphy/calc-engine": ["../../packages/calc-engine/src"],
+      "@nimphy/rules": ["../../packages/rules/src"],
+      "@nimphy/ai": ["../../packages/ai/src"],
+      "@nimphy/documents": ["../../packages/documents/src"],
+      "@nimphy/payments": ["../../packages/payments/src"],
+      "@nimphy/persistence": ["../../packages/persistence/src"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}
