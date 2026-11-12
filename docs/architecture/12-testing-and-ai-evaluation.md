@@ -20,14 +20,19 @@ Pure modules only; no network, clock, or randomness (injected). Coverage gate: `
 
 ## 3. Financial calculation test strategy
 
-1. **Golden fixtures:** hand-verified input → expected output files (JSON) checked into the repo; expected values computed independently (spreadsheet or hand calculation recorded in the fixture's `derivation` field) — not copied from engine output.
-2. **Boundary conditions:** zero units; one unit; list price at rule thresholds (just below, at, just above); zero/negative contribution ⇒ break-even "not reachable"; maximum supported magnitudes; empty fixed-cost list; exact-integer break-even (no spurious +1); break-even requiring ceiling.
-3. **Rounding:** every rounding mode in each Rule Pack tested at .5 boundaries and at accumulation points (per-unit vs per-total rounding must match the pack's declared point); negative values; currency with different minor-unit exponents (if supported — **OPEN**).
-4. **Determinism:** run twice, compare byte-equal canonical JSON; run across Node versions in CI matrix.
-5. **Properties:** raising units never lowers total net contribution when per-unit contribution ≥ 0; scenario ordering low ≤ base ≤ high holds when parameters are ordered; sensitivity sign matches analytic direction; currency mismatch rejected; addition associativity in integer minor units.
-6. **Trace completeness:** every output number has a trace entry whose inputs resolve.
-7. **Mutation testing** on `calc-engine` (target score OPEN) to catch weak assertions.
-8. **Cross-check:** an independent reference implementation of core formulas (spreadsheet or a second small script) compared against the engine on random inputs (differential test).
+1. **Golden fixtures:** hand-verified input → expected output files (JSON) checked into the repo (`fixtures/calc-engine/golden-per-unit-cases.json`); expected values computed independently with exact rational arithmetic (recorded in the fixture's `derivation` field) — never copied from engine execution.
+2. **Exact rational inputs & file sizes:** Ebook delivery inputs must provide exact decimal strings (`fileSizeMb: string`, e.g. `"0.1"`, `"0.5"`, `"1"`, `"2.1"`, `"10.25"`). Zero, negative, empty, non-decimal, scientific notation, and non-string inputs are strictly rejected.
+3. **Proportional delivery cost & fractional cost rounding:** Delivery costs are proportional to exact MB (`costPerMbMinor * exactFileSizeMb`) without integer-MB ceiling. When intermediate production or distribution costs yield fractional minor units, they are rounded using the Rule Pack's declared rounding mode at the designated rounding point.
+4. **All four approved rounding modes & ties:** Tests verify `round_half_up` (nearest integer, exact ties away from zero), `round_half_even` (Banker's rounding to nearest even integer), `round_down` (truncation toward zero), and `round_up` (away from zero) on positive and negative values as well as exact half-cent mathematical ties (+2.5, -2.5, +3.5, -3.5).
+5. **Rounding points & aggregation handoff:**
+   - Under `per_unit`: exact gross royalty and exact costs are rounded to integer minor units per unit; contribution is derived by subtraction (`grossRoyaltyMoney - productionCostMoney`).
+   - Under `per_total`: per-unit gross royalty and per-unit production cost are preserved as unrounded exact `Rational` values without premature rounding (per-unit Money fields governed by deferred rounding remain null); STEP-006 aggregates exact components by quantity and rounds aggregate components once.
+6. **Boundary conditions:** zero units; one unit; list price at rule thresholds (just below, at, just above); zero/negative contribution (e.g. valid $5.00 paperback at 300 pages yields USD -3.52) while rejecting out-of-bounds list prices (e.g. $4.00 paperback rejected with `PRICE_OUT_OF_BOUNDS`); maximum supported magnitudes; empty fixed-cost list; exact-integer break-even; break-even requiring ceiling.
+7. **Determinism:** run twice, compare byte-equal canonical JSON trace; run across Node versions in CI matrix; assert zero nondeterministic keys (timestamps, random IDs, filesystem paths).
+8. **Properties:** raising units never lowers total net contribution when per-unit contribution ≥ 0; scenario ordering low ≤ base ≤ high holds when parameters are ordered; sensitivity sign matches analytic direction; currency mismatch rejected; addition associativity in integer minor units.
+9. **Trace completeness:** every output number has an audited trace entry whose inputs resolve bit-for-bit.
+10. **Mutation testing** on `calc-engine` (target score OPEN) to catch weak assertions.
+11. **Cross-check:** an independent reference implementation of core formulas compared against the engine on random inputs (differential test).
 
 ## 4. Royalty-rule test fixtures
 

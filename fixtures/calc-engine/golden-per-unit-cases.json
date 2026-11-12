@@ -1,0 +1,1095 @@
+{
+  "description": "Independent hand-derived golden fixtures for Nimphy STEP-005 per-unit economics calculation engine.",
+  "disclaimer": "SYNTHETIC TEST CASES ONLY. Calculated with independent exact rational arithmetic. Not derived from engine execution.",
+  "engineVersion": "0.1.0",
+  "cases": [
+    {
+      "id": "golden_ebook_min_price",
+      "description": "Ebook minimum allowed price ($0.99) at tier standard_low (35%) with 1 MB delivery",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "input": {
+        "listPriceMinor": 99,
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "1"
+      },
+      "expectedTier": "standard_low",
+      "expectedRate": "0.35",
+      "expectedExactRoyalty": {
+        "numerator": "693",
+        "denominator": "20",
+        "decimalString": "34.65"
+      },
+      "expectedProductionCostMinor": 15,
+      "expectedExactContribution": {
+        "numerator": "393",
+        "denominator": "20",
+        "decimalString": "19.65"
+      },
+      "rounding": {
+        "mode": "round_half_up",
+        "point": "per_unit"
+      },
+      "expectedRoundedGrossRoyaltyMinor": 35,
+      "expectedRoundedNetContributionMinor": 20,
+      "derivation": "Gross royalty = 99 * 0.35 = 34.65 cents (693/20). Under round_half_up per_unit, 34.65 rounds to 35 cents. Delivery cost = 1 MB * 15 cents/MB = 15 cents. Contribution = 35 - 15 = 20 cents."
+    },
+    {
+      "id": "golden_ebook_tier1_upper",
+      "description": "Ebook tier 1 upper boundary ($2.98) at 35% with 1 MB delivery",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "input": {
+        "listPriceMinor": 298,
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "1"
+      },
+      "expectedTier": "standard_low",
+      "expectedRate": "0.35",
+      "expectedExactRoyalty": {
+        "numerator": "1043",
+        "denominator": "10",
+        "decimalString": "104.3"
+      },
+      "expectedProductionCostMinor": 15,
+      "expectedExactContribution": {
+        "numerator": "893",
+        "denominator": "10",
+        "decimalString": "89.3"
+      },
+      "rounding": {
+        "mode": "round_half_up",
+        "point": "per_unit"
+      },
+      "expectedRoundedGrossRoyaltyMinor": 104,
+      "expectedRoundedNetContributionMinor": 89,
+      "derivation": "Gross royalty = 298 * 0.35 = 104.30 cents (1043/10). Under round_half_up, 104.30 rounds to 104. Delivery cost = 15. Contribution = 104 - 15 = 89."
+    },
+    {
+      "id": "golden_ebook_tier2_lower",
+      "description": "Ebook tier 2 lower boundary ($2.99) at 70% with 1 MB delivery",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "input": {
+        "listPriceMinor": 299,
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "1"
+      },
+      "expectedTier": "standard_mid",
+      "expectedRate": "0.70",
+      "expectedExactRoyalty": {
+        "numerator": "2093",
+        "denominator": "10",
+        "decimalString": "209.3"
+      },
+      "expectedProductionCostMinor": 15,
+      "expectedExactContribution": {
+        "numerator": "1943",
+        "denominator": "10",
+        "decimalString": "194.3"
+      },
+      "rounding": {
+        "mode": "round_half_up",
+        "point": "per_unit"
+      },
+      "expectedRoundedGrossRoyaltyMinor": 209,
+      "expectedRoundedNetContributionMinor": 194,
+      "derivation": "Gross royalty = 299 * 0.70 = 209.30 cents (2093/10). Rounds to 209 cents. Delivery cost = 15. Contribution = 209 - 15 = 194."
+    },
+    {
+      "id": "golden_ebook_tier2_just_above_lower",
+      "description": "Ebook tier 2 just above lower boundary ($3.00) at 70%",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "input": {
+        "listPriceMinor": 300,
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "1"
+      },
+      "expectedTier": "standard_mid",
+      "expectedRate": "0.70",
+      "expectedExactRoyalty": {
+        "numerator": "210",
+        "denominator": "1",
+        "decimalString": "210"
+      },
+      "expectedProductionCostMinor": 15,
+      "expectedExactContribution": {
+        "numerator": "195",
+        "denominator": "1",
+        "decimalString": "195"
+      },
+      "rounding": {
+        "mode": "round_half_up",
+        "point": "per_unit"
+      },
+      "expectedRoundedGrossRoyaltyMinor": 210,
+      "expectedRoundedNetContributionMinor": 195,
+      "derivation": "Gross royalty = 300 * 0.70 = 210.00 cents (exact integer). Delivery cost = 15. Contribution = 210 - 15 = 195."
+    },
+    {
+      "id": "golden_ebook_tier2_exact_half_cent_tie",
+      "description": "Ebook tier 2 exact half-cent tie ($3.05 list price * 70% = 213.5 cents) under round_half_up",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "input": {
+        "listPriceMinor": 305,
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "1"
+      },
+      "expectedTier": "standard_mid",
+      "expectedRate": "0.70",
+      "expectedExactRoyalty": {
+        "numerator": "427",
+        "denominator": "2",
+        "decimalString": "213.5"
+      },
+      "expectedProductionCostMinor": 15,
+      "expectedExactContribution": {
+        "numerator": "397",
+        "denominator": "2",
+        "decimalString": "198.5"
+      },
+      "rounding": {
+        "mode": "round_half_up",
+        "point": "per_unit"
+      },
+      "expectedRoundedGrossRoyaltyMinor": 214,
+      "expectedRoundedNetContributionMinor": 199,
+      "derivation": "Gross royalty = 305 * 0.70 = 213.50 cents (427/2). Under round_half_up, the exact half-cent tie 213.50 rounds away from zero to 214 cents. Delivery cost = 1 MB * 15 = 15 cents. Contribution = 214 - 15 = 199 cents."
+    },
+    {
+      "id": "golden_ebook_tier2_upper",
+      "description": "Ebook tier 2 upper boundary ($9.99) at 70%",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "input": {
+        "listPriceMinor": 999,
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "1"
+      },
+      "expectedTier": "standard_mid",
+      "expectedRate": "0.70",
+      "expectedExactRoyalty": {
+        "numerator": "6993",
+        "denominator": "10",
+        "decimalString": "699.3"
+      },
+      "expectedProductionCostMinor": 15,
+      "expectedExactContribution": {
+        "numerator": "6843",
+        "denominator": "10",
+        "decimalString": "684.3"
+      },
+      "rounding": {
+        "mode": "round_half_up",
+        "point": "per_unit"
+      },
+      "expectedRoundedGrossRoyaltyMinor": 699,
+      "expectedRoundedNetContributionMinor": 684,
+      "derivation": "Gross royalty = 999 * 0.70 = 699.30 cents (6993/10). Rounds to 699 cents. Delivery cost = 15. Contribution = 699 - 15 = 684."
+    },
+    {
+      "id": "golden_ebook_tier3_lower",
+      "description": "Ebook tier 3 lower boundary ($10.00) at 35%",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "input": {
+        "listPriceMinor": 1000,
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "1"
+      },
+      "expectedTier": "standard_high",
+      "expectedRate": "0.35",
+      "expectedExactRoyalty": {
+        "numerator": "350",
+        "denominator": "1",
+        "decimalString": "350"
+      },
+      "expectedProductionCostMinor": 15,
+      "expectedExactContribution": {
+        "numerator": "335",
+        "denominator": "1",
+        "decimalString": "335"
+      },
+      "rounding": {
+        "mode": "round_half_up",
+        "point": "per_unit"
+      },
+      "expectedRoundedGrossRoyaltyMinor": 350,
+      "expectedRoundedNetContributionMinor": 335,
+      "derivation": "Gross royalty = 1000 * 0.35 = 350.00 cents (exact integer). Delivery cost = 15. Contribution = 350 - 15 = 335."
+    },
+    {
+      "id": "golden_ebook_tier3_just_above_lower",
+      "description": "Ebook tier 3 just above lower boundary ($10.01) at 35%",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "input": {
+        "listPriceMinor": 1001,
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "1"
+      },
+      "expectedTier": "standard_high",
+      "expectedRate": "0.35",
+      "expectedExactRoyalty": {
+        "numerator": "7007",
+        "denominator": "20",
+        "decimalString": "350.35"
+      },
+      "expectedProductionCostMinor": 15,
+      "expectedExactContribution": {
+        "numerator": "6707",
+        "denominator": "20",
+        "decimalString": "335.35"
+      },
+      "rounding": {
+        "mode": "round_half_up",
+        "point": "per_unit"
+      },
+      "expectedRoundedGrossRoyaltyMinor": 350,
+      "expectedRoundedNetContributionMinor": 335,
+      "derivation": "Gross royalty = 1001 * 0.35 = 350.35 cents (7007/20). Fractional 0.35 < 0.5 -> rounds to 350 cents. Delivery cost = 15. Contribution = 350 - 15 = 335."
+    },
+    {
+      "id": "golden_ebook_max_price",
+      "description": "Ebook maximum allowed price ($200.00) at 35%",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "input": {
+        "listPriceMinor": 20000,
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "1"
+      },
+      "expectedTier": "standard_high",
+      "expectedRate": "0.35",
+      "expectedExactRoyalty": {
+        "numerator": "7000",
+        "denominator": "1",
+        "decimalString": "7000"
+      },
+      "expectedProductionCostMinor": 15,
+      "expectedExactContribution": {
+        "numerator": "6985",
+        "denominator": "1",
+        "decimalString": "6985"
+      },
+      "rounding": {
+        "mode": "round_half_up",
+        "point": "per_unit"
+      },
+      "expectedRoundedGrossRoyaltyMinor": 7000,
+      "expectedRoundedNetContributionMinor": 6985,
+      "derivation": "Gross royalty = 20000 * 0.35 = 7000.00 cents (exact integer). Delivery cost = 15. Contribution = 7000 - 15 = 6985."
+    },
+    {
+      "id": "golden_ebook_negative_contribution",
+      "description": "Ebook where delivery cost exceeds gross royalty producing negative net contribution",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "input": {
+        "listPriceMinor": 99,
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "10"
+      },
+      "expectedTier": "standard_low",
+      "expectedRate": "0.35",
+      "expectedExactRoyalty": {
+        "numerator": "693",
+        "denominator": "20",
+        "decimalString": "34.65"
+      },
+      "expectedProductionCostMinor": 150,
+      "expectedExactContribution": {
+        "numerator": "-2307",
+        "denominator": "20",
+        "decimalString": "-115.35"
+      },
+      "rounding": {
+        "mode": "round_half_up",
+        "point": "per_unit"
+      },
+      "expectedRoundedGrossRoyaltyMinor": 35,
+      "expectedRoundedNetContributionMinor": -115,
+      "derivation": "Gross royalty = 99 * 0.35 = 34.65 cents -> rounds to 35 cents. Delivery cost = 10 MB * 15 = 150 cents. Contribution = 35 - 150 = -115 cents."
+    },
+    {
+      "id": "golden_paperback_v1_min_pages",
+      "description": "Paperback v1.0.0 minimum pages (24 pages, 0 excess pages, base cost $1.00)",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "1.0.0"
+      },
+      "input": {
+        "listPriceMinor": 1299,
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 24
+      },
+      "expectedTier": "fixed_60",
+      "expectedRate": "0.60",
+      "expectedExactRoyalty": {
+        "numerator": "3897",
+        "denominator": "5",
+        "decimalString": "779.4"
+      },
+      "expectedProductionCostMinor": 100,
+      "expectedExactContribution": {
+        "numerator": "3397",
+        "denominator": "5",
+        "decimalString": "679.4"
+      },
+      "rounding": {
+        "mode": "round_half_even",
+        "point": "per_unit"
+      },
+      "expectedRoundedGrossRoyaltyMinor": 779,
+      "expectedRoundedNetContributionMinor": 679,
+      "derivation": "Excess pages = max(0, 24 - 24) = 0. Print cost = 100 + 0 * 2 = 100 cents. Gross royalty = 1299 * 0.60 = 779.40 cents (3897/5). Under round_half_even, 779.40 rounds to 779. Contribution = 779 - 100 = 679 cents."
+    },
+    {
+      "id": "golden_paperback_v1_one_excess_page",
+      "description": "Paperback v1.0.0 with 1 excess page (25 pages -> 100 base + 2 per-page = 102 cents)",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "1.0.0"
+      },
+      "input": {
+        "listPriceMinor": 1299,
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 25
+      },
+      "expectedTier": "fixed_60",
+      "expectedRate": "0.60",
+      "expectedExactRoyalty": {
+        "numerator": "3897",
+        "denominator": "5",
+        "decimalString": "779.4"
+      },
+      "expectedProductionCostMinor": 102,
+      "expectedExactContribution": {
+        "numerator": "3387",
+        "denominator": "5",
+        "decimalString": "677.4"
+      },
+      "rounding": {
+        "mode": "round_half_even",
+        "point": "per_unit"
+      },
+      "expectedRoundedGrossRoyaltyMinor": 779,
+      "expectedRoundedNetContributionMinor": 677,
+      "derivation": "Excess pages = 25 - 24 = 1. Print cost = 100 + 1 * 2 = 102 cents. Gross royalty = 1299 * 0.60 = 779.40 -> rounds to 779. Contribution = 779 - 102 = 677."
+    },
+    {
+      "id": "golden_paperback_v1_standard_length",
+      "description": "Paperback v1.0.0 200-page novel (176 excess pages * 2 cents = 352 + 100 = 452 cents)",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "1.0.0"
+      },
+      "input": {
+        "listPriceMinor": 1499,
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 200
+      },
+      "expectedTier": "fixed_60",
+      "expectedRate": "0.60",
+      "expectedExactRoyalty": {
+        "numerator": "4497",
+        "denominator": "5",
+        "decimalString": "899.4"
+      },
+      "expectedProductionCostMinor": 452,
+      "expectedExactContribution": {
+        "numerator": "2237",
+        "denominator": "5",
+        "decimalString": "447.4"
+      },
+      "rounding": {
+        "mode": "round_half_even",
+        "point": "per_unit"
+      },
+      "expectedRoundedGrossRoyaltyMinor": 899,
+      "expectedRoundedNetContributionMinor": 447,
+      "derivation": "Excess pages = 200 - 24 = 176. Print cost = 100 + 176 * 2 = 452 cents. Gross royalty = 1499 * 0.60 = 899.40 (4497/5) -> rounds to 899. Contribution = 899 - 452 = 447."
+    },
+    {
+      "id": "golden_paperback_v1_negative_contribution",
+      "description": "Paperback v1.0.0 valid negative contribution at $5.00 list price and 300 pages (Decision D)",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "1.0.0"
+      },
+      "input": {
+        "listPriceMinor": 500,
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 300
+      },
+      "expectedTier": "fixed_60",
+      "expectedRate": "0.60",
+      "expectedExactRoyalty": {
+        "numerator": "300",
+        "denominator": "1",
+        "decimalString": "300"
+      },
+      "expectedProductionCostMinor": 652,
+      "expectedExactContribution": {
+        "numerator": "-352",
+        "denominator": "1",
+        "decimalString": "-352"
+      },
+      "rounding": {
+        "mode": "round_half_even",
+        "point": "per_unit"
+      },
+      "expectedRoundedGrossRoyaltyMinor": 300,
+      "expectedRoundedNetContributionMinor": -352,
+      "derivation": "List price $5.00 (500 cents) is at the minimum allowed price boundary. Excess pages = 300 - 24 = 276. Print cost = 100 + 276 * 2 = 652 cents ($6.52). Gross royalty = 500 * 0.60 = 300.00 cents ($3.00). Under round_half_even, 300.00 is integer 300 cents. Contribution = 300 - 652 = -352 cents (-$3.52). This verifies valid negative contribution when inputs comply with all Rule Pack limits."
+    },
+    {
+      "id": "golden_paperback_v1_max_limits",
+      "description": "Paperback v1.0.0 at maximum list price ($250.00) and maximum page count (800 pages)",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "1.0.0"
+      },
+      "input": {
+        "listPriceMinor": 25000,
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 800
+      },
+      "expectedTier": "fixed_60",
+      "expectedRate": "0.60",
+      "expectedExactRoyalty": {
+        "numerator": "15000",
+        "denominator": "1",
+        "decimalString": "15000"
+      },
+      "expectedProductionCostMinor": 1652,
+      "expectedExactContribution": {
+        "numerator": "13348",
+        "denominator": "1",
+        "decimalString": "13348"
+      },
+      "rounding": {
+        "mode": "round_half_even",
+        "point": "per_unit"
+      },
+      "expectedRoundedGrossRoyaltyMinor": 15000,
+      "expectedRoundedNetContributionMinor": 13348,
+      "derivation": "Excess pages = 800 - 24 = 776. Print cost = 100 + 776 * 2 = 1652 cents. Gross royalty = 25000 * 0.60 = 15000.00 cents. Contribution = 15000 - 1652 = 13348."
+    },
+    {
+      "id": "golden_paperback_v2_min_pages",
+      "description": "Paperback v2.0.0 minimum pages (24 pages, updated base cost $1.20 = 120 cents)",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "2.0.0"
+      },
+      "input": {
+        "listPriceMinor": 1499,
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 24
+      },
+      "expectedTier": "fixed_60",
+      "expectedRate": "0.60",
+      "expectedExactRoyalty": {
+        "numerator": "4497",
+        "denominator": "5",
+        "decimalString": "899.4"
+      },
+      "expectedProductionCostMinor": 120,
+      "expectedExactContribution": {
+        "numerator": "3897",
+        "denominator": "5",
+        "decimalString": "779.4"
+      },
+      "rounding": {
+        "mode": "round_half_even",
+        "point": "per_unit"
+      },
+      "expectedRoundedGrossRoyaltyMinor": 899,
+      "expectedRoundedNetContributionMinor": 779,
+      "derivation": "Excess pages = 0. Print cost = 120 cents. Gross royalty = 1499 * 0.60 = 899.40 -> rounds to 899. Contribution = 899 - 120 = 779."
+    },
+    {
+      "id": "golden_paperback_v2_standard_length",
+      "description": "Paperback v2.0.0 200 pages (120 base + 352 per-page = 472 cents)",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "2.0.0"
+      },
+      "input": {
+        "listPriceMinor": 1499,
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 200
+      },
+      "expectedTier": "fixed_60",
+      "expectedRate": "0.60",
+      "expectedExactRoyalty": {
+        "numerator": "4497",
+        "denominator": "5",
+        "decimalString": "899.4"
+      },
+      "expectedProductionCostMinor": 472,
+      "expectedExactContribution": {
+        "numerator": "2137",
+        "denominator": "5",
+        "decimalString": "427.4"
+      },
+      "rounding": {
+        "mode": "round_half_even",
+        "point": "per_unit"
+      },
+      "expectedRoundedGrossRoyaltyMinor": 899,
+      "expectedRoundedNetContributionMinor": 427,
+      "derivation": "Excess pages = 176. Print cost = 120 + 352 = 472 cents. Gross royalty = 1499 * 0.60 = 899.40 -> rounds to 899. Contribution = 899 - 472 = 427."
+    },
+    {
+      "id": "golden_hardcover_min_pages_exact_royalty",
+      "description": "Hardcover EUR min pages (75 pages, €6.00 base, round_down, per_total)",
+      "rulePackRef": {
+        "packKey": "TEST_HARDCOVER_GLOBAL",
+        "version": "1.0.0"
+      },
+      "input": {
+        "listPriceMinor": 2500,
+        "currency": "EUR",
+        "format": "hardcover",
+        "pages": 75
+      },
+      "expectedTier": "fixed_50",
+      "expectedRate": "0.50",
+      "expectedExactRoyalty": {
+        "numerator": "1250",
+        "denominator": "1",
+        "decimalString": "1250"
+      },
+      "expectedProductionCostMinor": 600,
+      "expectedExactContribution": {
+        "numerator": "650",
+        "denominator": "1",
+        "decimalString": "650"
+      },
+      "rounding": {
+        "mode": "round_down",
+        "point": "per_total"
+      },
+      "expectedRoundedGrossRoyaltyMinor": null,
+      "expectedRoundedNetContributionMinor": null,
+      "derivation": "Excess pages = 75 - 75 = 0. Print cost = 600 cents (€6.00). Gross royalty = 2500 * 0.50 = 1250.00 cents (exact integer). Rounding point is per_total, so per-unit rounded Money is null and exact rational is preserved for total aggregation. Exact contribution = 1250 - 600 = 650 cents."
+    },
+    {
+      "id": "golden_hardcover_fractional_per_total",
+      "description": "Hardcover EUR 200 pages with fractional cent royalty (1499.50 cents, round_down, per_total)",
+      "rulePackRef": {
+        "packKey": "TEST_HARDCOVER_GLOBAL",
+        "version": "1.0.0"
+      },
+      "input": {
+        "listPriceMinor": 2999,
+        "currency": "EUR",
+        "format": "hardcover",
+        "pages": 200
+      },
+      "expectedTier": "fixed_50",
+      "expectedRate": "0.50",
+      "expectedExactRoyalty": {
+        "numerator": "2999",
+        "denominator": "2",
+        "decimalString": "1499.5"
+      },
+      "expectedProductionCostMinor": 975,
+      "expectedExactContribution": {
+        "numerator": "1049",
+        "denominator": "2",
+        "decimalString": "524.5"
+      },
+      "rounding": {
+        "mode": "round_down",
+        "point": "per_total"
+      },
+      "expectedRoundedGrossRoyaltyMinor": null,
+      "expectedRoundedNetContributionMinor": null,
+      "derivation": "Excess pages = 200 - 75 = 125. Print cost = 600 + 125 * 3 = 975 cents. Gross royalty = 2999 * 0.50 = 1499.50 cents (2999/2). Rounding point is per_total: per-unit values are unrounded rationals (grossRoyalty=null, netContribution=null). Exact contribution = 1499.50 - 975 = 524.50 cents (1049/2)."
+    },
+    {
+      "id": "golden_hardcover_negative_contribution_per_total",
+      "description": "Hardcover EUR where 500 pages causes print cost to exceed gross royalty under per_total",
+      "rulePackRef": {
+        "packKey": "TEST_HARDCOVER_GLOBAL",
+        "version": "1.0.0"
+      },
+      "input": {
+        "listPriceMinor": 1500,
+        "currency": "EUR",
+        "format": "hardcover",
+        "pages": 500
+      },
+      "expectedTier": "fixed_50",
+      "expectedRate": "0.50",
+      "expectedExactRoyalty": {
+        "numerator": "750",
+        "denominator": "1",
+        "decimalString": "750"
+      },
+      "expectedProductionCostMinor": 1875,
+      "expectedExactContribution": {
+        "numerator": "-1125",
+        "denominator": "1",
+        "decimalString": "-1125"
+      },
+      "rounding": {
+        "mode": "round_down",
+        "point": "per_total"
+      },
+      "expectedRoundedGrossRoyaltyMinor": null,
+      "expectedRoundedNetContributionMinor": null,
+      "derivation": "Excess pages = 500 - 75 = 425. Print cost = 600 + 425 * 3 = 1875 cents. Gross royalty = 1500 * 0.50 = 750.00 cents. Point is per_total: exact rational is -1125 cents."
+    },
+    {
+      "id": "golden_hardcover_max_limits",
+      "description": "Hardcover EUR at maximum list price (€500.00) and maximum page count (1000 pages)",
+      "rulePackRef": {
+        "packKey": "TEST_HARDCOVER_GLOBAL",
+        "version": "1.0.0"
+      },
+      "input": {
+        "listPriceMinor": 50000,
+        "currency": "EUR",
+        "format": "hardcover",
+        "pages": 1000
+      },
+      "expectedTier": "fixed_50",
+      "expectedRate": "0.50",
+      "expectedExactRoyalty": {
+        "numerator": "25000",
+        "denominator": "1",
+        "decimalString": "25000"
+      },
+      "expectedProductionCostMinor": 3375,
+      "expectedExactContribution": {
+        "numerator": "21625",
+        "denominator": "1",
+        "decimalString": "21625"
+      },
+      "rounding": {
+        "mode": "round_down",
+        "point": "per_total"
+      },
+      "expectedRoundedGrossRoyaltyMinor": null,
+      "expectedRoundedNetContributionMinor": null,
+      "derivation": "Excess pages = 1000 - 75 = 925. Print cost = 600 + 925 * 3 = 3375 cents. Gross royalty = 50000 * 0.50 = 25000.00 cents. Under per_total, exact contribution = 25000 - 3375 = 21625 cents."
+    },
+    {
+      "id": "golden_ebook_large_file_size",
+      "description": "Ebook with large delivery file size (50 MB) under standard_high tier",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "input": {
+        "listPriceMinor": 1999,
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "50"
+      },
+      "expectedTier": "standard_high",
+      "expectedRate": "0.35",
+      "expectedExactRoyalty": {
+        "numerator": "13993",
+        "denominator": "20",
+        "decimalString": "699.65"
+      },
+      "expectedProductionCostMinor": 750,
+      "expectedExactContribution": {
+        "numerator": "-1007",
+        "denominator": "20",
+        "decimalString": "-50.35"
+      },
+      "rounding": {
+        "mode": "round_half_up",
+        "point": "per_unit"
+      },
+      "expectedRoundedGrossRoyaltyMinor": 700,
+      "expectedRoundedNetContributionMinor": -50,
+      "derivation": "Gross royalty = 1999 * 0.35 = 699.65 cents (13993/20) -> rounds to 700. Delivery cost = 50 * 15 = 750 cents. Contribution = 700 - 750 = -50 cents. Exact contribution = 699.65 - 750 = -50.35 cents (-1007/20)."
+    },
+    {
+      "id": "golden_paperback_v1_108_pages",
+      "description": "Paperback v1.0.0 108 pages (84 excess pages * 2 cents = 168 + 100 = 268 cents print cost)",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "1.0.0"
+      },
+      "input": {
+        "listPriceMinor": 1499,
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 108
+      },
+      "expectedTier": "fixed_60",
+      "expectedRate": "0.60",
+      "expectedExactRoyalty": {
+        "numerator": "4497",
+        "denominator": "5",
+        "decimalString": "899.4"
+      },
+      "expectedProductionCostMinor": 268,
+      "expectedExactContribution": {
+        "numerator": "3157",
+        "denominator": "5",
+        "decimalString": "631.4"
+      },
+      "rounding": {
+        "mode": "round_half_even",
+        "point": "per_unit"
+      },
+      "expectedRoundedGrossRoyaltyMinor": 899,
+      "expectedRoundedNetContributionMinor": 631,
+      "derivation": "Excess pages = 108 - 24 = 84. Print cost = 100 + 84 * 2 = 268 cents ($2.68). Gross royalty = 1499 * 0.60 = 899.40 cents (4497/5) -> rounds to 899 under round_half_even. Contribution = 899 - 268 = 631 cents ($6.31)."
+    },
+    {
+      "id": "golden_paperback_v1_500_pages",
+      "description": "Paperback v1.0.0 500 pages (476 excess pages * 2 cents = 952 + 100 = 1052 cents print cost)",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "1.0.0"
+      },
+      "input": {
+        "listPriceMinor": 1999,
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 500
+      },
+      "expectedTier": "fixed_60",
+      "expectedRate": "0.60",
+      "expectedExactRoyalty": {
+        "numerator": "5997",
+        "denominator": "5",
+        "decimalString": "1199.4"
+      },
+      "expectedProductionCostMinor": 1052,
+      "expectedExactContribution": {
+        "numerator": "737",
+        "denominator": "5",
+        "decimalString": "147.4"
+      },
+      "rounding": {
+        "mode": "round_half_even",
+        "point": "per_unit"
+      },
+      "expectedRoundedGrossRoyaltyMinor": 1199,
+      "expectedRoundedNetContributionMinor": 147,
+      "derivation": "Excess pages = 500 - 24 = 476. Print cost = 100 + 476 * 2 = 1052 cents ($10.52). Gross royalty = 1999 * 0.60 = 1199.40 cents (5997/5) -> rounds to 1199 under round_half_even. Contribution = 1199 - 1052 = 147 cents ($1.47)."
+    },
+    {
+      "id": "golden_paperback_v2_100_pages",
+      "description": "Paperback v2.0.0 100 pages (76 excess pages * 2 cents = 152 + 120 = 272 cents print cost)",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "2.0.0"
+      },
+      "input": {
+        "listPriceMinor": 1499,
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 100
+      },
+      "expectedTier": "fixed_60",
+      "expectedRate": "0.60",
+      "expectedExactRoyalty": {
+        "numerator": "4497",
+        "denominator": "5",
+        "decimalString": "899.4"
+      },
+      "expectedProductionCostMinor": 272,
+      "expectedExactContribution": {
+        "numerator": "3137",
+        "denominator": "5",
+        "decimalString": "627.4"
+      },
+      "rounding": {
+        "mode": "round_half_even",
+        "point": "per_unit"
+      },
+      "expectedRoundedGrossRoyaltyMinor": 899,
+      "expectedRoundedNetContributionMinor": 627,
+      "derivation": "Excess pages = 100 - 24 = 76. Print cost = 120 + 76 * 2 = 272 cents ($2.72). Gross royalty = 1499 * 0.60 = 899.40 cents -> rounds to 899 under round_half_even. Contribution = 899 - 272 = 627 cents ($6.27)."
+    },
+    {
+      "id": "golden_paperback_v2_150_pages",
+      "description": "Paperback v2.0.0 150 pages (126 excess pages * 2 cents = 252 + 120 = 372 cents print cost)",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "2.0.0"
+      },
+      "input": {
+        "listPriceMinor": 1499,
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 150
+      },
+      "expectedTier": "fixed_60",
+      "expectedRate": "0.60",
+      "expectedExactRoyalty": {
+        "numerator": "4497",
+        "denominator": "5",
+        "decimalString": "899.4"
+      },
+      "expectedProductionCostMinor": 372,
+      "expectedExactContribution": {
+        "numerator": "2637",
+        "denominator": "5",
+        "decimalString": "527.4"
+      },
+      "rounding": {
+        "mode": "round_half_even",
+        "point": "per_unit"
+      },
+      "expectedRoundedGrossRoyaltyMinor": 899,
+      "expectedRoundedNetContributionMinor": 527,
+      "derivation": "Excess pages = 150 - 24 = 126. Print cost = 120 + 126 * 2 = 372 cents ($3.72). Gross royalty = 1499 * 0.60 = 899.40 cents -> rounds to 899 under round_half_even. Contribution = 899 - 372 = 527 cents ($5.27)."
+    },
+    {
+      "id": "golden_hardcover_100_pages",
+      "description": "Hardcover EUR 100 pages (25 excess pages * 3 cents = 75 + 600 = 675 cents print cost)",
+      "rulePackRef": {
+        "packKey": "TEST_HARDCOVER_GLOBAL",
+        "version": "1.0.0"
+      },
+      "input": {
+        "listPriceMinor": 2500,
+        "currency": "EUR",
+        "format": "hardcover",
+        "pages": 100
+      },
+      "expectedTier": "fixed_50",
+      "expectedRate": "0.50",
+      "expectedExactRoyalty": {
+        "numerator": "1250",
+        "denominator": "1",
+        "decimalString": "1250"
+      },
+      "expectedProductionCostMinor": 675,
+      "expectedExactContribution": {
+        "numerator": "575",
+        "denominator": "1",
+        "decimalString": "575"
+      },
+      "rounding": {
+        "mode": "round_down",
+        "point": "per_total"
+      },
+      "expectedRoundedGrossRoyaltyMinor": null,
+      "expectedRoundedNetContributionMinor": null,
+      "derivation": "Excess pages = 100 - 75 = 25. Print cost = 600 + 25 * 3 = 675 cents (€6.75). Gross royalty = 2500 * 0.50 = 1250 cents (€12.50). Under per_total, per-unit rounded Money is null; exact rational net contribution is 575 cents (€5.75)."
+    },
+    {
+      "id": "golden_hardcover_300_pages_eur35",
+      "description": "Hardcover EUR 300 pages at €35.00 (royalty €17.50, print cost €12.75, contribution €4.75)",
+      "rulePackRef": {
+        "packKey": "TEST_HARDCOVER_GLOBAL",
+        "version": "1.0.0"
+      },
+      "input": {
+        "listPriceMinor": 3500,
+        "currency": "EUR",
+        "format": "hardcover",
+        "pages": 300
+      },
+      "expectedTier": "fixed_50",
+      "expectedRate": "0.50",
+      "expectedExactRoyalty": {
+        "numerator": "1750",
+        "denominator": "1",
+        "decimalString": "1750"
+      },
+      "expectedProductionCostMinor": 1275,
+      "expectedExactContribution": {
+        "numerator": "475",
+        "denominator": "1",
+        "decimalString": "475"
+      },
+      "rounding": {
+        "mode": "round_down",
+        "point": "per_total"
+      },
+      "expectedRoundedGrossRoyaltyMinor": null,
+      "expectedRoundedNetContributionMinor": null,
+      "derivation": "Excess pages = 300 - 75 = 225. Print cost = 600 + 225 * 3 = 1275 cents (€12.75). Gross royalty = 3500 * 0.50 = 1750 cents (€17.50). Under per_total, per-unit rounded Money is null; exact unrounded net contribution is 475 cents (€4.75)."
+    },
+    {
+      "id": "golden_ebook_fractional_0_1_mb",
+      "description": "Ebook tier 2 ($4.99) with 0.1 MB proportional delivery fee (15 * 0.1 = 1.5 cents -> 2 cents under round_half_up)",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "input": {
+        "listPriceMinor": 499,
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "0.1"
+      },
+      "expectedTier": "standard_mid",
+      "expectedRate": "0.70",
+      "expectedExactRoyalty": {
+        "numerator": "3493",
+        "denominator": "10",
+        "decimalString": "349.3"
+      },
+      "expectedProductionCostMinor": 2,
+      "expectedExactContribution": {
+        "numerator": "1739",
+        "denominator": "5",
+        "decimalString": "347.8"
+      },
+      "rounding": {
+        "mode": "round_half_up",
+        "point": "per_unit"
+      },
+      "expectedRoundedGrossRoyaltyMinor": 349,
+      "expectedRoundedNetContributionMinor": 347,
+      "derivation": "Gross royalty = 499 * 0.70 = 349.30 cents (3493/10) -> rounds to 349 cents under round_half_up per_unit. Proportional delivery cost = 0.1 MB * 15 cents/MB = 1.5 cents (3/2) -> rounds away from zero to 2 cents under round_half_up. Net contribution = 349 - 2 = 347 cents ($3.47). Exact net contribution = 349.3 - 1.5 = 347.8 cents (1739/5)."
+    },
+    {
+      "id": "golden_ebook_fractional_0_5_mb",
+      "description": "Ebook tier 2 ($4.99) with 0.5 MB proportional delivery fee (15 * 0.5 = 7.5 cents -> 8 cents under round_half_up)",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "input": {
+        "listPriceMinor": 499,
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "0.5"
+      },
+      "expectedTier": "standard_mid",
+      "expectedRate": "0.70",
+      "expectedExactRoyalty": {
+        "numerator": "3493",
+        "denominator": "10",
+        "decimalString": "349.3"
+      },
+      "expectedProductionCostMinor": 8,
+      "expectedExactContribution": {
+        "numerator": "1709",
+        "denominator": "5",
+        "decimalString": "341.8"
+      },
+      "rounding": {
+        "mode": "round_half_up",
+        "point": "per_unit"
+      },
+      "expectedRoundedGrossRoyaltyMinor": 349,
+      "expectedRoundedNetContributionMinor": 341,
+      "derivation": "Gross royalty = 499 * 0.70 = 349.30 cents (3493/10) -> rounds to 349 cents. Proportional delivery cost = 0.5 MB * 15 cents/MB = 7.5 cents (15/2) -> exact tie rounds away from zero to 8 cents under round_half_up. Net contribution = 349 - 8 = 341 cents ($3.41). Exact net contribution = 349.3 - 7.5 = 341.8 cents (1709/5)."
+    },
+    {
+      "id": "golden_ebook_fractional_1_25_mb",
+      "description": "Ebook tier 2 ($4.99) with 1.25 MB proportional delivery fee (15 * 1.25 = 18.75 cents -> 19 cents under round_half_up)",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "input": {
+        "listPriceMinor": 499,
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "1.25"
+      },
+      "expectedTier": "standard_mid",
+      "expectedRate": "0.70",
+      "expectedExactRoyalty": {
+        "numerator": "3493",
+        "denominator": "10",
+        "decimalString": "349.3"
+      },
+      "expectedProductionCostMinor": 19,
+      "expectedExactContribution": {
+        "numerator": "6611",
+        "denominator": "20",
+        "decimalString": "330.55"
+      },
+      "rounding": {
+        "mode": "round_half_up",
+        "point": "per_unit"
+      },
+      "expectedRoundedGrossRoyaltyMinor": 349,
+      "expectedRoundedNetContributionMinor": 330,
+      "derivation": "Gross royalty = 499 * 0.70 = 349.30 cents -> rounds to 349 cents. Proportional delivery cost = 1.25 MB * 15 cents/MB = 18.75 cents (75/4) -> rounds to 19 cents under round_half_up. Net contribution = 349 - 19 = 330 cents ($3.30). Exact net contribution = 349.3 - 18.75 = 330.55 cents (6611/20)."
+    },
+    {
+      "id": "golden_ebook_fractional_2_1_mb",
+      "description": "Ebook tier 2 ($4.99) with 2.1 MB proportional delivery fee (15 * 2.1 = 31.5 cents -> 32 cents under round_half_up)",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "input": {
+        "listPriceMinor": 499,
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "2.1"
+      },
+      "expectedTier": "standard_mid",
+      "expectedRate": "0.70",
+      "expectedExactRoyalty": {
+        "numerator": "3493",
+        "denominator": "10",
+        "decimalString": "349.3"
+      },
+      "expectedProductionCostMinor": 32,
+      "expectedExactContribution": {
+        "numerator": "1589",
+        "denominator": "5",
+        "decimalString": "317.8"
+      },
+      "rounding": {
+        "mode": "round_half_up",
+        "point": "per_unit"
+      },
+      "expectedRoundedGrossRoyaltyMinor": 349,
+      "expectedRoundedNetContributionMinor": 317,
+      "derivation": "Gross royalty = 499 * 0.70 = 349.30 cents -> rounds to 349 cents. Proportional delivery cost = 2.1 MB * 15 cents/MB = 31.5 cents (63/2) -> exact tie rounds away from zero to 32 cents under round_half_up. Net contribution = 349 - 32 = 317 cents ($3.17). Exact net contribution = 349.3 - 31.5 = 317.8 cents (1589/5)."
+    }
+  ]
+}

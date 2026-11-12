@@ -1,6 +1,6 @@
 # 18 — Architecture Decision Records
 
-Status vocabulary: **Accepted** (owner approved), **Proposed** (recommended, awaiting approval), **Superseded** (replaced by a later ADR), **OPEN** (no recommendation yet; `Status: OPEN — requires explicit decision.`). **No ADR in this package is Accepted**: the package itself awaits approval, and no repository decisions could be inspected (doc 00 §6). Detailed separate ADR files under `docs/adr/` are ADR-016.
+Status vocabulary: **Accepted** (owner approved), **Proposed** (recommended, awaiting approval), **Superseded** (replaced by a later ADR), **OPEN** (no recommendation yet; `Status: OPEN — requires explicit decision.`). The architecture package remains a living proposal unless separately approved. Individual ADR decisions can be Accepted independently. **ADR-005 is Accepted** (repository owner approved 2026-11-12). Other ADR statuses remain unchanged unless separately authorized. Detailed separate ADR files under `docs/adr/` are ADR-016.
 
 **Template.** Every ADR carries: Context · Problem · Options considered · Decision · Rationale · Consequences · Security and operational implications · Status · Revisit when. ADR-019 to ADR-022 (added in 0.3.0) use the full template; earlier ADRs keep their compact form and gain the missing fields when they are next amended.
 
@@ -12,7 +12,7 @@ Status vocabulary: **Accepted** (owner approved), **Proposed** (recommended, awa
 | 002 | TypeScript, pnpm workspace, Next.js/React, Tailwind | Proposed |
 | 003 | PostgreSQL as system of record | Proposed |
 | 004 | Pure, I/O-free calculation engine | Proposed |
-| 005 | Money as integer minor units; rounding in Rule Packs | Proposed |
+| 005 | Money as integer minor units; rounding in Rule Packs | Accepted |
 | 006 | Immutable, versioned Rule Packs | Proposed |
 | 007 | Provider-agnostic AI port; numbers by token, validated | Proposed |
 | 008 | Payment proof via verified webhooks + reconciliation | **Superseded** by 019 and 020 |
@@ -60,11 +60,41 @@ Template for each: Context · Problem · Alternatives · Decision · Rationale �
 ## ADR-004 Pure calculation engine — Proposed
 - **Decision:** `calc-engine` is a dependency-free pure package; all I/O outside; engine version recorded per run. **Rationale:** INV-01/02/06, testability. **Consequences:** adapters must supply fully-resolved inputs. **Revisit:** never for purity; only for performance if proven.
 
-## ADR-005 Money representation and rounding — Proposed
-- **Alternatives:** floats (rejected), decimal library everywhere, integer minor units.
-- **Decision:** integer minor units + currency in storage and API; if intermediate fractional precision is required, use a decimal/bigint arithmetic helper inside the engine only; **rounding mode and rounding points are declared by each Rule Pack** and tested at boundaries. Default mode when a pack is silent: not allowed — packs must declare it.
-- **Consequences:** formats at the edge only; multi-currency conversion excluded from MVP (single currency per case).
-- **Revisit:** if currencies with non-2 exponents or conversion are needed.
+## ADR-005 Money representation and rounding — Accepted
+- **Context:** Financial calculations require exact determinism (P-01), zero floating-point representation, and verifiable precision across varying marketplace royalty policies and production costs.
+- **Problem:** How to represent monetary amounts, model fractional intermediary calculations (rates, pages, delivery sizes), and execute rounding consistently across per-unit and aggregate scenario boundaries.
+- **Alternatives considered:** (a) IEEE-754 floating-point numbers (rejected: non-deterministic rounding and catastrophic cancellation); (b) Generic decimal library across all domain packages (rejected: adds external dependency surface and runtime overhead); (c) Integer minor units paired with ISO currency codes, backed by exact arbitrary-precision rational arithmetic (`Rational` BigInt) within the calculation engine (chosen).
+- **Decision:**
+  - **A. Money representation:** Money is represented as an integer number of minor units (e.g. cents, pence) paired with an ISO-4217 currency code in storage, domain interfaces, and public APIs. Floating-point calculations for financial amounts are strictly prohibited. Where fractional intermediate values occur, they must be computed using exact rational arithmetic (`Rational` with canonical numerator/denominator BigInts) inside `packages/calc-engine`.
+  - **B. Approved rounding modes (Rule Pack declared):**
+    1. `round_half_up`: Nearest integer minor unit; exact ties round away from zero (+2.5 -> +3, -2.5 -> -3).
+    2. `round_half_even`: Nearest integer minor unit; exact ties round to the nearest even integer (Banker's rounding: +2.5 -> +2, +3.5 -> +4, -2.5 -> -2, -3.5 -> -4).
+    3. `round_down`: Truncation toward zero (+2.7 -> +2, -2.7 -> -2).
+    4. `round_up`: Rounding away from zero (+2.1 -> +3, -2.1 -> -3).
+    Default mode when a Rule Pack is silent: not allowed — each pack must explicitly declare its rounding policy.
+  - **C. Rounding points and sequence:**
+    - `per_unit`:
+      1. Calculate exact gross royalty as Rational.
+      2. Round gross royalty to an integer minor unit using the Rule Pack's declared rounding mode.
+      3. Calculate exact production/distribution cost as Rational.
+      4. Round any fractional monetary cost using the same Rule Pack rounding mode (already-integer costs remain unchanged).
+      5. Subtract rounded cost from rounded royalty to yield net contribution: `grossRoyaltyMoney - productionCostMoney = netContributionMoney`.
+      6. Return Money values in integer minor units.
+    - `per_total`:
+      1. Calculate exact per-unit gross royalty as Rational.
+      2. Calculate exact per-unit production/distribution cost as Rational.
+      3. Preserve both exact Rational amounts without premature rounding.
+      4. Per-unit Money fields governed by deferred rounding remain null.
+      5. STEP-006 aggregates both exact components by quantity Q (`exactTotalRoyalty = exactPerUnitRoyalty * Q`, `exactTotalCost = exactPerUnitCost * Q`).
+      6. STEP-006 rounds aggregate royalty and aggregate cost separately, exactly once, using the Rule Pack's declared rounding mode.
+      7. Aggregate contribution is derived by subtraction: `totalContribution = roundedTotalRoyalty - roundedTotalCost`.
+  - **D. Proportional ebook delivery cost:** Digital delivery fees are calculated strictly proportionally to the exact supplied file size in MB: `deliveryCostMinorExact = costPerMbMinor * exactFileSizeMb`. The file size input is an exact decimal string (e.g. `"0.1"`, `"0.5"`, `"1"`, `"2.1"`, `"10.25"`) parsed into exact Rational. No ceiling-to-whole-megabyte policy is applied.
+  - **E. Cost rounding:** When an exact production or distribution cost contains fractional minor units, apply the Rule Pack's declared rounding mode at its designated rounding point (once per unit under `per_unit`; once after quantity aggregation under `per_total`).
+  - **F. Contribution derivation:** Contribution is always derived by subtraction after the applicable components have been rounded at their declared boundary. Ebook and physical book costs and contributions must always preserve the currency of the Rule Pack.
+- **Rationale:** Guarantees 100% bit-for-bit reproducible financial calculations; prevents fractional minor-unit drift across unit and aggregate scenarios; respects exact marketplace commercial rules.
+- **Consequences:** Formats and currency symbols are handled at the display edge only; multi-currency conversion is excluded from MVP; callers must supply valid Rule Packs with declared rounding policies.
+- **Status:** Accepted — repository owner approved 2026-11-12.
+- **Revisit when:** Currencies with non-2 minor-unit exponents or cross-currency exchange rate conversions are introduced.
 
 ## ADR-006 Rule Packs — Proposed
 - **Context:** Declarative royalty, printing, and digital distribution economics require exact, versioned, and immutable publishing rules to satisfy determinism (P-01), traceability (P-03), and immutability (P-04).

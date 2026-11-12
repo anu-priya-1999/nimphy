@@ -12,8 +12,13 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      include: ['packages/domain/src/**', 'packages/rules/src/**'],
-      exclude: ['packages/domain/src/**/*.test.ts', 'packages/rules/src/**/*.test.ts'],
+      include: ['packages/domain/src/**', 'packages/rules/src/**', 'packages/calc-engine/src/**'],
+      exclude: [
+        'packages/domain/src/**/*.test.ts',
+        'packages/rules/src/**/*.test.ts',
+        'packages/calc-engine/src/**/*.test.ts',
+        'packages/calc-engine/src/per-unit/types.ts',
+      ],
       thresholds: {
         statements: 95,
         branches: 95,

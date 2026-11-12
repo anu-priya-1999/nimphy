@@ -15,14 +15,14 @@ Related: [03](03-architecture-principles.md) (dependency rule), [06](06-database
 
 ## M-02 `calc-engine` (D) — financial calculation engine
 
-- **Responsibility:** compute unit economics, scenario totals, break-even, sensitivity; emit a **trace**.
-- **Inputs:** `CalcInput` (validated revision data), `RulePack` (parsed), `ScenarioParams`, `engineVersion`.
-- **Outputs:** `CalcResult { perUnit, scenarios[low|base|high], breakEven, sensitivity, trace[], warnings[], ruleRef, engineVersion }`.
-- **Owned data:** none. **Dependencies:** `domain` only.
-- **Public interface:** `calculate(input, rulePack, params): CalcResult` — pure, total, deterministic; no clock, no randomness, no `Date.now`, no floating point for money.
-- **Errors:** returns typed `CalcError` (e.g., `RULE_NOT_APPLICABLE`, `INPUT_OUT_OF_RANGE`) rather than throwing for expected conditions.
-- **Security:** none beyond input bounds (reject absurd magnitudes).
-- **Tests:** golden fixtures, boundary and rounding tests, property tests (monotonicity where valid), mutation testing target (doc 12).
+- **Responsibility:** compute unit economics, scenario totals, break-even, sensitivity; emit a comprehensive deterministic **trace**.
+- **Inputs:** `PerUnitCalcInput` (list price minor, currency, format, pages for physical books, exact decimal string `fileSizeMb` for ebooks), `CalcRulePack` (structural interface containing royalty tiers, print/delivery policies, limits, and declared rounding policy), `engineVersion`.
+- **Outputs:** `PerUnitEconomics` containing exact `Rational` intermediate amounts (`exactGrossRoyalty`, `exactApplicableCost`, `exactNetContribution`), `costBreakdown`, rounded `Money` components according to the Rule Pack's declared rounding point (`per_unit` rounds gross royalty and fractional cost once and returns integer Money; `per_total` preserves exact values and defers rounding to STEP-006 quantity aggregation), and `trace` (`CalculationTrace` with ordered steps and exact rational serializations).
+- **Owned data:** none. **Dependencies:** `domain` only (`@nimphy/domain`).
+- **Public interface:** `calculatePerUnitEconomics(input, rulePack): PerUnitEconomics` — pure, total, deterministic; no I/O, no network, no clock, no randomness, zero floating-point arithmetic for money.
+- **Errors:** throws typed `CalcEngineError` subclasses (`CalcInputValidationError`, `CalcCurrencyMismatchError`, `CalcFormatMismatchError`, `NoMatchingRoyaltyTierError`, `RulePackIncompatibleError`, `CalcOverflowError`).
+- **Security:** strict boundary validation; rejects non-string/malformed/zero/negative/excessive file sizes and out-of-bounds list prices or page counts.
+- **Tests:** hand-derived golden fixtures (`fixtures/calc-engine/golden-per-unit-cases.json`), 100% branch coverage, boundary and rounding tests, property tests, byte-for-byte canonical JSON trace determinism (doc 12).
 
 ## M-03 `rules` (D + loader)
 
