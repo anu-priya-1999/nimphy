@@ -1,0 +1,808 @@
+{
+  "description": "Independent hand-derived golden fixtures for Nimphy STEP-006 scenario and total economics calculation engine.",
+  "disclaimer": "SYNTHETIC TEST CASES ONLY. Calculated with independent exact rational arithmetic. Not derived from engine execution.",
+  "engineVersion": "0.1.0",
+  "cases": [
+    {
+      "id": "golden_scen_ebook_base_per_unit",
+      "description": "Ebook standard base scenario at $4.99 with 400 units, 1 MB delivery, 0% cost variance under round_half_up per_unit",
+      "rulePackRef": { "packKey": "TEST_EBOOK_STANDARD", "version": "1.0.0" },
+      "input": {
+        "scenarioName": "base",
+        "units": 400,
+        "listPriceMinor": 499,
+        "costVariancePercent": "0",
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "1"
+      },
+      "expectedRevenueMinor": 199600,
+      "expectedTotalRoyaltyMinor": 139600,
+      "expectedTotalCostMinor": 6000,
+      "expectedTotalContributionMinor": 133600,
+      "expectedExactTotalRoyalty": {
+        "numerator": "139720",
+        "denominator": "1",
+        "decimalString": "139720"
+      },
+      "expectedExactTotalCost": {
+        "numerator": "6000",
+        "denominator": "1",
+        "decimalString": "6000"
+      },
+      "expectedExactTotalContribution": {
+        "numerator": "133720",
+        "denominator": "1",
+        "decimalString": "133720"
+      }
+    },
+    {
+      "id": "golden_scen_ebook_low_per_unit",
+      "description": "Ebook standard low scenario at $2.99 with 100 units, 1 MB delivery, +10% cost variance under round_half_up per_unit",
+      "rulePackRef": { "packKey": "TEST_EBOOK_STANDARD", "version": "1.0.0" },
+      "input": {
+        "scenarioName": "low",
+        "units": 100,
+        "listPriceMinor": 299,
+        "costVariancePercent": "10",
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "1"
+      },
+      "expectedRevenueMinor": 29900,
+      "expectedTotalRoyaltyMinor": 20900,
+      "expectedTotalCostMinor": 1700,
+      "expectedTotalContributionMinor": 19200,
+      "expectedExactTotalRoyalty": {
+        "numerator": "20930",
+        "denominator": "1",
+        "decimalString": "20930"
+      },
+      "expectedExactTotalCost": {
+        "numerator": "1650",
+        "denominator": "1",
+        "decimalString": "1650"
+      },
+      "expectedExactTotalContribution": {
+        "numerator": "19280",
+        "denominator": "1",
+        "decimalString": "19280"
+      }
+    },
+    {
+      "id": "golden_scen_ebook_high_per_unit",
+      "description": "Ebook standard high scenario at $9.99 with 1200 units, 1 MB delivery, -20% cost variance under round_half_up per_unit",
+      "rulePackRef": { "packKey": "TEST_EBOOK_STANDARD", "version": "1.0.0" },
+      "input": {
+        "scenarioName": "high",
+        "units": 1200,
+        "listPriceMinor": 999,
+        "costVariancePercent": "-20",
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "1"
+      },
+      "expectedRevenueMinor": 1198800,
+      "expectedTotalRoyaltyMinor": 838800,
+      "expectedTotalCostMinor": 14400,
+      "expectedTotalContributionMinor": 824400,
+      "expectedExactTotalRoyalty": {
+        "numerator": "839160",
+        "denominator": "1",
+        "decimalString": "839160"
+      },
+      "expectedExactTotalCost": {
+        "numerator": "14400",
+        "denominator": "1",
+        "decimalString": "14400"
+      },
+      "expectedExactTotalContribution": {
+        "numerator": "824760",
+        "denominator": "1",
+        "decimalString": "824760"
+      }
+    },
+    {
+      "id": "golden_scen_hardcover_base_per_total",
+      "description": "Hardcover Global base scenario at €19.99 with 200 units, 100 pages, 0% cost variance under round_down per_total",
+      "rulePackRef": { "packKey": "TEST_HARDCOVER_GLOBAL", "version": "1.0.0" },
+      "input": {
+        "scenarioName": "base",
+        "units": 200,
+        "listPriceMinor": 1999,
+        "costVariancePercent": "0",
+        "currency": "EUR",
+        "format": "hardcover",
+        "pages": 100
+      },
+      "expectedRevenueMinor": 399800,
+      "expectedTotalRoyaltyMinor": 199900,
+      "expectedTotalCostMinor": 135000,
+      "expectedTotalContributionMinor": 64900,
+      "expectedExactTotalRoyalty": {
+        "numerator": "199900",
+        "denominator": "1",
+        "decimalString": "199900"
+      },
+      "expectedExactTotalCost": {
+        "numerator": "135000",
+        "denominator": "1",
+        "decimalString": "135000"
+      },
+      "expectedExactTotalContribution": {
+        "numerator": "64900",
+        "denominator": "1",
+        "decimalString": "64900"
+      }
+    },
+    {
+      "id": "golden_scen_hardcover_fractional_per_total",
+      "description": "Hardcover Global 3 units at €19.99 proving per_total aggregation before rounding under round_down",
+      "rulePackRef": { "packKey": "TEST_HARDCOVER_GLOBAL", "version": "1.0.0" },
+      "input": {
+        "scenarioName": "base",
+        "units": 3,
+        "listPriceMinor": 1999,
+        "costVariancePercent": "0",
+        "currency": "EUR",
+        "format": "hardcover",
+        "pages": 100
+      },
+      "expectedRevenueMinor": 5997,
+      "expectedTotalRoyaltyMinor": 2998,
+      "expectedTotalCostMinor": 2025,
+      "expectedTotalContributionMinor": 973,
+      "expectedExactTotalRoyalty": {
+        "numerator": "5997",
+        "denominator": "2",
+        "decimalString": "2998.5"
+      },
+      "expectedExactTotalCost": {
+        "numerator": "2025",
+        "denominator": "1",
+        "decimalString": "2025"
+      },
+      "expectedExactTotalContribution": {
+        "numerator": "1947",
+        "denominator": "2",
+        "decimalString": "973.5"
+      }
+    },
+    {
+      "id": "golden_scen_zero_units",
+      "description": "Zero units sold boundary test across all financial totals",
+      "rulePackRef": { "packKey": "TEST_PAPERBACK_US", "version": "1.0.0" },
+      "input": {
+        "scenarioName": "base",
+        "units": 0,
+        "listPriceMinor": 999,
+        "costVariancePercent": "0",
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 200
+      },
+      "expectedRevenueMinor": 0,
+      "expectedTotalRoyaltyMinor": 0,
+      "expectedTotalCostMinor": 0,
+      "expectedTotalContributionMinor": 0,
+      "expectedExactTotalRoyalty": { "numerator": "0", "denominator": "1", "decimalString": "0" },
+      "expectedExactTotalCost": { "numerator": "0", "denominator": "1", "decimalString": "0" },
+      "expectedExactTotalContribution": {
+        "numerator": "0",
+        "denominator": "1",
+        "decimalString": "0"
+      }
+    },
+    {
+      "id": "golden_scen_single_unit_paperback_v1",
+      "description": "Single unit sold at $14.99 with 200 pages under round_half_even per_unit",
+      "rulePackRef": { "packKey": "TEST_PAPERBACK_US", "version": "1.0.0" },
+      "input": {
+        "scenarioName": "base",
+        "units": 1,
+        "listPriceMinor": 1499,
+        "costVariancePercent": "0",
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 200
+      },
+      "expectedRevenueMinor": 1499,
+      "expectedTotalRoyaltyMinor": 899,
+      "expectedTotalCostMinor": 452,
+      "expectedTotalContributionMinor": 447,
+      "expectedExactTotalRoyalty": {
+        "numerator": "4497",
+        "denominator": "5",
+        "decimalString": "899.4"
+      },
+      "expectedExactTotalCost": { "numerator": "452", "denominator": "1", "decimalString": "452" },
+      "expectedExactTotalContribution": {
+        "numerator": "2237",
+        "denominator": "5",
+        "decimalString": "447.4"
+      }
+    },
+    {
+      "id": "golden_scen_negative_contribution_aggregated",
+      "description": "Paperback US v1 minimum list price $5.00 with 300 pages yielding negative contribution aggregated over 500 units",
+      "rulePackRef": { "packKey": "TEST_PAPERBACK_US", "version": "1.0.0" },
+      "input": {
+        "scenarioName": "low",
+        "units": 500,
+        "listPriceMinor": 500,
+        "costVariancePercent": "0",
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 300
+      },
+      "expectedRevenueMinor": 250000,
+      "expectedTotalRoyaltyMinor": 150000,
+      "expectedTotalCostMinor": 326000,
+      "expectedTotalContributionMinor": -176000,
+      "expectedExactTotalRoyalty": {
+        "numerator": "150000",
+        "denominator": "1",
+        "decimalString": "150000"
+      },
+      "expectedExactTotalCost": {
+        "numerator": "326000",
+        "denominator": "1",
+        "decimalString": "326000"
+      },
+      "expectedExactTotalContribution": {
+        "numerator": "-176000",
+        "denominator": "1",
+        "decimalString": "-176000"
+      }
+    },
+    {
+      "id": "golden_scen_paperback_v2_cost_variance_positive",
+      "description": "Paperback US v2 at $12.99 with 150 pages, 300 units, and +25% cost variance under round_half_up per_unit",
+      "rulePackRef": { "packKey": "TEST_PAPERBACK_US", "version": "2.0.0" },
+      "input": {
+        "scenarioName": "low",
+        "units": 300,
+        "listPriceMinor": 1299,
+        "costVariancePercent": "25",
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 150
+      },
+      "expectedRevenueMinor": 389700,
+      "expectedTotalRoyaltyMinor": 233700,
+      "expectedTotalCostMinor": 139500,
+      "expectedTotalContributionMinor": 94200,
+      "expectedExactTotalRoyalty": {
+        "numerator": "233820",
+        "denominator": "1",
+        "decimalString": "233820"
+      },
+      "expectedExactTotalCost": {
+        "numerator": "139500",
+        "denominator": "1",
+        "decimalString": "139500"
+      },
+      "expectedExactTotalContribution": {
+        "numerator": "94320",
+        "denominator": "1",
+        "decimalString": "94320"
+      }
+    },
+    {
+      "id": "golden_scen_paperback_v2_cost_variance_negative",
+      "description": "Paperback US v2 at $12.99 with 150 pages, 300 units, and -10% cost variance under round_half_up per_unit",
+      "rulePackRef": { "packKey": "TEST_PAPERBACK_US", "version": "2.0.0" },
+      "input": {
+        "scenarioName": "high",
+        "units": 300,
+        "listPriceMinor": 1299,
+        "costVariancePercent": "-10",
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 150
+      },
+      "expectedRevenueMinor": 389700,
+      "expectedTotalRoyaltyMinor": 233700,
+      "expectedTotalCostMinor": 100500,
+      "expectedTotalContributionMinor": 133200,
+      "expectedExactTotalRoyalty": {
+        "numerator": "233820",
+        "denominator": "1",
+        "decimalString": "233820"
+      },
+      "expectedExactTotalCost": {
+        "numerator": "100440",
+        "denominator": "1",
+        "decimalString": "100440"
+      },
+      "expectedExactTotalContribution": {
+        "numerator": "133380",
+        "denominator": "1",
+        "decimalString": "133380"
+      }
+    },
+    {
+      "id": "golden_scen_ebook_fractional_delivery_per_unit",
+      "description": "Ebook with fractional 0.5 MB delivery fee (7.5 cents -> 8 cents per unit) over 10 units under round_half_up per_unit",
+      "rulePackRef": { "packKey": "TEST_EBOOK_STANDARD", "version": "1.0.0" },
+      "input": {
+        "scenarioName": "base",
+        "units": 10,
+        "listPriceMinor": 499,
+        "costVariancePercent": "0",
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "0.5"
+      },
+      "expectedRevenueMinor": 4990,
+      "expectedTotalRoyaltyMinor": 3490,
+      "expectedTotalCostMinor": 80,
+      "expectedTotalContributionMinor": 3410,
+      "expectedExactTotalRoyalty": {
+        "numerator": "3493",
+        "denominator": "1",
+        "decimalString": "3493"
+      },
+      "expectedExactTotalCost": { "numerator": "75", "denominator": "1", "decimalString": "75" },
+      "expectedExactTotalContribution": {
+        "numerator": "3418",
+        "denominator": "1",
+        "decimalString": "3418"
+      }
+    },
+    {
+      "id": "golden_scen_ebook_min_price_boundary",
+      "description": "Ebook at minimum allowed price ($0.99) with 50 units, 1 MB delivery under round_half_up per_unit",
+      "rulePackRef": { "packKey": "TEST_EBOOK_STANDARD", "version": "1.0.0" },
+      "input": {
+        "scenarioName": "low",
+        "units": 50,
+        "listPriceMinor": 99,
+        "costVariancePercent": "0",
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "1"
+      },
+      "expectedRevenueMinor": 4950,
+      "expectedTotalRoyaltyMinor": 1750,
+      "expectedTotalCostMinor": 750,
+      "expectedTotalContributionMinor": 1000,
+      "expectedExactTotalRoyalty": {
+        "numerator": "3465",
+        "denominator": "2",
+        "decimalString": "1732.5"
+      },
+      "expectedExactTotalCost": { "numerator": "750", "denominator": "1", "decimalString": "750" },
+      "expectedExactTotalContribution": {
+        "numerator": "1965",
+        "denominator": "2",
+        "decimalString": "982.5"
+      }
+    },
+    {
+      "id": "golden_scen_paperback_min_price_boundary",
+      "description": "Paperback US v1 at minimum allowed price ($5.00) with 108 pages (minimum print cost 268 minor units) and 100 units",
+      "rulePackRef": { "packKey": "TEST_PAPERBACK_US", "version": "1.0.0" },
+      "input": {
+        "scenarioName": "base",
+        "units": 100,
+        "listPriceMinor": 500,
+        "costVariancePercent": "0",
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 108
+      },
+      "expectedRevenueMinor": 50000,
+      "expectedTotalRoyaltyMinor": 30000,
+      "expectedTotalCostMinor": 26800,
+      "expectedTotalContributionMinor": 3200,
+      "expectedExactTotalRoyalty": {
+        "numerator": "30000",
+        "denominator": "1",
+        "decimalString": "30000"
+      },
+      "expectedExactTotalCost": {
+        "numerator": "26800",
+        "denominator": "1",
+        "decimalString": "26800"
+      },
+      "expectedExactTotalContribution": {
+        "numerator": "3200",
+        "denominator": "1",
+        "decimalString": "3200"
+      }
+    },
+    {
+      "id": "golden_scen_paperback_max_price_boundary",
+      "description": "Paperback US v1 at maximum allowed price ($250.00) with maximum 800 pages and 10 units",
+      "rulePackRef": { "packKey": "TEST_PAPERBACK_US", "version": "1.0.0" },
+      "input": {
+        "scenarioName": "high",
+        "units": 10,
+        "listPriceMinor": 25000,
+        "costVariancePercent": "0",
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 800
+      },
+      "expectedRevenueMinor": 250000,
+      "expectedTotalRoyaltyMinor": 150000,
+      "expectedTotalCostMinor": 16520,
+      "expectedTotalContributionMinor": 133480,
+      "expectedExactTotalRoyalty": {
+        "numerator": "150000",
+        "denominator": "1",
+        "decimalString": "150000"
+      },
+      "expectedExactTotalCost": {
+        "numerator": "16520",
+        "denominator": "1",
+        "decimalString": "16520"
+      },
+      "expectedExactTotalContribution": {
+        "numerator": "133480",
+        "denominator": "1",
+        "decimalString": "133480"
+      }
+    },
+    {
+      "id": "golden_scen_hardcover_min_price_boundary",
+      "description": "Hardcover Global at minimum allowed price (€15.00) with 75 pages (base cost 600 minor units) and 50 units under round_down per_total",
+      "rulePackRef": { "packKey": "TEST_HARDCOVER_GLOBAL", "version": "1.0.0" },
+      "input": {
+        "scenarioName": "low",
+        "units": 50,
+        "listPriceMinor": 1500,
+        "costVariancePercent": "0",
+        "currency": "EUR",
+        "format": "hardcover",
+        "pages": 75
+      },
+      "expectedRevenueMinor": 75000,
+      "expectedTotalRoyaltyMinor": 37500,
+      "expectedTotalCostMinor": 30000,
+      "expectedTotalContributionMinor": 7500,
+      "expectedExactTotalRoyalty": {
+        "numerator": "37500",
+        "denominator": "1",
+        "decimalString": "37500"
+      },
+      "expectedExactTotalCost": {
+        "numerator": "30000",
+        "denominator": "1",
+        "decimalString": "30000"
+      },
+      "expectedExactTotalContribution": {
+        "numerator": "7500",
+        "denominator": "1",
+        "decimalString": "7500"
+      }
+    },
+    {
+      "id": "golden_scen_hardcover_max_price_boundary",
+      "description": "Hardcover Global at maximum allowed price (€500.00) with 1000 pages and 20 units under round_down per_total",
+      "rulePackRef": { "packKey": "TEST_HARDCOVER_GLOBAL", "version": "1.0.0" },
+      "input": {
+        "scenarioName": "high",
+        "units": 20,
+        "listPriceMinor": 50000,
+        "costVariancePercent": "0",
+        "currency": "EUR",
+        "format": "hardcover",
+        "pages": 1000
+      },
+      "expectedRevenueMinor": 1000000,
+      "expectedTotalRoyaltyMinor": 500000,
+      "expectedTotalCostMinor": 67500,
+      "expectedTotalContributionMinor": 432500,
+      "expectedExactTotalRoyalty": {
+        "numerator": "500000",
+        "denominator": "1",
+        "decimalString": "500000"
+      },
+      "expectedExactTotalCost": {
+        "numerator": "67500",
+        "denominator": "1",
+        "decimalString": "67500"
+      },
+      "expectedExactTotalContribution": {
+        "numerator": "432500",
+        "denominator": "1",
+        "decimalString": "432500"
+      }
+    },
+    {
+      "id": "golden_scen_hardcover_cost_variance_positive",
+      "description": "Hardcover Global at €25.00 with 300 pages, 50 units, and +15% cost variance under round_down per_total",
+      "rulePackRef": { "packKey": "TEST_HARDCOVER_GLOBAL", "version": "1.0.0" },
+      "input": {
+        "scenarioName": "low",
+        "units": 50,
+        "listPriceMinor": 2500,
+        "costVariancePercent": "15",
+        "currency": "EUR",
+        "format": "hardcover",
+        "pages": 300
+      },
+      "expectedRevenueMinor": 125000,
+      "expectedTotalRoyaltyMinor": 62500,
+      "expectedTotalCostMinor": 73312,
+      "expectedTotalContributionMinor": -10812,
+      "expectedExactTotalRoyalty": {
+        "numerator": "62500",
+        "denominator": "1",
+        "decimalString": "62500"
+      },
+      "expectedExactTotalCost": {
+        "numerator": "146625",
+        "denominator": "2",
+        "decimalString": "73312.5"
+      },
+      "expectedExactTotalContribution": {
+        "numerator": "-21625",
+        "denominator": "2",
+        "decimalString": "-10812.5"
+      }
+    },
+    {
+      "id": "golden_scen_hardcover_cost_variance_negative",
+      "description": "Hardcover Global at €25.00 with 300 pages, 50 units, and -10% cost variance under round_down per_total",
+      "rulePackRef": { "packKey": "TEST_HARDCOVER_GLOBAL", "version": "1.0.0" },
+      "input": {
+        "scenarioName": "high",
+        "units": 50,
+        "listPriceMinor": 2500,
+        "costVariancePercent": "-10",
+        "currency": "EUR",
+        "format": "hardcover",
+        "pages": 300
+      },
+      "expectedRevenueMinor": 125000,
+      "expectedTotalRoyaltyMinor": 62500,
+      "expectedTotalCostMinor": 57375,
+      "expectedTotalContributionMinor": 5125,
+      "expectedExactTotalRoyalty": {
+        "numerator": "62500",
+        "denominator": "1",
+        "decimalString": "62500"
+      },
+      "expectedExactTotalCost": {
+        "numerator": "57375",
+        "denominator": "1",
+        "decimalString": "57375"
+      },
+      "expectedExactTotalContribution": {
+        "numerator": "5125",
+        "denominator": "1",
+        "decimalString": "5125"
+      }
+    },
+    {
+      "id": "golden_scen_ebook_large_volume",
+      "description": "Ebook standard high volume 10,000 units at $3.99 with 2 MB delivery under round_half_up per_unit",
+      "rulePackRef": { "packKey": "TEST_EBOOK_STANDARD", "version": "1.0.0" },
+      "input": {
+        "scenarioName": "high",
+        "units": 10000,
+        "listPriceMinor": 399,
+        "costVariancePercent": "0",
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "2"
+      },
+      "expectedRevenueMinor": 3990000,
+      "expectedTotalRoyaltyMinor": 2790000,
+      "expectedTotalCostMinor": 300000,
+      "expectedTotalContributionMinor": 2490000,
+      "expectedExactTotalRoyalty": {
+        "numerator": "2793000",
+        "denominator": "1",
+        "decimalString": "2793000"
+      },
+      "expectedExactTotalCost": {
+        "numerator": "300000",
+        "denominator": "1",
+        "decimalString": "300000"
+      },
+      "expectedExactTotalContribution": {
+        "numerator": "2493000",
+        "denominator": "1",
+        "decimalString": "2493000"
+      }
+    },
+    {
+      "id": "golden_scen_paperback_v1_large_volume",
+      "description": "Paperback US v1 high volume 5,000 units at $15.99 with 300 pages under round_half_even per_unit",
+      "rulePackRef": { "packKey": "TEST_PAPERBACK_US", "version": "1.0.0" },
+      "input": {
+        "scenarioName": "high",
+        "units": 5000,
+        "listPriceMinor": 1599,
+        "costVariancePercent": "0",
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 300
+      },
+      "expectedRevenueMinor": 7995000,
+      "expectedTotalRoyaltyMinor": 4795000,
+      "expectedTotalCostMinor": 3260000,
+      "expectedTotalContributionMinor": 1535000,
+      "expectedExactTotalRoyalty": {
+        "numerator": "4797000",
+        "denominator": "1",
+        "decimalString": "4797000"
+      },
+      "expectedExactTotalCost": {
+        "numerator": "3260000",
+        "denominator": "1",
+        "decimalString": "3260000"
+      },
+      "expectedExactTotalContribution": {
+        "numerator": "1537000",
+        "denominator": "1",
+        "decimalString": "1537000"
+      }
+    },
+    {
+      "id": "golden_scen_ebook_tier3_high_price",
+      "description": "Ebook standard tier 3 ($14.99) at 35% rate with 250 units and 0.5 MB delivery",
+      "rulePackRef": { "packKey": "TEST_EBOOK_STANDARD", "version": "1.0.0" },
+      "input": {
+        "scenarioName": "base",
+        "units": 250,
+        "listPriceMinor": 1499,
+        "costVariancePercent": "0",
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "0.5"
+      },
+      "expectedRevenueMinor": 374750,
+      "expectedTotalRoyaltyMinor": 131250,
+      "expectedTotalCostMinor": 2000,
+      "expectedTotalContributionMinor": 129250,
+      "expectedExactTotalRoyalty": {
+        "numerator": "262325",
+        "denominator": "2",
+        "decimalString": "131162.5"
+      },
+      "expectedExactTotalCost": {
+        "numerator": "1875",
+        "denominator": "1",
+        "decimalString": "1875"
+      },
+      "expectedExactTotalContribution": {
+        "numerator": "258575",
+        "denominator": "2",
+        "decimalString": "129287.5"
+      }
+    },
+    {
+      "id": "golden_scen_paperback_v2_exact_tie_even",
+      "description": "Paperback US v2 at $5.25 with 24 pages (print cost 120 cents) and 20 units",
+      "rulePackRef": { "packKey": "TEST_PAPERBACK_US", "version": "2.0.0" },
+      "input": {
+        "scenarioName": "base",
+        "units": 20,
+        "listPriceMinor": 525,
+        "costVariancePercent": "0",
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 24
+      },
+      "expectedRevenueMinor": 10500,
+      "expectedTotalRoyaltyMinor": 6300,
+      "expectedTotalCostMinor": 2400,
+      "expectedTotalContributionMinor": 3900,
+      "expectedExactTotalRoyalty": {
+        "numerator": "6300",
+        "denominator": "1",
+        "decimalString": "6300"
+      },
+      "expectedExactTotalCost": {
+        "numerator": "2400",
+        "denominator": "1",
+        "decimalString": "2400"
+      },
+      "expectedExactTotalContribution": {
+        "numerator": "3900",
+        "denominator": "1",
+        "decimalString": "3900"
+      }
+    },
+    {
+      "id": "golden_scen_hardcover_round_down_truncation",
+      "description": "Hardcover Global 7 units at €15.01 with 100 pages demonstrating exact round_down aggregation truncation",
+      "rulePackRef": { "packKey": "TEST_HARDCOVER_GLOBAL", "version": "1.0.0" },
+      "input": {
+        "scenarioName": "low",
+        "units": 7,
+        "listPriceMinor": 1501,
+        "costVariancePercent": "0",
+        "currency": "EUR",
+        "format": "hardcover",
+        "pages": 100
+      },
+      "expectedRevenueMinor": 10507,
+      "expectedTotalRoyaltyMinor": 5253,
+      "expectedTotalCostMinor": 4725,
+      "expectedTotalContributionMinor": 528,
+      "expectedExactTotalRoyalty": {
+        "numerator": "10507",
+        "denominator": "2",
+        "decimalString": "5253.5"
+      },
+      "expectedExactTotalCost": {
+        "numerator": "4725",
+        "denominator": "1",
+        "decimalString": "4725"
+      },
+      "expectedExactTotalContribution": {
+        "numerator": "1057",
+        "denominator": "2",
+        "decimalString": "528.5"
+      }
+    },
+    {
+      "id": "golden_scen_paperback_v1_cost_variance_zero",
+      "description": "Paperback US v1 at $9.99 with 200 pages, 150 units, explicitly specified 0% cost variance",
+      "rulePackRef": { "packKey": "TEST_PAPERBACK_US", "version": "1.0.0" },
+      "input": {
+        "scenarioName": "base",
+        "units": 150,
+        "listPriceMinor": 999,
+        "costVariancePercent": "0",
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 200
+      },
+      "expectedRevenueMinor": 149850,
+      "expectedTotalRoyaltyMinor": 89850,
+      "expectedTotalCostMinor": 67800,
+      "expectedTotalContributionMinor": 22050,
+      "expectedExactTotalRoyalty": {
+        "numerator": "89910",
+        "denominator": "1",
+        "decimalString": "89910"
+      },
+      "expectedExactTotalCost": {
+        "numerator": "67800",
+        "denominator": "1",
+        "decimalString": "67800"
+      },
+      "expectedExactTotalContribution": {
+        "numerator": "22110",
+        "denominator": "1",
+        "decimalString": "22110"
+      }
+    },
+    {
+      "id": "golden_scen_ebook_cost_variance_max_negative",
+      "description": "Ebook standard with -100% cost variance (free distribution) over 100 units",
+      "rulePackRef": { "packKey": "TEST_EBOOK_STANDARD", "version": "1.0.0" },
+      "input": {
+        "scenarioName": "high",
+        "units": 100,
+        "listPriceMinor": 499,
+        "costVariancePercent": "-100",
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "1"
+      },
+      "expectedRevenueMinor": 49900,
+      "expectedTotalRoyaltyMinor": 34900,
+      "expectedTotalCostMinor": 0,
+      "expectedTotalContributionMinor": 34900,
+      "expectedExactTotalRoyalty": {
+        "numerator": "34930",
+        "denominator": "1",
+        "decimalString": "34930"
+      },
+      "expectedExactTotalCost": { "numerator": "0", "denominator": "1", "decimalString": "0" },
+      "expectedExactTotalContribution": {
+        "numerator": "34930",
+        "denominator": "1",
+        "decimalString": "34930"
+      }
+    }
+  ]
+}

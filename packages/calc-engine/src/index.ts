@@ -46,3 +46,21 @@ export {
   type CalculationTraceStep,
   type CalculationTrace,
 } from './per-unit';
+
+// Scenario Modeling and Total Economics (STEP-006)
+export {
+  calculateSingleScenario,
+  calculateTriadScenarios,
+  evaluateScenarioOrdering,
+  type SingleScenarioInput,
+  type CaseScenariosInput,
+  type ScenarioParametersInput,
+  type ScenarioTraceStep,
+  type ScenarioCalculationTrace,
+  type SingleScenarioResult,
+  type ScenarioOrderingEvaluation,
+  type TriadScenariosResult,
+  type ScenarioName,
+  type ScenarioParameters,
+  type ScenarioTotals,
+} from './scenarios';

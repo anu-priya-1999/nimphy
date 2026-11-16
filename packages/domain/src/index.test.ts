@@ -108,6 +108,9 @@ describe('@nimphy/domain Public Entrypoint & Barrels', () => {
   it('exports shared domain enums and guards', () => {
     expect(RootDomain.SCENARIO_NAMES).toBeDefined();
     expect(RootDomain.isScenarioName).toBeDefined();
+    expect(RootDomain.isScenarioParameters).toBeDefined();
+    expect(RootDomain.isScenarioTotals).toBeDefined();
+    expect(RootDomain.SCENARIO_DISCLAIMER_TEXT).toBeDefined();
     expect(RootDomain.BOOK_FORMATS).toBeDefined();
     expect(RootDomain.isBookFormat).toBeDefined();
   });

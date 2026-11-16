@@ -7,6 +7,7 @@ import {
   NoMatchingRoyaltyTierError,
   RulePackIncompatibleError,
 } from '../errors/calc-error';
+import { calculateSingleScenario } from '../scenarios/scenario-calc';
 import { calculatePerUnitEconomics } from './per-unit-calc';
 import type { CalcRulePack, PerUnitCalcInput } from './types';
 
@@ -1165,6 +1166,307 @@ describe('Per-Unit Economics Calculation Engine', () => {
       };
 
       expect(() => calculatePerUnitEconomics(input, hugeRoyaltyPack)).toThrow(CalcOverflowError);
+    });
+
+    it('throws CalcOverflowError when rounded per-unit production cost exceeds safe integer range (Check A)', () => {
+      const pack: CalcRulePack = {
+        ...sampleEbookPack,
+        content: {
+          ...sampleEbookPack.content,
+          deliveryCost: {
+            costPerMbMinor: 1,
+          },
+        },
+      };
+
+      const input: PerUnitCalcInput = {
+        listPriceMinor: 299,
+        currency: 'USD',
+        format: 'ebook',
+        // 9007199254740991.5 MB * 1 minor unit/MB = 9007199254740991.5 (fractional)
+        // With round_half_up, rounds to 9007199254740992n > MAX_SAFE_INTEGER
+        fileSizeMb: '9007199254740991.5',
+      };
+
+      expect(() => calculatePerUnitEconomics(input, pack)).toThrow(
+        /Rounded production cost 9007199254740992 exceeds safe integer range/,
+      );
+    });
+
+    it('throws CalcOverflowError when integer per-unit production cost exceeds safe integer range (Check B)', () => {
+      const pack: CalcRulePack = {
+        ...sampleEbookPack,
+        content: {
+          ...sampleEbookPack.content,
+          deliveryCost: {
+            costPerMbMinor: 1,
+          },
+        },
+      };
+
+      const input: PerUnitCalcInput = {
+        listPriceMinor: 299,
+        currency: 'USD',
+        format: 'ebook',
+        // 9007199254740992 MB * 1 minor unit/MB = 9007199254740992 (integer > MAX_SAFE_INTEGER)
+        fileSizeMb: '9007199254740992',
+      };
+
+      expect(() => calculatePerUnitEconomics(input, pack)).toThrow(
+        /Production cost 9007199254740992 exceeds safe integer range/,
+      );
+    });
+
+    it('succeeds at the valid exact safe-integer cost boundary (MAX_SAFE_INTEGER)', () => {
+      const pack: CalcRulePack = {
+        ...sampleEbookPack,
+        content: {
+          ...sampleEbookPack.content,
+          deliveryCost: {
+            costPerMbMinor: 1,
+          },
+        },
+      };
+
+      const input: PerUnitCalcInput = {
+        listPriceMinor: 299,
+        currency: 'USD',
+        format: 'ebook',
+        fileSizeMb: String(Number.MAX_SAFE_INTEGER), // '9007199254740991'
+      };
+
+      const result = calculatePerUnitEconomics(input, pack);
+      expect(result.applicableCost).not.toBeNull();
+      expect(result.applicableCost!.amountMinor).toBe(Number.MAX_SAFE_INTEGER);
+      expect(result.costBreakdown.totalCostMinor).toBe(Number.MAX_SAFE_INTEGER);
+      expect(result.costBreakdown.roundedCostMinor).toBe(Number.MAX_SAFE_INTEGER);
+    });
+
+    it('calculates negative net contribution correctly when safe cost exceeds gross royalty', () => {
+      const pack: CalcRulePack = {
+        ...sampleEbookPack,
+        content: {
+          ...sampleEbookPack.content,
+          deliveryCost: {
+            costPerMbMinor: 50,
+          },
+        },
+      };
+
+      const input: PerUnitCalcInput = {
+        listPriceMinor: 299,
+        currency: 'USD',
+        format: 'ebook',
+        fileSizeMb: '5', // 250 minor units delivery cost > 105 minor units royalty (35% of 299)
+      };
+
+      const result = calculatePerUnitEconomics(input, pack);
+      expect(result.grossRoyalty!.amountMinor).toBe(209);
+      expect(result.applicableCost!.amountMinor).toBe(250);
+      expect(result.netContribution!.amountMinor).toBe(-41);
+      expect(result.netContribution!.isNegative()).toBe(true);
+      expect(result.exactNetContribution.toDecimalString()).toBe('-40.7');
+    });
+
+    it('verifies net contribution arithmetic matches Money.subtract semantics for safe values and validates bounds', () => {
+      // 1. Equality with Money.subtract for safe values
+      const safeInput: PerUnitCalcInput = {
+        listPriceMinor: 1999,
+        currency: 'USD',
+        format: 'ebook',
+        fileSizeMb: '2',
+      };
+      const safeResult = calculatePerUnitEconomics(safeInput, sampleEbookPack);
+      expect(safeResult.grossRoyalty).not.toBeNull();
+      expect(safeResult.applicableCost).not.toBeNull();
+      expect(safeResult.netContribution).not.toBeNull();
+      const expectedViaSubtract = safeResult.grossRoyalty!.subtract(safeResult.applicableCost!);
+      expect(safeResult.netContribution!.equals(expectedViaSubtract)).toBe(true);
+      expect(safeResult.netContribution!.amountMinor).toBe(
+        safeResult.grossRoyalty!.amountMinor - safeResult.applicableCost!.amountMinor,
+      );
+
+      // 2. Throws typed CalcOverflowError when net contribution overflows MAX_SAFE_INTEGER
+      const overflowPackUpper: CalcRulePack = {
+        ...sampleEbookPack,
+        content: {
+          ...sampleEbookPack.content,
+          royalty: {
+            tiers: [
+              {
+                name: 'max_tier',
+                minPriceMinor: 0,
+                maxPriceMinor: null,
+                royaltyRateDecimal: '1.00',
+              },
+            ],
+          },
+          deliveryCost: {
+            costPerMbMinor: -10, // negative cost creates net contribution > MAX_SAFE_INTEGER
+          },
+          limits: {
+            minListPriceMinor: 0,
+            maxListPriceMinor: Number.MAX_SAFE_INTEGER,
+            minPages: null,
+            maxPages: null,
+          },
+        },
+      };
+      const overflowInputUpper: PerUnitCalcInput = {
+        listPriceMinor: Number.MAX_SAFE_INTEGER,
+        currency: 'USD',
+        format: 'ebook',
+        fileSizeMb: '1',
+      };
+      expect(() => calculatePerUnitEconomics(overflowInputUpper, overflowPackUpper)).toThrow(
+        CalcOverflowError,
+      );
+      expect(() => calculatePerUnitEconomics(overflowInputUpper, overflowPackUpper)).toThrow(
+        /Per-unit net contribution calculation overflowed safe integer bounds/,
+      );
+
+      // 3. Throws typed CalcOverflowError when net contribution underflows MIN_SAFE_INTEGER
+      const underflowPackLower: CalcRulePack = {
+        ...sampleEbookPack,
+        content: {
+          ...sampleEbookPack.content,
+          royalty: {
+            tiers: [
+              {
+                name: 'zero_tier',
+                minPriceMinor: 0,
+                maxPriceMinor: null,
+                royaltyRateDecimal: '-1.00', // negative royalty
+              },
+            ],
+          },
+          deliveryCost: {
+            costPerMbMinor: 1,
+          },
+          limits: {
+            minListPriceMinor: 0,
+            maxListPriceMinor: Number.MAX_SAFE_INTEGER,
+            minPages: null,
+            maxPages: null,
+          },
+        },
+      };
+      const underflowInputLower: PerUnitCalcInput = {
+        listPriceMinor: 10,
+        currency: 'USD',
+        format: 'ebook',
+        fileSizeMb: String(Number.MAX_SAFE_INTEGER), // cost = MAX_SAFE_INTEGER
+      };
+      // -10 - 9007199254740991 = -9007199254741001 < MIN_SAFE_INTEGER
+      expect(() => calculatePerUnitEconomics(underflowInputLower, underflowPackLower)).toThrow(
+        CalcOverflowError,
+      );
+      expect(() => calculatePerUnitEconomics(underflowInputLower, underflowPackLower)).toThrow(
+        /Per-unit net contribution calculation overflowed safe integer bounds/,
+      );
+    });
+
+    it('defers Money materialization in per_total mode when exact integer cost exceeds MAX_SAFE_INTEGER', () => {
+      const perTotalPack: CalcRulePack = {
+        ...sampleEbookPack,
+        content: {
+          ...sampleEbookPack.content,
+          rounding: {
+            mode: 'round_half_up',
+            point: 'per_total',
+          },
+          deliveryCost: {
+            costPerMbMinor: 1,
+          },
+        },
+      };
+
+      const input: PerUnitCalcInput = {
+        listPriceMinor: 299,
+        currency: 'USD',
+        format: 'ebook',
+        fileSizeMb: '9007199254740992', // integer > MAX_SAFE_INTEGER
+      };
+
+      const result = calculatePerUnitEconomics(input, perTotalPack);
+      expect(result.applicableCost).toBeNull();
+      expect(result.costBreakdown.totalCostMinor).toBeNull();
+      expect(result.costBreakdown.roundedCostMinor).toBeNull();
+      expect(result.netContribution).toBeNull();
+      expect(result.exactApplicableCost.isInteger()).toBe(true);
+      expect(result.exactApplicableCost.numerator).toBe(9007199254740992n);
+      expect(result.exactApplicableCost.denominator).toBe(1n);
+    });
+
+    it('preserves exact rational cost from per_total for scenario aggregation with zero units and overflowing non-zero units', () => {
+      const perTotalPack: CalcRulePack = {
+        ...sampleEbookPack,
+        content: {
+          ...sampleEbookPack.content,
+          rounding: {
+            mode: 'round_half_up',
+            point: 'per_total',
+          },
+          deliveryCost: {
+            costPerMbMinor: 1,
+          },
+        },
+      };
+
+      // 1. Per-unit economics preserves exact unrounded rational > MAX_SAFE_INTEGER
+      const perUnitInput: PerUnitCalcInput = {
+        listPriceMinor: 299,
+        currency: 'USD',
+        format: 'ebook',
+        fileSizeMb: '9007199254740992',
+      };
+      const perUnitResult = calculatePerUnitEconomics(perUnitInput, perTotalPack);
+      expect(perUnitResult.applicableCost).toBeNull();
+      expect(perUnitResult.exactApplicableCost.numerator).toBe(9007199254740992n);
+
+      // 2. Scenario aggregation with 0 units succeeds with 0 aggregate cost without overflow
+      const zeroScenario = calculateSingleScenario(
+        {
+          scenarioName: 'base',
+          units: 0,
+          listPriceMinor: 299,
+          currency: 'USD',
+          format: 'ebook',
+          fileSizeMb: '9007199254740992',
+        },
+        perTotalPack,
+      );
+      expect(zeroScenario.units).toBe(0);
+      expect(zeroScenario.applicableCost.amountMinor).toBe(0);
+      expect(zeroScenario.exactTotalCost.isZero()).toBe(true);
+
+      // 3. Scenario aggregation with 1 unit throws CalcOverflowError because aggregate cost exceeds MAX_SAFE_INTEGER
+      expect(() =>
+        calculateSingleScenario(
+          {
+            scenarioName: 'base',
+            units: 1,
+            listPriceMinor: 299,
+            currency: 'USD',
+            format: 'ebook',
+            fileSizeMb: '9007199254740992',
+          },
+          perTotalPack,
+        ),
+      ).toThrow(CalcOverflowError);
+      expect(() =>
+        calculateSingleScenario(
+          {
+            scenarioName: 'base',
+            units: 1,
+            listPriceMinor: 299,
+            currency: 'USD',
+            format: 'ebook',
+            fileSizeMb: '9007199254740992',
+          },
+          perTotalPack,
+        ),
+      ).toThrow(/Aggregate cost calculation overflowed safe integer bounds/);
     });
 
     it('enforces immutability: returns frozen objects and does not mutate inputs', () => {

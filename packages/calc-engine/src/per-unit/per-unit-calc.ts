@@ -303,15 +303,6 @@ export function calculatePerUnitEconomics(
       const costPerMbRational = Rational.from(costPerMb);
       exactApplicableCost = fileSizeRational.multiply(costPerMbRational);
 
-      if (
-        exactApplicableCost.numerator > BigInt(Number.MAX_SAFE_INTEGER) ||
-        exactApplicableCost.numerator < BigInt(Number.MIN_SAFE_INTEGER)
-      ) {
-        throw new CalcOverflowError(
-          `Delivery cost calculation overflowed safe integer bounds: ${fileSizeStr} MB * ${costPerMb}`,
-        );
-      }
-
       costBreakdown = {
         kind: 'delivery',
         fileSizeMb: fileSizeStr,
@@ -405,6 +396,14 @@ export function calculatePerUnitEconomics(
     let finalCostMinor: number;
     if (!exactApplicableCost.isInteger()) {
       const roundedCostBig = exactApplicableCost.round(roundingPolicy.mode);
+      if (
+        roundedCostBig > BigInt(Number.MAX_SAFE_INTEGER) ||
+        roundedCostBig < BigInt(Number.MIN_SAFE_INTEGER)
+      ) {
+        throw new CalcOverflowError(
+          `Rounded production cost ${roundedCostBig} exceeds safe integer range`,
+        );
+      }
       finalCostMinor = Number(roundedCostBig);
       applicableCostMoney = Money.of(finalCostMinor, currency);
 
@@ -419,7 +418,14 @@ export function calculatePerUnitEconomics(
       };
       roundingOperations.push(costOp);
     } else {
-      finalCostMinor = Number(exactApplicableCost.numerator);
+      const exactCostBig = exactApplicableCost.numerator;
+      if (
+        exactCostBig > BigInt(Number.MAX_SAFE_INTEGER) ||
+        exactCostBig < BigInt(Number.MIN_SAFE_INTEGER)
+      ) {
+        throw new CalcOverflowError(`Production cost ${exactCostBig} exceeds safe integer range`);
+      }
+      finalCostMinor = Number(exactCostBig);
       applicableCostMoney = Money.of(finalCostMinor, currency);
     }
 
@@ -442,7 +448,17 @@ export function calculatePerUnitEconomics(
     }
 
     // 5c. Net Contribution: rounded gross royalty minus rounded cost
-    netContributionMoney = grossRoyaltyMoney.subtract(applicableCostMoney);
+    const netContributionBig = roundedGrossBig - BigInt(finalCostMinor);
+    if (
+      netContributionBig > BigInt(Number.MAX_SAFE_INTEGER) ||
+      netContributionBig < BigInt(Number.MIN_SAFE_INTEGER)
+    ) {
+      throw new CalcOverflowError(
+        `Per-unit net contribution calculation overflowed safe integer bounds: ${netContributionBig}`,
+      );
+    }
+    const netContributionMinor = Number(netContributionBig);
+    netContributionMoney = Money.of(netContributionMinor, currency);
 
     steps.push({
       step: 'contribution_calculated',
@@ -455,13 +471,23 @@ export function calculatePerUnitEconomics(
     // point === 'per_total': per-unit rounding is explicitly deferred until total aggregation in STEP-006.
     // Unrounded rational amounts are preserved in exactGrossRoyalty and exactApplicableCost.
     if (exactApplicableCost.isInteger()) {
-      const costMinor = Number(exactApplicableCost.numerator);
-      applicableCostMoney = Money.of(costMinor, currency);
-      costBreakdown = {
-        ...costBreakdown,
-        totalCostMinor: costMinor,
-        roundedCostMinor: null,
-      };
+      const costBig = exactApplicableCost.numerator;
+      if (costBig > BigInt(Number.MAX_SAFE_INTEGER) || costBig < BigInt(Number.MIN_SAFE_INTEGER)) {
+        applicableCostMoney = null;
+        costBreakdown = {
+          ...costBreakdown,
+          totalCostMinor: null,
+          roundedCostMinor: null,
+        };
+      } else {
+        const costMinor = Number(costBig);
+        applicableCostMoney = Money.of(costMinor, currency);
+        costBreakdown = {
+          ...costBreakdown,
+          totalCostMinor: costMinor,
+          roundedCostMinor: null,
+        };
+      }
     } else {
       applicableCostMoney = null;
       costBreakdown = {
@@ -537,7 +563,7 @@ export function calculatePerUnitEconomics(
     rounding: Object.freeze({
       mode: roundingPolicy.mode,
       point: roundingPolicy.point,
-      operations: Object.freeze([...roundingOperations]),
+      operations: Object.freeze(roundingOperations.map((op) => Object.freeze({ ...op }))),
     }),
     finalSummary: Object.freeze({
       grossRoyaltyMinor: grossRoyaltyMoney !== null ? grossRoyaltyMoney.amountMinor : null,
@@ -545,7 +571,7 @@ export function calculatePerUnitEconomics(
       netContributionMinor: netContributionMoney !== null ? netContributionMoney.amountMinor : null,
       currency,
     }),
-    steps: Object.freeze([...steps]),
+    steps: Object.freeze(steps.map((step) => Object.freeze({ ...step }))),
   });
 
   return Object.freeze({

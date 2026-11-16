@@ -18,6 +18,7 @@ export default defineConfig({
         'packages/rules/src/**/*.test.ts',
         'packages/calc-engine/src/**/*.test.ts',
         'packages/calc-engine/src/per-unit/types.ts',
+        'packages/calc-engine/src/scenarios/types.ts',
       ],
       thresholds: {
         statements: 95,

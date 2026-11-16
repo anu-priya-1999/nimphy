@@ -74,9 +74,9 @@ Content-Type: application/json
       { "label": "Editing", "value": { "amountMinor": 90000, "currency": "USD" }, "provenance": "user_input" }
     ],
     "scenarios": {
-      "low":  { "units": 100,  "priceDeltaPct": 0 },
-      "base": { "units": 400,  "priceDeltaPct": 0 },
-      "high": { "units": 1200, "priceDeltaPct": 0 }
+      "low":  { "units": 100,  "listPriceMinor": 1299, "costVariancePercent": "10" },
+      "base": { "units": 400,  "listPriceMinor": 1499, "costVariancePercent": "0" },
+      "high": { "units": 1200, "listPriceMinor": 1799, "costVariancePercent": "-10" }
     }
   }
 }
