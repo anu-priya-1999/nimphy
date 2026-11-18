@@ -74,3 +74,26 @@ export {
   type BreakEvenTraceStep,
   type BreakEvenCalculationTrace,
 } from './break-even';
+
+// Sensitivity Analysis Engine (STEP-008)
+export {
+  calculateSensitivity,
+  SUPPORTED_SENSITIVITY_DRIVERS,
+  isSensitivityDriver,
+  type SensitivityDriver,
+  type SensitivityDriverConfig,
+  type UnitsSensitivityConfig,
+  type ListPriceSensitivityConfig,
+  type CostVarianceSensitivityConfig,
+  type SensitivityBaselineInput,
+  type SensitivityInput,
+  type BaseSensitivityDriverResult,
+  type UnitsSensitivityDriverResult,
+  type ListPriceSensitivityDriverResult,
+  type CostVarianceSensitivityDriverResult,
+  type SensitivityDriverResult,
+  type SensitivityRankDecision,
+  type SensitivityTraceDriverEvaluation,
+  type SensitivityCalculationTrace,
+  type SensitivityResult,
+} from './sensitivity';

@@ -8,10 +8,10 @@ This document is the living record of the system state, architecture decisions, 
 
 - **Architecture Package Version:** 0.4.0
 - **Current Phase:** Phase 1 (Deterministic Core)
-- **Current Step:** STEP-007 (Engine: Break-Even)
-- **Actual Implementation Status:** Implementation Complete & Fully Verified; Awaiting Formal Owner Acceptance (Pure financial calculation engine in `packages/calc-engine`; deterministic break-even units and revenue calculation under FR-007 and accepted ADR-005; roadmap-mandated exact integer ceiling division $Q_{\text{be}} = \lceil \text{FixedCost} / \text{ExactUnitContribution} \rceil$ without floating-point arithmetic using native `BigInt` integer division and remainder; gross retail sales revenue at the whole-unit, formula-defined break-even threshold $\text{Revenue}_{\text{be}} = \text{listPriceMinor} \times Q_{\text{be}}$ consistent with the scenario aggregation engine's revenue calculation; explicit unreachable result contracts with typed discriminator `ZERO_CONTRIBUTION` and `NEGATIVE_CONTRIBUTION` omitting units and revenue; zero fixed-cost boundary handling yielding 0 units and $0 revenue for positive contribution while preserving unreachable status for zero or negative contribution; distinction maintained between formula-defined break-even quantity and the minimum quantity covering fixed cost under independently rounded aggregate ledger components (with documented rounding-mode under-coverage under `per_total` with `round_half_even` due to parity-dependent tie-breaking; `round_down` not classified as unsafe without independent counterexample); safe-integer overflow protection on both units and revenue via typed `CalcOverflowError`; deterministic calculation trace with bit-for-bit canonical JSON replay and deep immutability via `deepFreeze`; 21 independently hand-derived golden fixture cases across all 4 synthetic Rule Packs under `fixtures/calc-engine/golden-break-even-cases.json`; 589/589 Tests Passed across 39 test files, 256 tests in `packages/calc-engine` across 14 test files, 100% Statements / 100% instrumented Branches / 100% Functions / 100% Lines coverage achieved in `packages/calc-engine` (1,496/1,496 stmts, 394/394 branches, 40/40 functions, 1,496/1,496 lines), 99.94% Statements (3,778/3,780) / 99.40% Branches (1,154/1,161) / 100% Functions (168/168) / 99.94% Lines (3,778/3,780) monorepo-wide; next step STEP-008 strictly unauthorized until explicit repository-owner instruction)
+- **Current Step:** STEP-008 (Engine: Sensitivity Analysis)
+- **Actual Implementation Status:** Implementation Complete & Fully Verified; Awaiting Formal Owner Acceptance (Pure financial calculation engine in `packages/calc-engine`; deterministic sensitivity analysis under FR-008; declared sensitivity drivers strictly allow-listed to FR-006 scenario parameters `units`, `listPriceMinor`, and `costVariancePercent`; one-at-a-time lower ($D_i^-$) and upper ($D_i^+$) perturbations preserving all other baseline parameters; strict fail-closed boundary handling with typed `CalcInputValidationError` and `CalcOverflowError` rather than silent clamping; primary sensitivity metric total scenario net contribution in integer minor units; absolute impact score $I_i = \max(|\Delta_i^-|, |\Delta_i^+|)$; deterministic ranking descending by impact score with secondary tie-breaking by UTF-16 code-point order (`costVariancePercent` < `listPriceMinor` < `units`); exact decimal arithmetic for cost variance perturbations via `Rational`; deterministic canonical audit trace with bit-for-bit reproducibility; deep immutability via `deepFreeze`; 21 independently hand-derived golden fixture cases across all 4 synthetic Rule Packs in `fixtures/calc-engine/golden-sensitivity-cases.json`; 653/653 Tests Passed across 42 test files, 320 tests in `packages/calc-engine` across 17 test files, 100% Statements / 100% Branches / 100% Functions / 100% Lines coverage achieved in `packages/calc-engine` (1,675/1,675 stmts, 464/464 branches, 43/43 functions, 1,675/1,675 lines); next step STEP-009 strictly unauthorized until explicit repository-owner instruction)
 - **Strategic Alignment:** Long-term product vision, competitive differentiation, customer segmentation, 6-pillar capability framework, and repository alignment documented in [product-strategy.md](product-strategy.md) (Canonical Master Product Vision & Strategy).
-- **Next Proposed Step:** STEP-008 (Engine: sensitivity) — strictly unauthorized until explicit repository-owner review and written authorization.
+- **Next Proposed Step:** STEP-009 (Differential Reference Check) — strictly unauthorized until explicit repository-owner review and written authorization.
 
 ---
 
@@ -49,16 +49,16 @@ All versions confirmed against repository manifests and `pnpm-lock.yaml`:
 
 All packages established as valid TypeScript workspaces. Dependency arrows point strictly inward toward `@nimphy/domain`:
 
-| Package Name              | Location               | Responsibility & Scope                                                               | Current Package Status                                                                                                                                                                                                                               |
-| ------------------------- | ---------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`@nimphy/domain`**      | `packages/domain`      | Pure domain types, value objects, branded primitives, scenario contracts, errors     | **Complete & hardened; 0 workspace dependencies; 0 external dependencies; 167 tests across 10 test files; 100% Stmt / 100% Br / 100% Func / 100% Line Cov (903/903 stmts, 366/366 br)**                                                              |
-| **`@nimphy/calc-engine`** | `packages/calc-engine` | Pure financial calculation engine (P-01: zero I/O, zero AI, exact rational math)     | **Complete & hardened; depends only on `@nimphy/domain`; zero I/O, zero AI; 256 tests across 14 test files; 100% Stmt / 100% instrumented Br / 100% Func / 100% Line Cov (1,496/1,496 stmts, 394/394 branches, 40/40 functions, 1,496/1,496 lines)** |
-| **`@nimphy/rules`**       | `packages/rules`       | Rule Pack schema, synthetic loader, date-based selection, cryptographic content hash | **Complete & frozen v1 schema (hardened); depends only on `@nimphy/domain`; zero external deps; 106 tests across 10 test files; 99.84% Stmt / 98.16% Br / 100% Func / 99.84% Line Cov (1,239/1,241 stmts, 374/381 br)**                              |
-| **`@nimphy/ai`**          | `packages/ai`          | Narrative memo synthesis, provider ports, schema validation                          | Package stub; depends only on `@nimphy/domain`                                                                                                                                                                                                       |
-| **`@nimphy/documents`**   | `packages/documents`   | Dossier assembly and Markdown/PDF document generation                                | Package stub; depends only on `@nimphy/domain`                                                                                                                                                                                                       |
-| **`@nimphy/payments`**    | `packages/payments`    | PayPal port, payment state machine, webhook processing                               | Package stub; depends only on `@nimphy/domain`                                                                                                                                                                                                       |
-| **`@nimphy/persistence`** | `packages/persistence` | PostgreSQL client, schema migrations, repositories                                   | Package stub; depends only on `@nimphy/domain`                                                                                                                                                                                                       |
-| **`@nimphy/web`**         | `apps/web`             | Next.js App Router application shell and UI                                          | App shell with layout, styling, disclaimer banner, smoke tests (2 tests passed)                                                                                                                                                                      |
+| Package Name              | Location               | Responsibility & Scope                                                               | Current Package Status                                                                                                                                                                                                                  |
+| ------------------------- | ---------------------- | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`@nimphy/domain`**      | `packages/domain`      | Pure domain types, value objects, branded primitives, scenario contracts, errors     | **Complete & hardened; 0 workspace dependencies; 0 external dependencies; 167 tests across 10 test files; 100% Stmt / 100% Br / 100% Func / 100% Line Cov (903/903 stmts, 366/366 br)**                                                 |
+| **`@nimphy/calc-engine`** | `packages/calc-engine` | Pure financial calculation engine (P-01: zero I/O, zero AI, exact rational math)     | **Complete & hardened; depends only on `@nimphy/domain`; zero I/O, zero AI; 320 tests across 17 test files; 100% Stmt / 100% Br / 100% Func / 100% Line Cov (1,675/1,675 stmts, 464/464 branches, 43/43 functions, 1,675/1,675 lines)** |
+| **`@nimphy/rules`**       | `packages/rules`       | Rule Pack schema, synthetic loader, date-based selection, cryptographic content hash | **Complete & frozen v1 schema (hardened); depends only on `@nimphy/domain`; zero external deps; 106 tests across 10 test files; 99.84% Stmt / 98.16% Br / 100% Func / 99.84% Line Cov (1,239/1,241 stmts, 374/381 br)**                 |
+| **`@nimphy/ai`**          | `packages/ai`          | Narrative memo synthesis, provider ports, schema validation                          | Package stub; depends only on `@nimphy/domain`                                                                                                                                                                                          |
+| **`@nimphy/documents`**   | `packages/documents`   | Dossier assembly and Markdown/PDF document generation                                | Package stub; depends only on `@nimphy/domain`                                                                                                                                                                                          |
+| **`@nimphy/payments`**    | `packages/payments`    | PayPal port, payment state machine, webhook processing                               | Package stub; depends only on `@nimphy/domain`                                                                                                                                                                                          |
+| **`@nimphy/persistence`** | `packages/persistence` | PostgreSQL client, schema migrations, repositories                                   | Package stub; depends only on `@nimphy/domain`                                                                                                                                                                                          |
+| **`@nimphy/web`**         | `apps/web`             | Next.js App Router application shell and UI                                          | App shell with layout, styling, disclaimer banner, smoke tests (2 tests passed)                                                                                                                                                         |
 
 ---
 
@@ -101,7 +101,8 @@ nimphy/
 │   ├── calc-engine/                       # Calculation engine test fixtures
 │   │   ├── golden-break-even-cases.json   # 21 hand-derived golden fixture cases for break-even economics
 │   │   ├── golden-per-unit-cases.json     # 32 hand-derived golden fixture cases for per-unit economics
-│   │   └── golden-scenario-cases.json     # 25 hand-derived golden fixture cases for scenario totals
+│   │   ├── golden-scenario-cases.json     # 25 hand-derived golden fixture cases for scenario totals
+│   │   └── golden-sensitivity-cases.json  # 21 hand-derived golden fixture cases for sensitivity analysis
 │   └── rules/                             # Synthetic Rule Pack fixtures (doc 12 §4)
 │       ├── TEST_EBOOK_STANDARD/1.0.0/     # pack.json, cases.json, README.md
 │       ├── TEST_HARDCOVER_GLOBAL/1.0.0/   # pack.json, cases.json, README.md
@@ -116,7 +117,8 @@ nimphy/
 │   │   ├── step-04-rule-pack-schema-and-loader.md # Detailed STEP-004 implementation record
 │   │   ├── step-05-per-unit-economics.md  # Detailed STEP-005 implementation record
 │   │   ├── step-06-scenarios-and-totals.md# Detailed STEP-006 implementation record
-│   │   └── step-07-break-even.md          # Detailed STEP-007 implementation record
+│   │   ├── step-07-break-even.md          # Detailed STEP-007 implementation record
+│   │   └── step-08-sensitivity.md         # Detailed STEP-008 implementation record
 │   ├── interviews/
 │   │   ├── step-01-project-scaffolding.md # STEP-001 technical interview preparation
 │   │   ├── step-02-docs-and-boundaries.md # STEP-002 technical interview preparation
@@ -124,7 +126,8 @@ nimphy/
 │   │   ├── step-04-rule-pack-schema-and-loader.md # STEP-004 technical interview preparation (8 senior topics)
 │   │   ├── step-05-per-unit-economics.md  # STEP-005 technical interview preparation (10 senior topics)
 │   │   ├── step-06-scenarios-and-totals.md# STEP-006 technical interview preparation (7 senior topics)
-│   │   └── step-07-break-even.md          # STEP-007 technical interview preparation (11 senior topics)
+│   │   ├── step-07-break-even.md          # STEP-007 technical interview preparation (11 senior topics)
+│   │   └── step-08-sensitivity.md         # STEP-008 technical interview preparation (7 senior topics)
 │   └── notes/
 │       ├── step-01-project-scaffolding.md # STEP-001 engineering reference notes
 │       ├── step-02-docs-and-boundaries.md # STEP-002 engineering reference notes
@@ -132,7 +135,8 @@ nimphy/
 │       ├── step-04-rule-pack-schema-and-loader.md # STEP-004 engineering reference notes
 │       ├── step-05-per-unit-economics.md  # STEP-005 engineering reference notes
 │       ├── step-06-scenarios-and-totals.md# STEP-006 engineering reference notes
-│       └── step-07-break-even.md          # STEP-007 engineering reference notes
+│       ├── step-07-break-even.md          # STEP-007 engineering reference notes
+│       └── step-08-sensitivity.md         # STEP-008 engineering reference notes
 ├── package.json                           # Monorepo root manifest and orchestration scripts (includes test:coverage)
 ├── packages/
 │   ├── ai/                                # AI prompt building & synthesis stub
@@ -173,8 +177,15 @@ nimphy/
 │   │       │   ├── properties.test.ts     # Property-based testing with Mulberry32 PRNG (5 tests)
 │   │       │   ├── types.ts               # Input, result, unreachable reason, and trace types
 │   │       │   └── index.ts
+│   │       ├── sensitivity/
+│   │       │   ├── sensitivity-calc.ts    # calculateSensitivity pure function
+│   │       │   ├── sensitivity-calc.test.ts # Unit, boundary, overflow, sign, tie, and trace tests (37 tests)
+│   │       │   ├── golden-sensitivity.test.ts # Parity runner for 21 golden sensitivity cases (22 tests)
+│   │       │   ├── properties.test.ts     # Property-based testing with Mulberry32 PRNG (4 tests)
+│   │       │   ├── types.ts               # Input, driver configs, results, and trace types
+│   │       │   └── index.ts
 │   │       ├── index.ts                   # Public barrel entrypoint
-│   │       └── index.test.ts              # Public API barrel integration tests (8 tests)
+│   │       └── index.test.ts              # Public API barrel integration tests (9 tests)
 │   ├── documents/                         # Dossier assembly & document generator stub
 │   ├── domain/                            # Pure domain types & value objects
 │   │   ├── README.md                      # Comprehensive domain package documentation
@@ -257,7 +268,8 @@ nimphy/
 │   ├── step-04.md                         # Canonical STEP-004 implementation prompt archive
 │   ├── step-05.md                         # Canonical STEP-005 implementation prompt archive
 │   ├── step-06.md                         # Canonical STEP-006 implementation prompt archive
-│   └── step-07.md                         # Canonical STEP-007 implementation prompt archive
+│   ├── step-07.md                         # Canonical STEP-007 implementation prompt archive
+│   └── step-08.md                         # Canonical STEP-008 implementation prompt archive
 ├── scripts/
 │   ├── check-boundaries.mjs               # Standalone architectural boundary & cycle checker
 │   ├── check-commit.mjs                   # Conventional commit validator
@@ -602,53 +614,105 @@ nimphy/
 
 ---
 
-## 11. Verification Results
+## 11. Completed Work in STEP-008 (Engine: Sensitivity Analysis)
 
-### A. Local Checks Executed & Passed Directly
-
-| Verification Suite            | Exact Command                                 | Result       | Details                                                                                                                                                            |
-| ----------------------------- | --------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Dependency Installation**   | `pnpm install --frozen-lockfile`              | **Passed**   | 9 workspace projects linked; store clean and reproducible                                                                                                          |
-| **Git Hook Setup**            | `pnpm setup:hooks`                            | **Passed**   | `core.hooksPath` configured to `.githooks` locally                                                                                                                 |
-| **Calc-Engine Typecheck**     | `pnpm --filter @nimphy/calc-engine typecheck` | **Passed**   | `@nimphy/calc-engine` typecheck succeeded (`tsc --noEmit`); 0 errors                                                                                               |
-| **Workspace TypeScript**      | `pnpm typecheck`                              | **Passed**   | 8 workspace projects checked (`pnpm -r run typecheck`); 0 errors                                                                                                   |
-| **Code Linting**              | `pnpm lint`                                   | **Passed**   | ESLint 10 with local `@nimphy` plugin; 0 errors, **0 warnings**                                                                                                    |
-| **Prettier Formatting Check** | `pnpm format:check`                           | **Passed**   | All matched files use Prettier code style                                                                                                                          |
-| **Documentation Validation**  | `pnpm docs:check`                             | **Passed**   | 23 docs present, 94 links verified, 22 ADR statuses confirmed                                                                                                      |
-| **Architecture Boundaries**   | `pnpm boundaries:check`                       | **Passed**   | 85 source files checked, 290 import declarations verified; `@nimphy/calc-engine` depends only on `@nimphy/domain`                                                  |
-| **Full Vitest Test Suite**    | `pnpm test`                                   | **Passed**   | Vitest 3.0.8, 39 test files, **589/589 tests passed** (0 failed, 0 skipped; 256 tests in calc-engine across 14 test files)                                         |
-| **V8 Code Coverage**          | `pnpm test:coverage`                          | **Passed**   | **packages/calc-engine: 100% Stmts / 100% instrumented Br / 100% Func / 100% Lines**; monorepo: 99.94% Stmts, 99.40% Br, 100% Funcs, 99.94% Lines (threshold: 95%) |
-| **Production Web Build**      | `pnpm build`                                  | **Passed**   | `@nimphy/web` Next.js Turbopack build succeeded with 0 errors; static prerender succeeded                                                                          |
-| **Git Whitespace Check**      | `git diff --check`                            | **Passed**   | Whitespace and patch integrity check; 0 whitespace or line ending errors reported                                                                                  |
-| **Working Tree Status**       | `git status --short`                          | **Verified** | Modified and untracked STEP-007 files preserved uncommitted awaiting engineering review                                                                            |
+1. **Pure Financial Calculation Engine Module (`packages/calc-engine/src/sensitivity/`):**
+   - Pure function `calculateSensitivity(input: SensitivityAnalysisInput, rulePack: CalcRulePack): SensitivityAnalysisResult`.
+   - Zero I/O, zero network, zero AI imports, zero clocks/randomness (Principle P-01: Deterministic core, probabilistic edge).
+   - Reuses `calculateSingleScenario` for all financial totals; preserves exact rational arithmetic and ADR-005 aggregation semantics without formula duplication.
+2. **Declared Sensitivity Driver Allow-List (FR-006 / FR-008):**
+   - Strictly bounded to FR-006 scenario parameters: `'units'`, `'listPriceMinor'`, `'costVariancePercent'`.
+   - Rejects unapproved structural dimensions (format, pages, currency, marketplace) with typed `CalcInputValidationError`.
+   - Rejects duplicate drivers or empty driver lists.
+   - Enforces domain-appropriate perturbation representations:
+     - `units`: positive safe integer.
+     - `listPriceMinor`: positive safe integer in minor currency units.
+     - `costVariancePercent`: positive exact decimal string.
+3. **One-at-a-Time Perturbation Model:**
+   - Evaluates a valid baseline scenario via `calculateSingleScenario`.
+   - For each driver $D_i$ with perturbation $\Delta_i$, computes lower ($D_i - \Delta_i$) and upper ($D_i + \Delta_i$) scenarios.
+   - Unchanged scenario parameters are strictly preserved across evaluations.
+   - Exact decimal string arithmetic for cost variance perturbations via `Rational.fromDecimalString()`, guaranteeing zero IEEE 754 floating-point drift.
+4. **Strict Boundary Handling & Fail-Closed Validation:**
+   - Perturbed inputs are never silently clamped to boundaries or replaced.
+   - Out-of-bounds perturbations (negative units $< 0$, list price outside Rule Pack floor/ceiling, cost variance $< -100\%$, arithmetic overflow $> \text{MAX\_SAFE\_INTEGER}$) fail explicitly with `CalcInputValidationError` or `CalcOverflowError`.
+5. **Primary Metric, Impact Score, and Deterministic Ranking:**
+   - Primary sensitivity metric is **total scenario net contribution** in integer minor currency units.
+   - For each driver $D_i$:
+     $$\Delta_i^- = \text{Contribution}_i^- - \text{Contribution}_{\text{base}}$$
+     $$\Delta_i^+ = \text{Contribution}_i^+ - \text{Contribution}_{\text{base}}$$
+     $$I_i = \max(|\Delta_i^-|, |\Delta_i^+|)$$
+   - Deterministic ranking:
+     1. Primary: Impact score $I_i$ descending.
+     2. Secondary (Deterministic Tie-Break): Driver identifier ascending via UTF-16 code-point order (`costVariancePercent` < `listPriceMinor` < `units`).
+   - Ranking is completely invariant to driver input order.
+6. **Deterministic Canonical Audit Trace & Deep Immutability:**
+   - `SensitivityCalculationTrace` records engine version, rule pack reference and hash, baseline summary, driver configurations, lower/upper scenario runs with deltas, impact scores, and tie-breaking decisions.
+   - Bit-for-bit canonical JSON reproducibility (`toCanonicalJson`); zero timestamps, zero random UUIDs.
+   - Deep recursive freezing (`deepFreeze`) on all returned result objects, driver result arrays, scenario summaries, and trace trees.
+7. **Hand-Derived Golden Fixtures (`fixtures/calc-engine/golden-sensitivity-cases.json`):**
+   - 21 independently hand-derived golden fixture cases across all 4 synthetic Rule Packs:
+     - 7 Ebook cases (USD, delivery fee variations, price sensitivity, volume sensitivity).
+     - 5 Paperback US v1 cases (USD, wholesale print cost sensitivity, tie-breaking, asymmetric impacts).
+     - 4 Paperback US v2 cases (USD, successor cost window, fractional contribution sensitivities).
+     - 5 Hardcover Global v1 cases (EUR, `round_down`, `per_total` exact rational contribution sensitivities).
+8. **Exhaustive Testing & 100% Branch Coverage:**
+   - 63 sensitivity-specific tests plus 1 updated barrel integration test:
+     - 37 sensitivity calculation unit tests (`sensitivity-calc.test.ts`: validation, boundaries, overflow, analytic sign checks, tie-break invariants, immutability).
+     - 22 golden sensitivity tests (`golden-sensitivity.test.ts`: 1 inventory check + 21 golden case parity verifications).
+     - 4 sensitivity property tests (`properties.test.ts`: Mulberry32 PRNG suites for determinism, parameter preservation, monotonic ranking, and scenario parity).
+     - 1 updated README barrel integration test in `index.test.ts`.
+   - Package total: 320 tests across 17 test files in `@nimphy/calc-engine`.
+   - Monorepo total: 653 tests across 42 test files.
+   - 100% Statement (1,675/1,675), 100% Branch (464/464), 100% Function (43/43), and 100% Line (1,675/1,675) coverage maintained across `packages/calc-engine`.
 
 ---
 
-## 12. Open Issues & Dependency Warnings
+## 12. Verification Results
+
+### A. Local Checks Executed & Passed Directly
+
+| Verification Suite            | Exact Command                                 | Result       | Details                                                                                                                                               |
+| ----------------------------- | --------------------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Dependency Installation**   | `pnpm install --frozen-lockfile`              | **Passed**   | 9 workspace projects linked; store clean and reproducible                                                                                             |
+| **Git Hook Setup**            | `pnpm setup:hooks`                            | **Passed**   | `core.hooksPath` configured to `.githooks` locally                                                                                                    |
+| **Calc-Engine Typecheck**     | `pnpm --filter @nimphy/calc-engine typecheck` | **Passed**   | `@nimphy/calc-engine` typecheck succeeded (`tsc --noEmit`); 0 errors                                                                                  |
+| **Workspace TypeScript**      | `pnpm typecheck`                              | **Passed**   | 8 workspace projects checked (`pnpm -r run typecheck`); 0 errors                                                                                      |
+| **Code Linting**              | `pnpm lint`                                   | **Passed**   | ESLint 10 with local `@nimphy` plugin; 0 errors, **0 warnings**                                                                                       |
+| **Prettier Formatting Check** | `pnpm format:check`                           | **Passed**   | All matched files use Prettier code style                                                                                                             |
+| **Documentation Validation**  | `pnpm docs:check`                             | **Passed**   | 23 docs present, 94 links verified, 22 ADR statuses confirmed                                                                                         |
+| **Architecture Boundaries**   | `pnpm boundaries:check`                       | **Passed**   | 91 source files checked, 331 import declarations verified; `@nimphy/calc-engine` depends only on `@nimphy/domain`                                     |
+| **Full Vitest Test Suite**    | `pnpm test`                                   | **Passed**   | Vitest 3.0.8, 42 test files, **653/653 tests passed** (0 failed, 0 skipped; 320 tests in calc-engine across 17 test files)                            |
+| **V8 Code Coverage**          | `pnpm test:coverage`                          | **Passed**   | **packages/calc-engine: 100% Stmts / 100% Br / 100% Func / 100% Lines**; monorepo: 99.95% Stmts, 99.44% Br, 100% Funcs, 99.95% Lines (threshold: 95%) |
+| **Production Web Build**      | `pnpm build`                                  | **Passed**   | `@nimphy/web` Next.js Turbopack build succeeded with 0 errors; static prerender succeeded                                                             |
+| **Git Whitespace Check**      | `git diff --check`                            | **Passed**   | Whitespace and patch integrity check; 0 whitespace or line ending errors reported                                                                     |
+| **Working Tree Status**       | `git status --short`                          | **Verified** | Modified and untracked STEP-008 files preserved uncommitted awaiting engineering review                                                               |
+
+---
+
+## 13. Open Issues & Dependency Warnings
 
 1. **ESLint Plugin Peer Dependencies:** Transitive plugins declare peer dependency compatibility up to ESLint 9 (`^8.0.0 || ^9.0.0`), while ESLint `10.14.0` is installed. Our custom local plugin operates natively without third-party dependencies, and all linting executes with 0 runtime errors and 0 warnings.
 2. **Deprecated Transitive Package:** `whatwg-encoding` was noted as deprecated in transitive `jsdom` dependencies. Managed upstream by `jsdom`.
 
 ---
 
-## 13. Next Proposed Step & Roadmap Reconciliation (Awaiting Authorization)
+## 14. Next Proposed Step & Roadmap Reconciliation (Awaiting Authorization)
 
-**STEP-008: Engine: Sensitivity (Proposed — Strictly Unauthorized)**
+**STEP-009: Differential Reference Check (Proposed — Strictly Unauthorized)**
 
 - **Status:** Proposed next engineering step; strictly unauthorized until explicit repository-owner review and written approval per `AGENTS.md` §3 ("Step-by-Step Discipline: Implement only the step explicitly authorized by the user. Do not anticipate or partially implement future steps").
-- **STEP-007 Reconciliation Status:**
-  - STEP-007 implementation reported complete.
-  - Break-even units and revenue calculations implemented and hardened in `packages/calc-engine`.
+- **STEP-008 Reconciliation Status:**
+  - STEP-008 implementation reported complete.
+  - Deterministic sensitivity analysis engine implemented and hardened in `packages/calc-engine`.
   - Formal owner acceptance is pending; owner acceptance is NOT claimed.
 - **Authoritative Roadmap Sequence (per `docs/architecture/17-implementation-roadmap.md`):**
-  - **STEP-007 — Engine: Break-even** (Current — Complete & Fully Verified; Awaiting Formal Owner Acceptance)
-  - **STEP-008 — Engine: Sensitivity** (Next — Strictly Unauthorized)
-  - **STEP-009 — Differential Reference Check**
+  - **STEP-007 — Engine: Break-even** (Accepted)
+  - **STEP-008 — Engine: Sensitivity** (Current — Complete & Fully Verified; Awaiting Formal Owner Acceptance)
+  - **STEP-009 — Differential Reference Check** (Next — Strictly Unauthorized)
   - **STEP-010 — Database Foundation**
-- **STEP-008 Scope (Authoritative Roadmap §STEP-008):**
-  - Sensitivity analysis: vary one parameter while holding others constant.
-  - Price elasticity / variation curves: compute contribution across a range of list prices.
-  - Page count sensitivity: compute print cost impact across page ranges.
-  - Cost variance sensitivity: sweep cost variance percentages.
-  - Maintain 100% branch coverage for `packages/calc-engine`.
-- **Strict Boundary Constraint:** Do not begin STEP-008 until explicitly authorized by the repository owner.
+- **STEP-009 Scope (Authoritative Roadmap §STEP-009):**
+  - Build differential testing harness comparing `@nimphy/calc-engine` calculations against an independent reference implementation.
+  - Generate large-scale random and edge-case inputs.
+  - Verify zero financial drift across all supported Rule Packs and rounding modes.
+- **Strict Boundary Constraint:** Do not begin STEP-009 until explicitly authorized by the repository owner.

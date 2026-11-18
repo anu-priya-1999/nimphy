@@ -1,0 +1,1156 @@
+{
+  "description": "Independent hand-derived golden fixtures for Nimphy STEP-008 sensitivity analysis calculation engine.",
+  "disclaimer": "SYNTHETIC TEST CASES ONLY. Calculated with independent exact rational arithmetic. Not derived from engine execution.",
+  "engineVersion": "0.1.0",
+  "cases": [
+    {
+      "id": "golden_sens_ebook_01_all_three",
+      "description": "Ebook standard $4.99 with 500 units, 1 MB delivery, 0% cost variance under round_half_up per_unit with all 3 declared drivers",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "input": {
+        "baseline": {
+          "scenarioName": "base",
+          "units": 500,
+          "listPriceMinor": 499,
+          "costVariancePercent": "0",
+          "currency": "USD",
+          "format": "ebook",
+          "fileSizeMb": "1"
+        },
+        "drivers": [
+          {
+            "driver": "units",
+            "perturbation": 100
+          },
+          {
+            "driver": "listPriceMinor",
+            "perturbation": 100
+          },
+          {
+            "driver": "costVariancePercent",
+            "perturbation": "10"
+          }
+        ]
+      },
+      "expectedBaselineContributionMinor": 167000,
+      "expectedRankedDrivers": [
+        {
+          "driver": "listPriceMinor",
+          "rank": 1,
+          "perturbation": 100,
+          "lowerValue": 399,
+          "upperValue": 599,
+          "lowerContributionMinor": 132000,
+          "upperContributionMinor": 202000,
+          "deltaLowerMinor": -35000,
+          "deltaUpperMinor": 35000,
+          "impactScoreMinor": 35000
+        },
+        {
+          "driver": "units",
+          "rank": 2,
+          "perturbation": 100,
+          "lowerValue": 400,
+          "upperValue": 600,
+          "lowerContributionMinor": 133600,
+          "upperContributionMinor": 200400,
+          "deltaLowerMinor": -33400,
+          "deltaUpperMinor": 33400,
+          "impactScoreMinor": 33400
+        },
+        {
+          "driver": "costVariancePercent",
+          "rank": 3,
+          "perturbation": "10",
+          "lowerValue": "-10",
+          "upperValue": "10",
+          "lowerContributionMinor": 167500,
+          "upperContributionMinor": 166000,
+          "deltaLowerMinor": 500,
+          "deltaUpperMinor": -1000,
+          "impactScoreMinor": 1000
+        }
+      ],
+      "derivation": "Baseline $4.99 at 70% royalty = 349.3 -> 349 cents. Delivery for 1 MB = 15 cents. Unit contrib = 334 cents. At 500 units, baseline contrib = 167,000 cents ($1,670.00). Perturbing listPrice by 100 ($1.00) gives 399 ($279 - 15 = 264c * 500 = 132,000c, delta -35,000) and 599 ($419 - 15 = 404c * 500 = 202,000c, delta +35,000), impact 35,000. Perturbing units by 100 gives 400 (400 * 334 = 133,600, delta -33,400) and 600 (600 * 334 = 200,400, delta +33,400), impact 33,400. Perturbing costVariance by 10% gives -10% (cost 15 * 0.9 = 13.5 -> 14c, unit 335, total 167,500, delta +500) and +10% (cost 15 * 1.1 = 16.5 -> 17c, unit 332, total 166,000, delta -1,000), impact 1,000. Ranking: listPriceMinor (rank 1), units (rank 2), costVariancePercent (rank 3)."
+    },
+    {
+      "id": "golden_sens_ebook_02_units_only",
+      "description": "Ebook single driver units analysis with 250 unit perturbation",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "input": {
+        "baseline": {
+          "scenarioName": "base",
+          "units": 1000,
+          "listPriceMinor": 299,
+          "costVariancePercent": "0",
+          "currency": "USD",
+          "format": "ebook",
+          "fileSizeMb": "1"
+        },
+        "drivers": [
+          {
+            "driver": "units",
+            "perturbation": 250
+          }
+        ]
+      },
+      "expectedBaselineContributionMinor": 194000,
+      "expectedRankedDrivers": [
+        {
+          "driver": "units",
+          "rank": 1,
+          "perturbation": 250,
+          "lowerValue": 750,
+          "upperValue": 1250,
+          "lowerContributionMinor": 145500,
+          "upperContributionMinor": 242500,
+          "deltaLowerMinor": -48500,
+          "deltaUpperMinor": 48500,
+          "impactScoreMinor": 48500
+        }
+      ],
+      "derivation": "List price $2.99 at 70% royalty = 209.3 -> 209 cents. Delivery for 1 MB = 15 cents. Unit contribution = 209 - 15 = 194 cents. Baseline 1,000 units * 194 = 194,000 cents. Lower (750 units) * 194 = 145,500 cents (delta -48,500). Upper (1,250 units) * 194 = 242,500 cents (delta +48,500). Impact score = 48,500. Rank = 1."
+    },
+    {
+      "id": "golden_sens_ebook_03_price_only",
+      "description": "Ebook single driver listPriceMinor analysis staying within 70% royalty tier",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "input": {
+        "baseline": {
+          "scenarioName": "base",
+          "units": 800,
+          "listPriceMinor": 799,
+          "costVariancePercent": "0",
+          "currency": "USD",
+          "format": "ebook",
+          "fileSizeMb": "1"
+        },
+        "drivers": [
+          {
+            "driver": "listPriceMinor",
+            "perturbation": 150
+          }
+        ]
+      },
+      "expectedBaselineContributionMinor": 435200,
+      "expectedRankedDrivers": [
+        {
+          "driver": "listPriceMinor",
+          "rank": 1,
+          "perturbation": 150,
+          "lowerValue": 649,
+          "upperValue": 949,
+          "lowerContributionMinor": 351200,
+          "upperContributionMinor": 519200,
+          "deltaLowerMinor": -84000,
+          "deltaUpperMinor": 84000,
+          "impactScoreMinor": 84000
+        }
+      ],
+      "derivation": "Baseline $7.99 at 70% = 559.3 -> 559 cents. Cost = 15. Unit = 544. At 800 units, total = 435,200 cents. Lower price $6.49 at 70% = 454.3 -> 454 cents. Unit = 439. Total = 800 * 439 = 351,200 cents (delta -84,000). Upper price $9.49 at 70% = 664.3 -> 664 cents. Unit = 649. Total = 800 * 649 = 519,200 cents (delta +84,000). Impact score = 84,000. Rank = 1."
+    },
+    {
+      "id": "golden_sens_ebook_04_cost_variance_only",
+      "description": "Ebook single driver costVariancePercent analysis with 20% perturbation",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "input": {
+        "baseline": {
+          "scenarioName": "base",
+          "units": 1000,
+          "listPriceMinor": 499,
+          "costVariancePercent": "10",
+          "currency": "USD",
+          "format": "ebook",
+          "fileSizeMb": "2"
+        },
+        "drivers": [
+          {
+            "driver": "costVariancePercent",
+            "perturbation": "20"
+          }
+        ]
+      },
+      "expectedBaselineContributionMinor": 316000,
+      "expectedRankedDrivers": [
+        {
+          "driver": "costVariancePercent",
+          "rank": 1,
+          "perturbation": "20",
+          "lowerValue": "-10",
+          "upperValue": "30",
+          "lowerContributionMinor": 322000,
+          "upperContributionMinor": 310000,
+          "deltaLowerMinor": 6000,
+          "deltaUpperMinor": -6000,
+          "impactScoreMinor": 6000
+        }
+      ],
+      "derivation": "Gross royalty at $4.99 = 349 cents. Base delivery cost for 2 MB = 30 cents. Baseline variance +10% -> 30 * 1.10 = 33 cents. Unit contrib = 349 - 33 = 316 cents. Total for 1,000 units = 316,000 cents. Lower variance 10 - 20 = -10% -> cost = 30 * 0.90 = 27 cents. Unit = 349 - 27 = 322 cents. Total = 322,000 cents (delta +6,000). Upper variance 10 + 20 = +30% -> cost = 30 * 1.30 = 39 cents. Unit = 349 - 39 = 310 cents. Total = 310,000 cents (delta -6,000). Impact = 6,000. Rank = 1."
+    },
+    {
+      "id": "golden_sens_ebook_05_fractional_delivery",
+      "description": "Ebook proportional fractional delivery fee (2.5 MB) under per_unit rounding",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "input": {
+        "baseline": {
+          "scenarioName": "base",
+          "units": 400,
+          "listPriceMinor": 499,
+          "costVariancePercent": "0",
+          "currency": "USD",
+          "format": "ebook",
+          "fileSizeMb": "2.5"
+        },
+        "drivers": [
+          {
+            "driver": "units",
+            "perturbation": 100
+          },
+          {
+            "driver": "costVariancePercent",
+            "perturbation": "15"
+          }
+        ]
+      },
+      "expectedBaselineContributionMinor": 124400,
+      "expectedRankedDrivers": [
+        {
+          "driver": "units",
+          "rank": 1,
+          "perturbation": 100,
+          "lowerValue": 300,
+          "upperValue": 500,
+          "lowerContributionMinor": 93300,
+          "upperContributionMinor": 155500,
+          "deltaLowerMinor": -31100,
+          "deltaUpperMinor": 31100,
+          "impactScoreMinor": 31100
+        },
+        {
+          "driver": "costVariancePercent",
+          "rank": 2,
+          "perturbation": "15",
+          "lowerValue": "-15",
+          "upperValue": "15",
+          "lowerContributionMinor": 126800,
+          "upperContributionMinor": 122400,
+          "deltaLowerMinor": 2400,
+          "deltaUpperMinor": -2000,
+          "impactScoreMinor": 2400
+        }
+      ],
+      "derivation": "Royalty at $4.99 = 349 cents. Delivery cost 2.5 MB * 15 = 37.5 cents -> round_half_up rounds to 38 cents. Unit contrib = 349 - 38 = 311 cents. Baseline for 400 units = 124,400 cents. Units pert 100: lower 300 * 311 = 93,300 (delta -31,100), upper 500 * 311 = 155,500 (delta +31,100), impact 31,100. Cost variance pert 15%: lower -15% -> cost = 37.5 * 0.85 = 31.875 -> 32c, unit 317c, total 400 * 317 = 126,800 (delta +2,400); upper +15% -> cost = 37.5 * 1.15 = 43.125 -> 43c, unit 306c, total 400 * 306 = 122,400 (delta -2,000), impact 2,400. Ranking: units (rank 1), costVariancePercent (rank 2)."
+    },
+    {
+      "id": "golden_sens_ebook_06_zero_units_tied",
+      "description": "Ebook zero units baseline producing zero contribution and tied 0 impact on price and cost variance",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "input": {
+        "baseline": {
+          "scenarioName": "base",
+          "units": 0,
+          "listPriceMinor": 499,
+          "costVariancePercent": "0",
+          "currency": "USD",
+          "format": "ebook",
+          "fileSizeMb": "1"
+        },
+        "drivers": [
+          {
+            "driver": "listPriceMinor",
+            "perturbation": 100
+          },
+          {
+            "driver": "costVariancePercent",
+            "perturbation": "10"
+          }
+        ]
+      },
+      "expectedBaselineContributionMinor": 0,
+      "expectedRankedDrivers": [
+        {
+          "driver": "costVariancePercent",
+          "rank": 1,
+          "perturbation": "10",
+          "lowerValue": "-10",
+          "upperValue": "10",
+          "lowerContributionMinor": 0,
+          "upperContributionMinor": 0,
+          "deltaLowerMinor": 0,
+          "deltaUpperMinor": 0,
+          "impactScoreMinor": 0
+        },
+        {
+          "driver": "listPriceMinor",
+          "rank": 2,
+          "perturbation": 100,
+          "lowerValue": 399,
+          "upperValue": 599,
+          "lowerContributionMinor": 0,
+          "upperContributionMinor": 0,
+          "deltaLowerMinor": 0,
+          "deltaUpperMinor": 0,
+          "impactScoreMinor": 0
+        }
+      ],
+      "derivation": "At units = 0, total revenue, royalties, costs, and net contribution are exactly 0. Varying list price or cost variance with 0 units still yields 0 total contribution (delta = 0, impact = 0) for both drivers. Tied impact score 0 is broken deterministically by driver identifier code points: 'costVariancePercent' < 'listPriceMinor'. Rank 1: costVariancePercent, Rank 2: listPriceMinor."
+    },
+    {
+      "id": "golden_sens_ebook_07_price_cross_tier",
+      "description": "Ebook list price perturbation crossing tier boundary (299 to 199 in 35% tier, 399 in 70% tier)",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "input": {
+        "baseline": {
+          "scenarioName": "base",
+          "units": 200,
+          "listPriceMinor": 299,
+          "costVariancePercent": "0",
+          "currency": "USD",
+          "format": "ebook",
+          "fileSizeMb": "1"
+        },
+        "drivers": [
+          {
+            "driver": "listPriceMinor",
+            "perturbation": 100
+          },
+          {
+            "driver": "units",
+            "perturbation": 50
+          }
+        ]
+      },
+      "expectedBaselineContributionMinor": 38800,
+      "expectedRankedDrivers": [
+        {
+          "driver": "listPriceMinor",
+          "rank": 1,
+          "perturbation": 100,
+          "lowerValue": 199,
+          "upperValue": 399,
+          "lowerContributionMinor": 11000,
+          "upperContributionMinor": 52800,
+          "deltaLowerMinor": -27800,
+          "deltaUpperMinor": 14000,
+          "impactScoreMinor": 27800
+        },
+        {
+          "driver": "units",
+          "rank": 2,
+          "perturbation": 50,
+          "lowerValue": 150,
+          "upperValue": 250,
+          "lowerContributionMinor": 29100,
+          "upperContributionMinor": 48500,
+          "deltaLowerMinor": -9700,
+          "deltaUpperMinor": 9700,
+          "impactScoreMinor": 9700
+        }
+      ],
+      "derivation": "Baseline $2.99 (standard_mid 70%): roy 209, cost 15, unit contrib 194c. Total 200 * 194 = 38,800 cents. Lower price $1.99 drops into standard_low (35% tier!): roy = round(199 * 0.35) = round(69.65) = 70c. Cost = 15. Unit contrib = 70 - 15 = 55c. Total 200 * 55 = 11,000 cents (delta = 11,000 - 38,800 = -27,800). Upper price $3.99 remains standard_mid (70%): roy = round(399 * 0.70) = 279c. Cost = 15. Unit contrib = 279 - 15 = 264c. Total 200 * 264 = 52,800 cents (delta = 52,800 - 38,800 = +14,000). Max impact = max(|-27,800|, |14,000|) = 27,800. Units pert 50: lower 150 * 194 = 29,100 (delta -9,700), upper 250 * 194 = 48,500 (delta +9,700), impact 9,700. Ranking: listPriceMinor (rank 1), units (rank 2)."
+    },
+    {
+      "id": "golden_sens_paperback_v1_08_standard",
+      "description": "Paperback US v1 $15.00 list price with 200 pages and all 3 drivers under per_unit round_half_even",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "1.0.0"
+      },
+      "input": {
+        "baseline": {
+          "scenarioName": "base",
+          "units": 500,
+          "listPriceMinor": 1500,
+          "costVariancePercent": "0",
+          "currency": "USD",
+          "format": "paperback",
+          "pages": 200
+        },
+        "drivers": [
+          {
+            "driver": "units",
+            "perturbation": 100
+          },
+          {
+            "driver": "listPriceMinor",
+            "perturbation": 200
+          },
+          {
+            "driver": "costVariancePercent",
+            "perturbation": "10"
+          }
+        ]
+      },
+      "expectedBaselineContributionMinor": 224000,
+      "expectedRankedDrivers": [
+        {
+          "driver": "listPriceMinor",
+          "rank": 1,
+          "perturbation": 200,
+          "lowerValue": 1300,
+          "upperValue": 1700,
+          "lowerContributionMinor": 164000,
+          "upperContributionMinor": 284000,
+          "deltaLowerMinor": -60000,
+          "deltaUpperMinor": 60000,
+          "impactScoreMinor": 60000
+        },
+        {
+          "driver": "units",
+          "rank": 2,
+          "perturbation": 100,
+          "lowerValue": 400,
+          "upperValue": 600,
+          "lowerContributionMinor": 179200,
+          "upperContributionMinor": 268800,
+          "deltaLowerMinor": -44800,
+          "deltaUpperMinor": 44800,
+          "impactScoreMinor": 44800
+        },
+        {
+          "driver": "costVariancePercent",
+          "rank": 3,
+          "perturbation": "10",
+          "lowerValue": "-10",
+          "upperValue": "10",
+          "lowerContributionMinor": 246500,
+          "upperContributionMinor": 201500,
+          "deltaLowerMinor": 22500,
+          "deltaUpperMinor": -22500,
+          "impactScoreMinor": 22500
+        }
+      ],
+      "derivation": "Royalty fixed_60 (60%): 1500 * 0.60 = 900 cents. Print cost 200 pages: 100 + (200 - 24) * 2 = 100 + 352 = 452 cents. Unit contrib = 900 - 452 = 448 cents. Baseline 500 * 448 = 224,000 cents. List price pert 200 ($2.00): lower $13.00 roy = 780, cost = 452, unit = 328, total 500 * 328 = 164,000 (delta -60,000); upper $17.00 roy = 1020, cost = 452, unit = 568, total 500 * 568 = 284,000 (delta +60,000), impact 60,000. Units pert 100: lower 400 * 448 = 179,200 (delta -44,800), upper 600 * 448 = 268,800 (delta +44,800), impact 44,800. Cost variance pert 10%: lower -10% cost = 452 * 0.90 = 406.8 -> 407c, unit = 493c, total = 246,500 (delta +22,500); upper +10% cost = 452 * 1.10 = 497.2 -> 497c, unit = 403c, total = 201,500 (delta -22,500), impact 22,500. Ranking: listPriceMinor (rank 1), units (rank 2), costVariancePercent (rank 3)."
+    },
+    {
+      "id": "golden_sens_paperback_v1_09_negative_baseline",
+      "description": "Paperback US v1 $5.00 list price with 300 pages yielding negative baseline contribution (-$3.52/unit)",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "1.0.0"
+      },
+      "input": {
+        "baseline": {
+          "scenarioName": "base",
+          "units": 200,
+          "listPriceMinor": 500,
+          "costVariancePercent": "0",
+          "currency": "USD",
+          "format": "paperback",
+          "pages": 300
+        },
+        "drivers": [
+          {
+            "driver": "units",
+            "perturbation": 50
+          },
+          {
+            "driver": "costVariancePercent",
+            "perturbation": "10"
+          }
+        ]
+      },
+      "expectedBaselineContributionMinor": -70400,
+      "expectedRankedDrivers": [
+        {
+          "driver": "units",
+          "rank": 1,
+          "perturbation": 50,
+          "lowerValue": 150,
+          "upperValue": 250,
+          "lowerContributionMinor": -52800,
+          "upperContributionMinor": -88000,
+          "deltaLowerMinor": 17600,
+          "deltaUpperMinor": -17600,
+          "impactScoreMinor": 17600
+        },
+        {
+          "driver": "costVariancePercent",
+          "rank": 2,
+          "perturbation": "10",
+          "lowerValue": "-10",
+          "upperValue": "10",
+          "lowerContributionMinor": -57400,
+          "upperContributionMinor": -83400,
+          "deltaLowerMinor": 13000,
+          "deltaUpperMinor": -13000,
+          "impactScoreMinor": 13000
+        }
+      ],
+      "derivation": "List price $5.00 fixed_60 royalty = 300 cents. Print cost 300 pages = 100 + (300-24)*2 = 100 + 552 = 652 cents. Unit contrib = 300 - 652 = -352 cents. At 200 units, baseline = 200 * -352 = -70,400 cents (-$704.00). Units pert 50: lower 150 units -> 150 * -352 = -52,800 cents (delta +17,600); upper 250 units -> 250 * -352 = -88,000 cents (delta -17,600). Impact = 17,600. Cost variance pert 10%: lower -10% cost = 652 * 0.90 = 586.8 -> 587c, unit = 300 - 587 = -287c, total = 200 * -287 = -57,400 (delta +13,000); upper +10% cost = 652 * 1.10 = 717.2 -> 717c, unit = 300 - 717 = -417c, total = 200 * -417 = -83,400 (delta -13,000). Impact = 13,000. Ranking: units (rank 1), costVariancePercent (rank 2)."
+    },
+    {
+      "id": "golden_sens_paperback_v1_10_price_and_cost",
+      "description": "Paperback US v1 $12.00 list price with price and cost variance drivers",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "1.0.0"
+      },
+      "input": {
+        "baseline": {
+          "scenarioName": "base",
+          "units": 300,
+          "listPriceMinor": 1200,
+          "costVariancePercent": "0",
+          "currency": "USD",
+          "format": "paperback",
+          "pages": 150
+        },
+        "drivers": [
+          {
+            "driver": "listPriceMinor",
+            "perturbation": 200
+          },
+          {
+            "driver": "costVariancePercent",
+            "perturbation": "25"
+          }
+        ]
+      },
+      "expectedBaselineContributionMinor": 110400,
+      "expectedRankedDrivers": [
+        {
+          "driver": "listPriceMinor",
+          "rank": 1,
+          "perturbation": 200,
+          "lowerValue": 1000,
+          "upperValue": 1400,
+          "lowerContributionMinor": 74400,
+          "upperContributionMinor": 146400,
+          "deltaLowerMinor": -36000,
+          "deltaUpperMinor": 36000,
+          "impactScoreMinor": 36000
+        },
+        {
+          "driver": "costVariancePercent",
+          "rank": 2,
+          "perturbation": "25",
+          "lowerValue": "-25",
+          "upperValue": "25",
+          "lowerContributionMinor": 136800,
+          "upperContributionMinor": 84000,
+          "deltaLowerMinor": 26400,
+          "deltaUpperMinor": -26400,
+          "impactScoreMinor": 26400
+        }
+      ],
+      "derivation": "Royalty at $12.00 = 720 cents. Print cost 150 pages = 100 + 126 * 2 = 352 cents. Unit contrib = 720 - 352 = 368 cents. Baseline 300 * 368 = 110,400 cents. Price pert 200 ($2.00): lower $10.00 roy = 600, unit = 248, total = 300 * 248 = 74,400 (delta -36,000); upper $14.00 roy = 840, unit = 488, total = 300 * 488 = 146,400 (delta +36,000), impact 36,000. Cost variance pert 25%: lower -25% cost = 352 * 0.75 = 264c, unit = 720 - 264 = 456c, total = 300 * 456 = 136,800 (delta +26,400); upper +25% cost = 352 * 1.25 = 440c, unit = 720 - 440 = 280c, total = 300 * 280 = 84,000 (delta -26,400), impact 26,400. Ranking: listPriceMinor (rank 1), costVariancePercent (rank 2)."
+    },
+    {
+      "id": "golden_sens_paperback_v1_11_tied_impact",
+      "description": "Paperback US v1 tuned exact tie between listPriceMinor and units impact scores (30,000 minor units each)",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "1.0.0"
+      },
+      "input": {
+        "baseline": {
+          "scenarioName": "base",
+          "units": 500,
+          "listPriceMinor": 1087,
+          "costVariancePercent": "0",
+          "currency": "USD",
+          "format": "paperback",
+          "pages": 150
+        },
+        "drivers": [
+          {
+            "driver": "units",
+            "perturbation": 100
+          },
+          {
+            "driver": "listPriceMinor",
+            "perturbation": 100
+          }
+        ]
+      },
+      "expectedBaselineContributionMinor": 150000,
+      "expectedRankedDrivers": [
+        {
+          "driver": "listPriceMinor",
+          "rank": 1,
+          "perturbation": 100,
+          "lowerValue": 987,
+          "upperValue": 1187,
+          "lowerContributionMinor": 120000,
+          "upperContributionMinor": 180000,
+          "deltaLowerMinor": -30000,
+          "deltaUpperMinor": 30000,
+          "impactScoreMinor": 30000
+        },
+        {
+          "driver": "units",
+          "rank": 2,
+          "perturbation": 100,
+          "lowerValue": 400,
+          "upperValue": 600,
+          "lowerContributionMinor": 120000,
+          "upperContributionMinor": 180000,
+          "deltaLowerMinor": -30000,
+          "deltaUpperMinor": 30000,
+          "impactScoreMinor": 30000
+        }
+      ],
+      "derivation": "Baseline $10.87 fixed_60 royalty: 1087 * 0.60 = 652.2 -> 652 cents under round_half_even. Print cost 150 pages = 352 cents. Unit contrib = 652 - 352 = 300 cents. At 500 units, baseline = 150,000 cents. Price pert 100 ($1.00): lower $9.87 roy = 592.2 -> 592c, unit = 592 - 352 = 240c, total 500 * 240 = 120,000 (delta -30,000); upper $11.87 roy = 712.2 -> 712c, unit = 712 - 352 = 360c, total 500 * 360 = 180,000 (delta +30,000), impact = 30,000. Units pert 100: lower 400 * 300 = 120,000 (delta -30,000); upper 600 * 300 = 180,000 (delta +30,000), impact = 30,000. Exactly tied at 30,000. Code point tie-break: 'listPriceMinor' < 'units'. Rank 1: listPriceMinor, Rank 2: units."
+    },
+    {
+      "id": "golden_sens_paperback_v2_12_standard",
+      "description": "Paperback US v2 (successor 120c base cost) with all 3 drivers",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "2.0.0"
+      },
+      "input": {
+        "baseline": {
+          "scenarioName": "base",
+          "units": 500,
+          "listPriceMinor": 1500,
+          "costVariancePercent": "0",
+          "currency": "USD",
+          "format": "paperback",
+          "pages": 200
+        },
+        "drivers": [
+          {
+            "driver": "units",
+            "perturbation": 100
+          },
+          {
+            "driver": "listPriceMinor",
+            "perturbation": 200
+          },
+          {
+            "driver": "costVariancePercent",
+            "perturbation": "10"
+          }
+        ]
+      },
+      "expectedBaselineContributionMinor": 214000,
+      "expectedRankedDrivers": [
+        {
+          "driver": "listPriceMinor",
+          "rank": 1,
+          "perturbation": 200,
+          "lowerValue": 1300,
+          "upperValue": 1700,
+          "lowerContributionMinor": 154000,
+          "upperContributionMinor": 274000,
+          "deltaLowerMinor": -60000,
+          "deltaUpperMinor": 60000,
+          "impactScoreMinor": 60000
+        },
+        {
+          "driver": "units",
+          "rank": 2,
+          "perturbation": 100,
+          "lowerValue": 400,
+          "upperValue": 600,
+          "lowerContributionMinor": 171200,
+          "upperContributionMinor": 256800,
+          "deltaLowerMinor": -42800,
+          "deltaUpperMinor": 42800,
+          "impactScoreMinor": 42800
+        },
+        {
+          "driver": "costVariancePercent",
+          "rank": 3,
+          "perturbation": "10",
+          "lowerValue": "-10",
+          "upperValue": "10",
+          "lowerContributionMinor": 237500,
+          "upperContributionMinor": 190500,
+          "deltaLowerMinor": 23500,
+          "deltaUpperMinor": -23500,
+          "impactScoreMinor": 23500
+        }
+      ],
+      "derivation": "Paperback v2 base cost is 120 cents. Print cost 200 pages = 120 + 352 = 472 cents. Royalty $15.00 = 900 cents. Unit contrib = 900 - 472 = 428 cents. Baseline 500 * 428 = 214,000 cents. Price pert 200: lower $13.00 roy = 780, unit = 308, total = 154,000 (delta -60,000); upper $17.00 roy = 1020, unit = 548, total = 274,000 (delta +60,000), impact 60,000. Units pert 100: lower 400 * 428 = 171,200 (delta -42,800); upper 600 * 428 = 256,800 (delta +42,800), impact 42,800. Cost variance pert 10%: lower -10% cost = 472 * 0.90 = 424.8 -> 425c, unit = 475c, total = 237,500 (delta +23,500); upper +10% cost = 472 * 1.10 = 519.2 -> 519c, unit = 381c, total = 190,500 (delta -23,500), impact 23,500. Ranking: listPriceMinor (rank 1), units (rank 2), costVariancePercent (rank 3)."
+    },
+    {
+      "id": "golden_sens_paperback_v2_13_units_only",
+      "description": "Paperback US v2 single driver units analysis with 150 unit perturbation",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "2.0.0"
+      },
+      "input": {
+        "baseline": {
+          "scenarioName": "base",
+          "units": 600,
+          "listPriceMinor": 1000,
+          "costVariancePercent": "0",
+          "currency": "USD",
+          "format": "paperback",
+          "pages": 100
+        },
+        "drivers": [
+          {
+            "driver": "units",
+            "perturbation": 150
+          }
+        ]
+      },
+      "expectedBaselineContributionMinor": 196800,
+      "expectedRankedDrivers": [
+        {
+          "driver": "units",
+          "rank": 1,
+          "perturbation": 150,
+          "lowerValue": 450,
+          "upperValue": 750,
+          "lowerContributionMinor": 147600,
+          "upperContributionMinor": 246000,
+          "deltaLowerMinor": -49200,
+          "deltaUpperMinor": 49200,
+          "impactScoreMinor": 49200
+        }
+      ],
+      "derivation": "Print cost 100 pages: 120 + 76 * 2 = 272 cents. Royalty $10.00 = 600 cents. Unit contrib = 600 - 272 = 328 cents. Baseline 600 * 328 = 196,800 cents. Units pert 150: lower 450 * 328 = 147,600 (delta -49,200); upper 750 * 328 = 246,000 (delta +49,200). Impact = 49,200. Rank = 1."
+    },
+    {
+      "id": "golden_sens_paperback_v2_14_price_only",
+      "description": "Paperback US v2 single driver listPriceMinor analysis",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "2.0.0"
+      },
+      "input": {
+        "baseline": {
+          "scenarioName": "base",
+          "units": 400,
+          "listPriceMinor": 1400,
+          "costVariancePercent": "0",
+          "currency": "USD",
+          "format": "paperback",
+          "pages": 120
+        },
+        "drivers": [
+          {
+            "driver": "listPriceMinor",
+            "perturbation": 300
+          }
+        ]
+      },
+      "expectedBaselineContributionMinor": 211200,
+      "expectedRankedDrivers": [
+        {
+          "driver": "listPriceMinor",
+          "rank": 1,
+          "perturbation": 300,
+          "lowerValue": 1100,
+          "upperValue": 1700,
+          "lowerContributionMinor": 139200,
+          "upperContributionMinor": 283200,
+          "deltaLowerMinor": -72000,
+          "deltaUpperMinor": 72000,
+          "impactScoreMinor": 72000
+        }
+      ],
+      "derivation": "Print cost 120 pages: 120 + 96 * 2 = 312 cents. Royalty $14.00 = 840 cents. Unit contrib = 840 - 312 = 528 cents. Baseline 400 * 528 = 211,200 cents. Price pert 300 ($3.00): lower $11.00 roy = 660, unit = 348, total = 400 * 348 = 139,200 (delta -72,000); upper $17.00 roy = 1020, unit = 708, total = 400 * 708 = 283,200 (delta +72,000). Impact = 72,000. Rank = 1."
+    },
+    {
+      "id": "golden_sens_hardcover_global_15_standard",
+      "description": "Hardcover Global EUR under round_down and per_total with all 3 drivers",
+      "rulePackRef": {
+        "packKey": "TEST_HARDCOVER_GLOBAL",
+        "version": "1.0.0"
+      },
+      "input": {
+        "baseline": {
+          "scenarioName": "base",
+          "units": 200,
+          "listPriceMinor": 3000,
+          "costVariancePercent": "0",
+          "currency": "EUR",
+          "format": "hardcover",
+          "pages": 100
+        },
+        "drivers": [
+          {
+            "driver": "units",
+            "perturbation": 50
+          },
+          {
+            "driver": "listPriceMinor",
+            "perturbation": 500
+          },
+          {
+            "driver": "costVariancePercent",
+            "perturbation": "5"
+          }
+        ]
+      },
+      "expectedBaselineContributionMinor": 165000,
+      "expectedRankedDrivers": [
+        {
+          "driver": "listPriceMinor",
+          "rank": 1,
+          "perturbation": 500,
+          "lowerValue": 2500,
+          "upperValue": 3500,
+          "lowerContributionMinor": 115000,
+          "upperContributionMinor": 215000,
+          "deltaLowerMinor": -50000,
+          "deltaUpperMinor": 50000,
+          "impactScoreMinor": 50000
+        },
+        {
+          "driver": "units",
+          "rank": 2,
+          "perturbation": 50,
+          "lowerValue": 150,
+          "upperValue": 250,
+          "lowerContributionMinor": 123750,
+          "upperContributionMinor": 206250,
+          "deltaLowerMinor": -41250,
+          "deltaUpperMinor": 41250,
+          "impactScoreMinor": 41250
+        },
+        {
+          "driver": "costVariancePercent",
+          "rank": 3,
+          "perturbation": "5",
+          "lowerValue": "-5",
+          "upperValue": "5",
+          "lowerContributionMinor": 171750,
+          "upperContributionMinor": 158250,
+          "deltaLowerMinor": 6750,
+          "deltaUpperMinor": -6750,
+          "impactScoreMinor": 6750
+        }
+      ],
+      "derivation": "Under per_total with round_down: Baseline 200 units, EUR 30.00: roy = 200 * 1500 = 300,000c, cost = 200 * 675 = 135,000c, contrib = 165,000 cents. Price pert 500 (EUR 5.00): lower 2500 -> roy = 200 * 1250 = 250,000c, cost = 135,000c, contrib = 115,000 (delta -50,000); upper 3500 -> roy = 200 * 1750 = 350,000c, cost = 135,000c, contrib = 215,000 (delta +50,000), impact 50,000. Units pert 50: lower 150 units -> roy = 150 * 1500 = 225,000, cost = 150 * 675 = 101,250, contrib = 123,750 (delta -41,250); upper 250 units -> roy = 250 * 1500 = 375,000, cost = 250 * 675 = 168,750, contrib = 206,250 (delta +41,250), impact 41,250. Cost variance pert 5%: lower -5% -> cost = 200 * (675 * 0.95) = 128,250c, contrib = 171,750 (delta +6,750); upper +5% -> cost = 200 * (675 * 1.05) = 141,750c, contrib = 158,250 (delta -6,750), impact 6,750. Ranking: listPriceMinor (rank 1), units (rank 2), costVariancePercent (rank 3)."
+    },
+    {
+      "id": "golden_sens_hardcover_global_16_units_only",
+      "description": "Hardcover Global EUR single driver units analysis under per_total",
+      "rulePackRef": {
+        "packKey": "TEST_HARDCOVER_GLOBAL",
+        "version": "1.0.0"
+      },
+      "input": {
+        "baseline": {
+          "scenarioName": "base",
+          "units": 300,
+          "listPriceMinor": 2400,
+          "costVariancePercent": "0",
+          "currency": "EUR",
+          "format": "hardcover",
+          "pages": 75
+        },
+        "drivers": [
+          {
+            "driver": "units",
+            "perturbation": 100
+          }
+        ]
+      },
+      "expectedBaselineContributionMinor": 180000,
+      "expectedRankedDrivers": [
+        {
+          "driver": "units",
+          "rank": 1,
+          "perturbation": 100,
+          "lowerValue": 200,
+          "upperValue": 400,
+          "lowerContributionMinor": 120000,
+          "upperContributionMinor": 240000,
+          "deltaLowerMinor": -60000,
+          "deltaUpperMinor": 60000,
+          "impactScoreMinor": 60000
+        }
+      ],
+      "derivation": "Pages = 75 (threshold, 0 excess pages) -> print cost = 600 cents. Royalty EUR 24.00 = 1200 cents. Unit contrib = 1200 - 600 = 600 cents. Baseline 300 * 600 = 180,000 cents. Units pert 100: lower 200 * 600 = 120,000 (delta -60,000); upper 400 * 600 = 240,000 (delta +60,000). Impact = 60,000. Rank = 1."
+    },
+    {
+      "id": "golden_sens_hardcover_global_17_price_only",
+      "description": "Hardcover Global EUR single driver listPriceMinor analysis",
+      "rulePackRef": {
+        "packKey": "TEST_HARDCOVER_GLOBAL",
+        "version": "1.0.0"
+      },
+      "input": {
+        "baseline": {
+          "scenarioName": "base",
+          "units": 150,
+          "listPriceMinor": 2800,
+          "costVariancePercent": "0",
+          "currency": "EUR",
+          "format": "hardcover",
+          "pages": 85
+        },
+        "drivers": [
+          {
+            "driver": "listPriceMinor",
+            "perturbation": 400
+          }
+        ]
+      },
+      "expectedBaselineContributionMinor": 115500,
+      "expectedRankedDrivers": [
+        {
+          "driver": "listPriceMinor",
+          "rank": 1,
+          "perturbation": 400,
+          "lowerValue": 2400,
+          "upperValue": 3200,
+          "lowerContributionMinor": 85500,
+          "upperContributionMinor": 145500,
+          "deltaLowerMinor": -30000,
+          "deltaUpperMinor": 30000,
+          "impactScoreMinor": 30000
+        }
+      ],
+      "derivation": "Pages = 85 (10 excess pages) -> print cost = 600 + 30 = 630 cents. List price 2800 -> roy = 1400. Unit contrib = 1400 - 630 = 770 cents. Baseline 150 * 770 = 115,500 cents. Price pert 400 (EUR 4.00): lower 2400 roy = 1200, unit = 570, total 150 * 570 = 85,500 (delta -30,000); upper 3200 roy = 1600, unit = 970, total 150 * 970 = 145,500 (delta +30,000). Impact = 30,000. Rank = 1."
+    },
+    {
+      "id": "golden_sens_hardcover_global_18_fractional_per_total",
+      "description": "Hardcover Global EUR per_total aggregation with fractional cost variance and round_down truncation",
+      "rulePackRef": {
+        "packKey": "TEST_HARDCOVER_GLOBAL",
+        "version": "1.0.0"
+      },
+      "input": {
+        "baseline": {
+          "scenarioName": "base",
+          "units": 100,
+          "listPriceMinor": 2500,
+          "costVariancePercent": "0",
+          "currency": "EUR",
+          "format": "hardcover",
+          "pages": 100
+        },
+        "drivers": [
+          {
+            "driver": "costVariancePercent",
+            "perturbation": "7.5"
+          },
+          {
+            "driver": "units",
+            "perturbation": 20
+          }
+        ]
+      },
+      "expectedBaselineContributionMinor": 57500,
+      "expectedRankedDrivers": [
+        {
+          "driver": "units",
+          "rank": 1,
+          "perturbation": 20,
+          "lowerValue": 80,
+          "upperValue": 120,
+          "lowerContributionMinor": 46000,
+          "upperContributionMinor": 69000,
+          "deltaLowerMinor": -11500,
+          "deltaUpperMinor": 11500,
+          "impactScoreMinor": 11500
+        },
+        {
+          "driver": "costVariancePercent",
+          "rank": 2,
+          "perturbation": "7.5",
+          "lowerValue": "-7.5",
+          "upperValue": "7.5",
+          "lowerContributionMinor": 62563,
+          "upperContributionMinor": 52438,
+          "deltaLowerMinor": 5063,
+          "deltaUpperMinor": -5062,
+          "impactScoreMinor": 5063
+        }
+      ],
+      "derivation": "Under per_total round_down: Baseline 100 units, EUR 25.00 (royalty 1250c, cost 675c). Total roy = 125,000c, total cost = 67,500c, contrib = 57,500 cents. Units pert 20: lower 80 units -> roy = 100,000, cost = 54,000, contrib = 46,000 (delta -11,500); upper 120 units -> roy = 150,000, cost = 81,000, contrib = 69,000 (delta +11,500), impact = 11,500. Cost variance pert 7.5%: lower -7.5% -> exact cost = 100 * (675 * 0.925) = 62,437.5 -> round_down truncates to 62,437c, contrib = 125,000 - 62,437 = 62,563 (delta +5,063); upper +7.5% -> exact cost = 100 * (675 * 1.075) = 72,562.5 -> round_down truncates to 72,562c, contrib = 125,000 - 72,562 = 52,438 (delta -5,062). Impact = max(5063, 5062) = 5,063. Ranking: units (rank 1), costVariancePercent (rank 2)."
+    },
+    {
+      "id": "golden_sens_ebook_19_asymmetric_deltas",
+      "description": "Ebook list price upper perturbation crosses into 35% tier yielding asymmetric negative deltas",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "input": {
+        "baseline": {
+          "scenarioName": "base",
+          "units": 100,
+          "listPriceMinor": 950,
+          "costVariancePercent": "0",
+          "currency": "USD",
+          "format": "ebook",
+          "fileSizeMb": "1"
+        },
+        "drivers": [
+          {
+            "driver": "listPriceMinor",
+            "perturbation": 100
+          },
+          {
+            "driver": "units",
+            "perturbation": 20
+          }
+        ]
+      },
+      "expectedBaselineContributionMinor": 65000,
+      "expectedRankedDrivers": [
+        {
+          "driver": "listPriceMinor",
+          "rank": 1,
+          "perturbation": 100,
+          "lowerValue": 850,
+          "upperValue": 1050,
+          "lowerContributionMinor": 58000,
+          "upperContributionMinor": 35300,
+          "deltaLowerMinor": -7000,
+          "deltaUpperMinor": -29700,
+          "impactScoreMinor": 29700
+        },
+        {
+          "driver": "units",
+          "rank": 2,
+          "perturbation": 20,
+          "lowerValue": 80,
+          "upperValue": 120,
+          "lowerContributionMinor": 52000,
+          "upperContributionMinor": 78000,
+          "deltaLowerMinor": -13000,
+          "deltaUpperMinor": 13000,
+          "impactScoreMinor": 13000
+        }
+      ],
+      "derivation": "Baseline $9.50 (70%): roy 665, cost 15, unit contrib 650c. At 100 units, baseline = 65,000 cents. Price pert 100: lower $8.50 (70%) roy 595, cost 15, unit 580, total 58,000c (delta -7,000); upper $10.50 drops into standard_high (35% tier!) roy = round(1050 * 0.35) = 368c, cost 15, unit 353, total 35,300c (delta -29,700). Notice deltaUpper is negative because the tier royalty rate drops from 70% to 35%! Impact score = max(|-7,000|, |-29,700|) = 29,700. Units pert 20: lower 80 * 650 = 52,000 (delta -13,000); upper 120 * 650 = 78,000 (delta +13,000), impact 13,000. Ranking: listPriceMinor (rank 1), units (rank 2)."
+    },
+    {
+      "id": "golden_sens_paperback_v2_20_cost_domination",
+      "description": "Paperback US v2 extreme 50% cost variance perturbation dominating unit perturbation",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "2.0.0"
+      },
+      "input": {
+        "baseline": {
+          "scenarioName": "base",
+          "units": 400,
+          "listPriceMinor": 1200,
+          "costVariancePercent": "0",
+          "currency": "USD",
+          "format": "paperback",
+          "pages": 200
+        },
+        "drivers": [
+          {
+            "driver": "units",
+            "perturbation": 25
+          },
+          {
+            "driver": "costVariancePercent",
+            "perturbation": "50"
+          }
+        ]
+      },
+      "expectedBaselineContributionMinor": 99200,
+      "expectedRankedDrivers": [
+        {
+          "driver": "costVariancePercent",
+          "rank": 1,
+          "perturbation": "50",
+          "lowerValue": "-50",
+          "upperValue": "50",
+          "lowerContributionMinor": 193600,
+          "upperContributionMinor": 4800,
+          "deltaLowerMinor": 94400,
+          "deltaUpperMinor": -94400,
+          "impactScoreMinor": 94400
+        },
+        {
+          "driver": "units",
+          "rank": 2,
+          "perturbation": 25,
+          "lowerValue": 375,
+          "upperValue": 425,
+          "lowerContributionMinor": 93000,
+          "upperContributionMinor": 105400,
+          "deltaLowerMinor": -6200,
+          "deltaUpperMinor": 6200,
+          "impactScoreMinor": 6200
+        }
+      ],
+      "derivation": "Paperback v2 print cost 200 pages = 120 + 352 = 472 cents. Royalty $12.00 = 720 cents. Unit contrib = 720 - 472 = 248 cents. Baseline 400 * 248 = 99,200 cents. Cost variance pert 50%: lower -50% cost = 472 * 0.50 = 236c, unit = 720 - 236 = 484c, total = 400 * 484 = 193,600 (delta +94,400); upper +50% cost = 472 * 1.50 = 708c, unit = 720 - 708 = 12c, total = 400 * 12 = 4,800 (delta -94,400). Impact score = 94,400. Units pert 25: lower 375 * 248 = 93,000 (delta -6,200); upper 425 * 248 = 105,400 (delta +6,200). Impact = 6,200. Ranking: costVariancePercent (rank 1), units (rank 2)."
+    },
+    {
+      "id": "golden_sens_paperback_v1_21_three_way_tie",
+      "description": "Paperback US v1 three-way tie at 0 impact when units = 0 (units perturbation omitted, price and cost pert yield 0 impact)",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "1.0.0"
+      },
+      "input": {
+        "baseline": {
+          "scenarioName": "base",
+          "units": 0,
+          "listPriceMinor": 1000,
+          "costVariancePercent": "0",
+          "currency": "USD",
+          "format": "paperback",
+          "pages": 100
+        },
+        "drivers": [
+          {
+            "driver": "listPriceMinor",
+            "perturbation": 200
+          },
+          {
+            "driver": "costVariancePercent",
+            "perturbation": "20"
+          }
+        ]
+      },
+      "expectedBaselineContributionMinor": 0,
+      "expectedRankedDrivers": [
+        {
+          "driver": "costVariancePercent",
+          "rank": 1,
+          "perturbation": "20",
+          "lowerValue": "-20",
+          "upperValue": "20",
+          "lowerContributionMinor": 0,
+          "upperContributionMinor": 0,
+          "deltaLowerMinor": 0,
+          "deltaUpperMinor": 0,
+          "impactScoreMinor": 0
+        },
+        {
+          "driver": "listPriceMinor",
+          "rank": 2,
+          "perturbation": 200,
+          "lowerValue": 800,
+          "upperValue": 1200,
+          "lowerContributionMinor": 0,
+          "upperContributionMinor": 0,
+          "deltaLowerMinor": 0,
+          "deltaUpperMinor": 0,
+          "impactScoreMinor": 0
+        }
+      ],
+      "derivation": "At units = 0, total net contribution is 0. Both list price and cost variance perturbations at 0 units yield 0 total net contribution, so deltaLower = 0, deltaUpper = 0, and impactScoreMinor = 0 for both drivers. Tied impact score 0 is broken deterministically by UTF-16 code point order: 'costVariancePercent' < 'listPriceMinor'. Rank 1: costVariancePercent, Rank 2: listPriceMinor."
+    }
+  ]
+}

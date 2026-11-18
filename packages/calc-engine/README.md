@@ -2,7 +2,7 @@
 
 `@nimphy/calc-engine` is the pure, deterministic financial calculation engine for Nimphy (Module M-02).
 
-It encapsulates exact rational arithmetic, per-unit economics (STEP-005), multi-unit scenario totals (STEP-006), and break-even analysis (STEP-007) for book self-publishing royalties and costs across formats (`ebook`, `paperback`, `hardcover`).
+It encapsulates exact rational arithmetic, per-unit economics (STEP-005), multi-unit scenario totals (STEP-006), break-even analysis (STEP-007), and deterministic sensitivity analysis (STEP-008) for book self-publishing royalties and costs across formats (`ebook`, `paperback`, `hardcover`).
 
 ---
 
@@ -202,10 +202,97 @@ The API model is a discriminated union on `reachable`. When `reachable === false
 
 ---
 
+## Sensitivity Analysis Engine (STEP-008)
+
+The sensitivity analysis engine implements FR-008 to perform deterministic, reproducible one-at-a-time perturbations on declared scenario drivers, evaluating financial impact on total scenario net contribution and ranking drivers deterministically.
+
+### Declared Sensitivity Drivers
+
+In conformance with FR-006 and the accepted scenario modeling contracts, sensitivity drivers are strictly limited to the declared allow-list:
+
+| Driver                | Perturbation Representation   | Semantic Meaning                                                     |
+| --------------------- | ----------------------------- | -------------------------------------------------------------------- |
+| `units`               | Positive safe integer         | Unit sales perturbation (e.g. `100` units)                           |
+| `listPriceMinor`      | Positive safe integer         | Retail list price perturbation in minor units (e.g. `200` for $2.00) |
+| `costVariancePercent` | Positive exact decimal string | Production cost variance in percentage points (e.g. `"10"`, `"7.5"`) |
+
+All perturbations must be strictly positive and valid. Decimal strings for `costVariancePercent` are parsed using exact `Rational` arithmetic without floating-point conversion. Unrecognized or unsupported drivers are rejected with `CalcInputValidationError`.
+
+### One-at-a-Time Perturbation Model
+
+For each declared driver $D_i$ with configured perturbation $\Delta_i$:
+
+1. The baseline scenario is evaluated via `calculateSingleScenario`.
+2. A lower scenario is created with $D_i^- = D_i - \Delta_i$, holding all other parameters constant.
+3. An upper scenario is created with $D_i^+ = D_i + \Delta_i$, holding all other parameters constant.
+4. Both perturbed scenarios are evaluated through `calculateSingleScenario` under the applicable Rule Pack.
+
+$$\text{Lower Input}: D_i^- = D_i - \Delta_i, \quad \text{Upper Input}: D_i^+ = D_i + \Delta_i$$
+
+### Strict Boundary Behavior (No Silent Clamping)
+
+The engine never silently clamps perturbed values to Rule Pack limits or arbitrary bounds:
+
+- If $D_{\text{units}} - \Delta_{\text{units}} < 0$, the calculation fails explicitly with `CalcInputValidationError` (`UNITS_OUT_OF_BOUNDS`).
+- If $D_{\text{price}} - \Delta_{\text{price}} < \text{minListPriceMinor}$, the calculation fails explicitly with `CalcInputValidationError` (`PRICE_OUT_OF_BOUNDS`).
+- If $D_{\text{costVar}} - \Delta_{\text{costVar}} < -100\%$, the calculation fails explicitly with `CalcInputValidationError` (`COST_VARIANCE_INVALID`).
+- If any perturbed value or aggregate amount exceeds safe integer limits, it fails explicitly with `CalcOverflowError`.
+
+### Primary Sensitivity Metric & Absolute Impact Score
+
+The primary ranking metric is **total scenario net contribution** (in integer minor units).
+
+For each driver $i$, the engine records:
+
+- Baseline net contribution: $\text{Contribution}_{base}$
+- Lower-perturbation net contribution: $\text{Contribution}_i^-$
+- Upper-perturbation net contribution: $\text{Contribution}_i^+$
+- Lower delta: $\Delta_i^- = \text{Contribution}_i^- - \text{Contribution}_{base}$
+- Upper delta: $\Delta_i^+ = \text{Contribution}_i^+ - \text{Contribution}_{base}$
+
+The **absolute impact score** $I_i$ is defined as the maximum absolute deviation from baseline:
+
+$$I_i = \max\left( |\Delta_i^-|, |\Delta_i^+| \right) = \max\left( |\text{Contribution}_i^- - \text{Contribution}_{base}|, |\text{Contribution}_i^+ - \text{Contribution}_{base}| \right)$$
+
+The score represents impact at the explicitly configured perturbation sizes. It is not normalized elasticity.
+
+Gross retail revenue is recorded as an auxiliary output, but ranking is strictly governed by total net contribution.
+
+### Deterministic Ranking and Tie-Breaking
+
+Drivers are ranked using a total ordering rule:
+
+1. **Impact Score, Descending:** The driver with the largest impact score $I_i$ receives the highest rank (Rank 1).
+2. **Stable Identifier, Ascending (Tie-Break):** If two or more drivers have identical impact scores, ties are broken deterministically by driver identifier name using lexicographical UTF-16 code-point comparison (`costVariancePercent` < `listPriceMinor` < `units`).
+
+Input declaration order never acts as an implicit tie-breaker. Sorting is stable and independent of declaration order.
+
+### Audit Traceability & Determinism
+
+Every sensitivity run produces a structured `SensitivityCalculationTrace` containing:
+
+- Baseline scenario trace and unperturbed parameters.
+- Rule Pack reference and cryptographic `contentHash`.
+- Engine version (`0.1.0`).
+- Declared drivers, perturbation sizes, lower and upper effective values.
+- Unchanged inputs shared across perturbations.
+- Embedded lower and upper scenario calculation traces.
+- Recorded ranking decisions and tie-break status.
+- Zero timestamps, zero UUIDs, zero random numbers.
+
+Canonical JSON serialization produces identical output across all environments.
+
+---
+
 ## Public API Reference
 
 ```typescript
 import {
+  // Sensitivity analysis calculation (STEP-008)
+  calculateSensitivity,
+  SUPPORTED_SENSITIVITY_DRIVERS,
+  isSensitivityDriver,
+
   // Break-even economics calculation (STEP-007)
   calculateBreakEven,
 
@@ -229,7 +316,43 @@ import {
 } from '@nimphy/calc-engine';
 ```
 
-### 1. `calculateBreakEven(input, rulePack)`
+### 1. `calculateSensitivity(input, rulePack)`
+
+Performs deterministic sensitivity analysis with one-at-a-time perturbations and ranked results.
+
+```typescript
+const result = calculateSensitivity(
+  {
+    baseline: {
+      units: 500,
+      listPriceMinor: 1500, // $15.00
+      costVariancePercent: '0',
+      currency: 'USD',
+      format: 'paperback',
+      pages: 200,
+    },
+    drivers: [
+      { driver: 'units', perturbation: 100 },
+      { driver: 'listPriceMinor', perturbation: 200 }, // $2.00
+      { driver: 'costVariancePercent', perturbation: '10' }, // 10%
+    ],
+  },
+  paperbackRulePack,
+);
+
+console.log(result.baseline.netContribution.amountMinor); // 224000 ($2,240.00)
+console.log(result.rankedDrivers[0].driver); // 'listPriceMinor'
+console.log(result.rankedDrivers[0].rank); // 1
+console.log(result.rankedDrivers[0].impactScore.amountMinor); // 60000 ($600.00)
+console.log(result.rankedDrivers[1].driver); // 'units'
+console.log(result.rankedDrivers[1].rank); // 2
+console.log(result.rankedDrivers[1].impactScore.amountMinor); // 44800 ($448.00)
+console.log(result.rankedDrivers[2].driver); // 'costVariancePercent'
+console.log(result.rankedDrivers[2].rank); // 3
+console.log(result.rankedDrivers[2].impactScore.amountMinor); // 22500 ($225.00)
+```
+
+### 2. `calculateBreakEven(input, rulePack)`
 
 Calculates deterministic break-even units and revenue for a specified fixed cost.
 
@@ -257,7 +380,7 @@ if (result.reachable) {
 }
 ```
 
-### 2. `calculateSingleScenario(input, rulePack)`
+### 3. `calculateSingleScenario(input, rulePack)`
 
 Calculates multi-unit totals and economics for an individual scenario.
 
@@ -284,7 +407,7 @@ console.log(result.isIllustrative); // true
 console.log(result.disclaimer); // 'Illustrative scenarios for planning purposes only; not guaranteed financial outcomes.'
 ```
 
-### 3. `calculateTriadScenarios(input, rulePack)`
+### 4. `calculateTriadScenarios(input, rulePack)`
 
 Calculates the complete triad of low, base, and high scenarios.
 
@@ -308,7 +431,7 @@ console.log(triad.totals.base.netContribution.amountMinor); // 73500
 console.log(triad.disclaimer); // SCENARIO_DISCLAIMER_TEXT
 ```
 
-### 4. `calculatePerUnitEconomics(input, rulePack)`
+### 5. `calculatePerUnitEconomics(input, rulePack)`
 
 Calculates per-unit economics (STEP-005) for a single copy.
 

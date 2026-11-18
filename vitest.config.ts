@@ -20,6 +20,7 @@ export default defineConfig({
         'packages/calc-engine/src/per-unit/types.ts',
         'packages/calc-engine/src/scenarios/types.ts',
         'packages/calc-engine/src/break-even/types.ts',
+        'packages/calc-engine/src/sensitivity/types.ts',
       ],
       thresholds: {
         statements: 95,

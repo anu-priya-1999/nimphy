@@ -12,6 +12,10 @@ import {
   evaluateScenarioOrdering,
   // Break-even economics calculation (STEP-007)
   calculateBreakEven,
+  // Sensitivity analysis calculation (STEP-008)
+  calculateSensitivity,
+  SUPPORTED_SENSITIVITY_DRIVERS,
+  isSensitivityDriver,
   // Per-unit economics calculation (STEP-005)
   calculatePerUnitEconomics,
   // Exact rational arithmetic
@@ -29,6 +33,7 @@ import {
   type TriadScenariosResult,
   type PerUnitEconomics,
   type BreakEvenResult,
+  type SensitivityResult,
 } from './index';
 
 describe('@nimphy/calc-engine Barrel Export & Public API', () => {
@@ -45,6 +50,7 @@ describe('@nimphy/calc-engine Barrel Export & Public API', () => {
     expect(typeof CalcEngine.calculateTriadScenarios).toBe('function');
     expect(typeof CalcEngine.evaluateScenarioOrdering).toBe('function');
     expect(typeof CalcEngine.calculateBreakEven).toBe('function');
+    expect(typeof CalcEngine.calculateSensitivity).toBe('function');
     expect(typeof CalcEngine.Rational).toBe('function');
 
     expect(typeof calculatePerUnitEconomics).toBe('function');
@@ -52,7 +58,10 @@ describe('@nimphy/calc-engine Barrel Export & Public API', () => {
     expect(typeof calculateTriadScenarios).toBe('function');
     expect(typeof evaluateScenarioOrdering).toBe('function');
     expect(typeof calculateBreakEven).toBe('function');
+    expect(typeof calculateSensitivity).toBe('function');
     expect(typeof Rational).toBe('function');
+    expect(Array.isArray(SUPPORTED_SENSITIVITY_DRIVERS)).toBe(true);
+    expect(typeof isSensitivityDriver).toBe('function');
   });
 
   it('exports all typed calculation engine error classes', () => {
@@ -214,6 +223,52 @@ describe('README Public API Compile-Time & Runtime Verification', () => {
       const reason: string = result.unreachableReason;
       expect(reason).toBeUndefined();
     }
+  });
+
+  it('statically typechecks and executes the exact Sensitivity Analysis README example', () => {
+    // Exact code snippet from packages/calc-engine/README.md Sensitivity Analysis section
+    const result: SensitivityResult = calculateSensitivity(
+      {
+        baseline: {
+          units: 500,
+          listPriceMinor: 1500, // $15.00
+          costVariancePercent: '0',
+          currency: 'USD',
+          format: 'paperback',
+          pages: 200,
+        },
+        drivers: [
+          { driver: 'units', perturbation: 100 },
+          { driver: 'listPriceMinor', perturbation: 200 }, // $2.00
+          { driver: 'costVariancePercent', perturbation: '10' }, // 10%
+        ],
+      },
+      paperbackRulePack,
+    );
+
+    // Static compile-time type verification of every property accessed in README
+    const baselineContributionMinor: number = result.baseline.netContribution.amountMinor;
+    const topDriver = result.rankedDrivers[0]!;
+    const secondDriver = result.rankedDrivers[1]!;
+    const thirdDriver = result.rankedDrivers[2]!;
+
+    expect(baselineContributionMinor).toBe(224000);
+    expect(topDriver.driver).toBe('listPriceMinor');
+    expect(topDriver.rank).toBe(1);
+    expect(topDriver.impactScore.amountMinor).toBe(60000);
+
+    expect(secondDriver.driver).toBe('units');
+    expect(secondDriver.rank).toBe(2);
+    expect(secondDriver.impactScore.amountMinor).toBe(44800);
+
+    expect(thirdDriver.driver).toBe('costVariancePercent');
+    expect(thirdDriver.rank).toBe(3);
+    expect(thirdDriver.impactScore.amountMinor).toBe(22500);
+
+    expect(result.isIllustrative).toBe(true);
+    expect(typeof result.disclaimer).toBe('string');
+    expect(result.rankingMetric).toBe('total_net_contribution');
+    expect(result.trace).toBeDefined();
   });
 
   it('statically typechecks exported calculation error classes and hierarchy', () => {
