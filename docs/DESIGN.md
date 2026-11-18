@@ -8,10 +8,10 @@ This document is the living record of the system state, architecture decisions, 
 
 - **Architecture Package Version:** 0.4.0
 - **Current Phase:** Phase 1 (Deterministic Core)
-- **Current Step:** STEP-006 (Engine: Scenarios and Totals)
-- **Actual Implementation Status:** Implementation Complete & Fully Verified; Awaiting Formal Owner Acceptance (Pure financial calculation engine in `packages/calc-engine` and domain types in `@nimphy/domain`; multi-unit scenario calculation engine and low/base/high totals modeling under FR-006 and accepted ADR-005; independent component rounding for `per_total` after multiplying exact rational fractions by quantity $Q$; already-rounded integer minor unit aggregation for `per_unit`; mathematical proof of divergence; exact decimal string contract `costVariancePercent?: string` with runtime validation rejecting JSON numbers and explicit null; cost variance scaling $M = 1 + \text{costVariancePercent}/100$ bounded $\ge -100\%$; corrected ADR-005 overflow protection preserving unaggregated per-unit rationals under `per_total` without premature safe integer rejection, validating rounded aggregate cost against safe-integer bounds, succeeding with zero aggregate cost when $Q = 0$, and retaining separate safe-integer checks for rounded per-unit Money and aggregate Money under `per_unit`; supporting overflow-safety and BigInt arithmetic corrections in `packages/calc-engine/src/per-unit/per-unit-calc.ts` (Check A rounded production-cost overflow validation, Check B integer production-cost overflow validation, Check C explicit BigInt net contribution subtraction with typed CalcOverflowError, removal of premature delivery cost check, and deferred Money construction under per_total); final monetary integrity audit establishing safe-integer protection across revenue, royalty, cost, and contribution for both per_unit and per_total with typed CalcOverflowError consistency; monotonic ordering evaluation with faithful reporting of user inputs; zero-unit sales boundary handling; illustrative scenario disclaimers; deterministic calculation trace with bit-for-bit canonical JSON replay; 25 independently hand-derived golden fixture cases across all 4 synthetic Rule Packs under `fixtures/calc-engine/golden-scenario-cases.json`; rounding verification across all 4 rounding modes for both `per_unit` and `per_total`; 535/535 Tests Passed across 36 test files, 100% Statements / 100% instrumented Branches / 100% Functions / 100% Lines coverage achieved in `packages/calc-engine` (1,369/1,369 stmts, 354/354 branches, 39/39 functions, 1,369/1,369 lines), 99.94% Statements (3,511/3,513) / 99.36% Branches (1,094/1,101) / 100% Functions (167/167) / 99.94% Lines (3,511/3,513) monorepo-wide; next step STEP-007 strictly unauthorized until explicit repository-owner instruction)
+- **Current Step:** STEP-007 (Engine: Break-Even)
+- **Actual Implementation Status:** Implementation Complete & Fully Verified; Awaiting Formal Owner Acceptance (Pure financial calculation engine in `packages/calc-engine`; deterministic break-even units and revenue calculation under FR-007 and accepted ADR-005; roadmap-mandated exact integer ceiling division $Q_{\text{be}} = \lceil \text{FixedCost} / \text{ExactUnitContribution} \rceil$ without floating-point arithmetic using native `BigInt` integer division and remainder; gross retail sales revenue at the whole-unit, formula-defined break-even threshold $\text{Revenue}_{\text{be}} = \text{listPriceMinor} \times Q_{\text{be}}$ consistent with the scenario aggregation engine's revenue calculation; explicit unreachable result contracts with typed discriminator `ZERO_CONTRIBUTION` and `NEGATIVE_CONTRIBUTION` omitting units and revenue; zero fixed-cost boundary handling yielding 0 units and $0 revenue for positive contribution while preserving unreachable status for zero or negative contribution; distinction maintained between formula-defined break-even quantity and the minimum quantity covering fixed cost under independently rounded aggregate ledger components (with documented rounding-mode under-coverage under `per_total` with `round_half_even` due to parity-dependent tie-breaking; `round_down` not classified as unsafe without independent counterexample); safe-integer overflow protection on both units and revenue via typed `CalcOverflowError`; deterministic calculation trace with bit-for-bit canonical JSON replay and deep immutability via `deepFreeze`; 21 independently hand-derived golden fixture cases across all 4 synthetic Rule Packs under `fixtures/calc-engine/golden-break-even-cases.json`; 589/589 Tests Passed across 39 test files, 256 tests in `packages/calc-engine` across 14 test files, 100% Statements / 100% instrumented Branches / 100% Functions / 100% Lines coverage achieved in `packages/calc-engine` (1,496/1,496 stmts, 394/394 branches, 40/40 functions, 1,496/1,496 lines), 99.94% Statements (3,778/3,780) / 99.40% Branches (1,154/1,161) / 100% Functions (168/168) / 99.94% Lines (3,778/3,780) monorepo-wide; next step STEP-008 strictly unauthorized until explicit repository-owner instruction)
 - **Strategic Alignment:** Long-term product vision, competitive differentiation, customer segmentation, 6-pillar capability framework, and repository alignment documented in [product-strategy.md](product-strategy.md) (Canonical Master Product Vision & Strategy).
-- **Next Proposed Step:** STEP-007 (Engine: break-even) — strictly unauthorized until explicit repository-owner review and written authorization.
+- **Next Proposed Step:** STEP-008 (Engine: sensitivity) — strictly unauthorized until explicit repository-owner review and written authorization.
 
 ---
 
@@ -52,7 +52,7 @@ All packages established as valid TypeScript workspaces. Dependency arrows point
 | Package Name              | Location               | Responsibility & Scope                                                               | Current Package Status                                                                                                                                                                                                                               |
 | ------------------------- | ---------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **`@nimphy/domain`**      | `packages/domain`      | Pure domain types, value objects, branded primitives, scenario contracts, errors     | **Complete & hardened; 0 workspace dependencies; 0 external dependencies; 167 tests across 10 test files; 100% Stmt / 100% Br / 100% Func / 100% Line Cov (903/903 stmts, 366/366 br)**                                                              |
-| **`@nimphy/calc-engine`** | `packages/calc-engine` | Pure financial calculation engine (P-01: zero I/O, zero AI, exact rational math)     | **Complete & hardened; depends only on `@nimphy/domain`; zero I/O, zero AI; 202 tests across 11 test files; 100% Stmt / 100% instrumented Br / 100% Func / 100% Line Cov (1,369/1,369 stmts, 354/354 branches, 39/39 functions, 1,369/1,369 lines)** |
+| **`@nimphy/calc-engine`** | `packages/calc-engine` | Pure financial calculation engine (P-01: zero I/O, zero AI, exact rational math)     | **Complete & hardened; depends only on `@nimphy/domain`; zero I/O, zero AI; 256 tests across 14 test files; 100% Stmt / 100% instrumented Br / 100% Func / 100% Line Cov (1,496/1,496 stmts, 394/394 branches, 40/40 functions, 1,496/1,496 lines)** |
 | **`@nimphy/rules`**       | `packages/rules`       | Rule Pack schema, synthetic loader, date-based selection, cryptographic content hash | **Complete & frozen v1 schema (hardened); depends only on `@nimphy/domain`; zero external deps; 106 tests across 10 test files; 99.84% Stmt / 98.16% Br / 100% Func / 99.84% Line Cov (1,239/1,241 stmts, 374/381 br)**                              |
 | **`@nimphy/ai`**          | `packages/ai`          | Narrative memo synthesis, provider ports, schema validation                          | Package stub; depends only on `@nimphy/domain`                                                                                                                                                                                                       |
 | **`@nimphy/documents`**   | `packages/documents`   | Dossier assembly and Markdown/PDF document generation                                | Package stub; depends only on `@nimphy/domain`                                                                                                                                                                                                       |
@@ -99,6 +99,7 @@ nimphy/
 ├── eslint.config.mjs                      # ESLint 10 direct flat configuration with local @nimphy plugin
 ├── fixtures/                              # Repository test fixtures
 │   ├── calc-engine/                       # Calculation engine test fixtures
+│   │   ├── golden-break-even-cases.json   # 21 hand-derived golden fixture cases for break-even economics
 │   │   ├── golden-per-unit-cases.json     # 32 hand-derived golden fixture cases for per-unit economics
 │   │   └── golden-scenario-cases.json     # 25 hand-derived golden fixture cases for scenario totals
 │   └── rules/                             # Synthetic Rule Pack fixtures (doc 12 §4)
@@ -114,21 +115,24 @@ nimphy/
 │   │   ├── step-03-domain-primitives.md   # Detailed STEP-003 implementation record
 │   │   ├── step-04-rule-pack-schema-and-loader.md # Detailed STEP-004 implementation record
 │   │   ├── step-05-per-unit-economics.md  # Detailed STEP-005 implementation record
-│   │   └── step-06-scenarios-and-totals.md# Detailed STEP-006 implementation record
+│   │   ├── step-06-scenarios-and-totals.md# Detailed STEP-006 implementation record
+│   │   └── step-07-break-even.md          # Detailed STEP-007 implementation record
 │   ├── interviews/
 │   │   ├── step-01-project-scaffolding.md # STEP-001 technical interview preparation
 │   │   ├── step-02-docs-and-boundaries.md # STEP-002 technical interview preparation
 │   │   ├── step-03-domain-primitives.md   # STEP-003 technical interview preparation (18 senior topics)
 │   │   ├── step-04-rule-pack-schema-and-loader.md # STEP-004 technical interview preparation (8 senior topics)
 │   │   ├── step-05-per-unit-economics.md  # STEP-005 technical interview preparation (10 senior topics)
-│   │   └── step-06-scenarios-and-totals.md# STEP-006 technical interview preparation (7 senior topics)
+│   │   ├── step-06-scenarios-and-totals.md# STEP-006 technical interview preparation (7 senior topics)
+│   │   └── step-07-break-even.md          # STEP-007 technical interview preparation (11 senior topics)
 │   └── notes/
 │       ├── step-01-project-scaffolding.md # STEP-001 engineering reference notes
 │       ├── step-02-docs-and-boundaries.md # STEP-002 engineering reference notes
 │       ├── step-03-domain-primitives.md   # STEP-003 engineering reference notes (Hardened)
 │       ├── step-04-rule-pack-schema-and-loader.md # STEP-004 engineering reference notes
 │       ├── step-05-per-unit-economics.md  # STEP-005 engineering reference notes
-│       └── step-06-scenarios-and-totals.md# STEP-006 engineering reference notes
+│       ├── step-06-scenarios-and-totals.md# STEP-006 engineering reference notes
+│       └── step-07-break-even.md          # STEP-007 engineering reference notes
 ├── package.json                           # Monorepo root manifest and orchestration scripts (includes test:coverage)
 ├── packages/
 │   ├── ai/                                # AI prompt building & synthesis stub
@@ -162,8 +166,15 @@ nimphy/
 │   │       │   ├── scenario-calc.test.ts  # Unit, boundary, overflow, trace, and rounding tests (39 executed tests across 33 source declarations)
 │   │       │   ├── types.ts               # Input, trace, result, and ordering contracts
 │   │       │   └── index.ts
+│   │       ├── break-even/
+│   │       │   ├── break-even-calc.ts     # calculateBreakEven pure function
+│   │       │   ├── break-even-calc.test.ts # Unit, boundary, overflow, and trace tests (26 tests)
+│   │       │   ├── golden-break-even.test.ts # Parity runner for 21 golden break-even cases (22 tests)
+│   │       │   ├── properties.test.ts     # Property-based testing with Mulberry32 PRNG (5 tests)
+│   │       │   ├── types.ts               # Input, result, unreachable reason, and trace types
+│   │       │   └── index.ts
 │   │       ├── index.ts                   # Public barrel entrypoint
-│   │       └── index.test.ts              # Public API barrel integration tests (7 tests)
+│   │       └── index.test.ts              # Public API barrel integration tests (8 tests)
 │   ├── documents/                         # Dossier assembly & document generator stub
 │   ├── domain/                            # Pure domain types & value objects
 │   │   ├── README.md                      # Comprehensive domain package documentation
@@ -245,7 +256,8 @@ nimphy/
 │   ├── step-03-correctness-review.md      # Canonical STEP-003 correctness review prompt archive
 │   ├── step-04.md                         # Canonical STEP-004 implementation prompt archive
 │   ├── step-05.md                         # Canonical STEP-005 implementation prompt archive
-│   └── step-06.md                         # Canonical STEP-006 implementation prompt archive
+│   ├── step-06.md                         # Canonical STEP-006 implementation prompt archive
+│   └── step-07.md                         # Canonical STEP-007 implementation prompt archive
 ├── scripts/
 │   ├── check-boundaries.mjs               # Standalone architectural boundary & cycle checker
 │   ├── check-commit.mjs                   # Conventional commit validator
@@ -547,54 +559,96 @@ nimphy/
 
 ---
 
-## 10. Verification Results
+## 10. Completed Work in STEP-007 (Engine: Break-Even)
 
-### A. Local Checks Executed & Passed Directly
-
-| Verification Suite            | Exact Command                                 | Result       | Details                                                                                                                                                                                                                |
-| ----------------------------- | --------------------------------------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Dependency Installation**   | `pnpm install --frozen-lockfile`              | **Passed**   | 9 workspace projects linked; store clean and reproducible                                                                                                                                                              |
-| **Git Hook Setup**            | `pnpm setup:hooks`                            | **Passed**   | `core.hooksPath` configured to `.githooks` locally                                                                                                                                                                     |
-| **Calc-Engine Typecheck**     | `pnpm --filter @nimphy/calc-engine typecheck` | **Passed**   | `@nimphy/calc-engine` typecheck succeeded (`tsc --noEmit`); 0 errors                                                                                                                                                   |
-| **Workspace TypeScript**      | `pnpm typecheck`                              | **Passed**   | 8 workspace projects checked (`pnpm -r run typecheck`); 0 errors                                                                                                                                                       |
-| **Code Linting**              | `pnpm lint`                                   | **Passed**   | ESLint 10 with local `@nimphy` plugin; 0 errors, **0 warnings**                                                                                                                                                        |
-| **Prettier Formatting Check** | `pnpm format:check`                           | **Passed**   | All matched files use Prettier code style                                                                                                                                                                              |
-| **Documentation Validation**  | `pnpm docs:check`                             | **Passed**   | 23 docs present, 94 links verified, 22 ADR statuses confirmed                                                                                                                                                          |
-| **Architecture Boundaries**   | `pnpm boundaries:check`                       | **Passed**   | 79 source files checked, 248 import declarations verified; `@nimphy/calc-engine` depends only on `@nimphy/domain`                                                                                                      |
-| **Full Vitest Test Suite**    | `pnpm test`                                   | **Passed**   | Vitest 3.0.8, 36 test files, **535/535 tests passed** (0 failed, 0 skipped; 202 tests in calc-engine across 11 test files)                                                                                             |
-| **V8 Code Coverage**          | `pnpm test:coverage`                          | **Passed**   | **packages/calc-engine: 100% Stmts / 100% instrumented Br / 100% Func / 100% Lines**; monorepo: 99.94% Stmts (3,511/3,513), 99.36% Br (1,094/1,101), 100% Funcs (167/167), 99.94% Lines (3,511/3,513) (threshold: 95%) |
-| **Production Web Build**      | `pnpm build`                                  | **Passed**   | `@nimphy/web` Next.js Turbopack build succeeded with 0 errors; static prerender succeeded                                                                                                                              |
-| **Git Whitespace Check**      | `git diff --check`                            | **Passed**   | Whitespace and patch integrity check; 0 whitespace or line ending errors reported                                                                                                                                      |
-| **Working Tree Status**       | `git status --short`                          | **Verified** | Modified and untracked STEP-006 files preserved uncommitted awaiting engineering review                                                                                                                                |
+1. **Pure Financial Calculation Engine Module (`packages/calc-engine/src/break-even/`):**
+   - Pure function `calculateBreakEven(input: BreakEvenInput, rulePack: CalcRulePack): BreakEvenResult`.
+   - Zero I/O, zero network, zero AI imports, zero clocks/randomness (Principle P-01: Deterministic core, probabilistic edge).
+   - Operates strictly in minor monetary units and exact BigInt rational numbers; zero floating-point arithmetic.
+2. **Five Mandatory Financial-Contract Invariants (Resolved & Documented):**
+   - **Contract A (Fixed-Cost Input Contract):** `fixedCost: Money` passed explicitly as a standalone argument within `BreakEvenInput`. Fixed cost is NOT added to `ScenarioParameters`, `ScenarioTotals`, the Rule Pack schema, or database schemas.
+   - **Contract B (Unit-Contribution Semantics):** Baseline unit economics derived under the Rule Pack via `calculatePerUnitEconomics(input, rulePack)`, scaled by cost variance multiplier $M = 1 + \text{costVariancePercent} / 100$. Unit contribution is NEVER derived by dividing scenario totals by quantity, preserving precision for zero-quantity scenarios and preventing distortion under `per_total`.
+   - **Contract C (`per_unit` vs `per_total` Interaction):** Under `per_unit`, unit contribution uses already-rounded integer minor units ($R_{\text{unit}} - C_{\text{unit}}$). Under `per_total`, exact rational differences ($\text{exactGrossRoyalty} - \text{exactApplicableCostVaried}$) are preserved. In both cases, exact BigInt ceiling division:
+     $Q_{\text{be}} = \left\lceil \frac{\text{FixedCost}}{\text{ExactUnitContribution}} \right\rceil$
+     evaluates the formula-defined quantity required by the roadmap. The documentation explicitly distinguishes this formula-defined quantity from the minimum quantity that covers fixed cost under independently rounded aggregate ledger components. For non-negative aggregate amounts and integer fixed costs, `round_half_up`, `round_down`, and `round_up` preserve the integer-shift property ($\text{round}(x + F) = \text{round}(x) + F$) needed for the coverage argument. `round_half_even` is the demonstrated exception because tie-breaking depends on the parity of the integer part, which can flip under an odd integer fixed cost (e.g., exact royalty 2.5, exact cost 1.5, contribution 1.0, fixed cost 1, $Q_{\text{be}}=1$, but rounded ledger contribution is 0). `round_down` is not classified as an unsafe mode based on this counterexample, nor is disallowing it recommended without a valid independent counterexample. The current schema permits all four rounding modes with `per_total`, and universal ledger coverage across all possible configurations is not claimed unless formally established.
+   - **Contract D (Break-Even Revenue Definition):** Approved definition $\text{Revenue}_{\text{be}} = \text{listPriceMinor} \times Q_{\text{be}}$ as `Money`. Precise semantic meaning: gross retail sales revenue at the whole-unit, formula-defined break-even threshold (not author royalty income, publisher proceeds, or net profit), consistent with the existing scenario engine's revenue calculation.
+   - **Contract E (Explicit Unreachable Result Contract):** Discriminated union on `reachable: boolean`. When `reachable: false`, `reason` is `'ZERO_CONTRIBUTION' | 'NEGATIVE_CONTRIBUTION'` and `units` and `revenue` fields are completely omitted from the type contract (preventing misleading zero-unit break-even representations or fabricated monetary values).
+3. **Zero Fixed-Cost and Boundary Semantics:**
+   - When $F = 0$ and $U > 0$, break-even is reachable with $Q_{\text{be}} = 0$ units and $\text{Revenue}_{\text{be}} = \$0.00$.
+   - When $F = 0$ and $U \le 0$, break-even remains explicitly unreachable (`ZERO_CONTRIBUTION` or `NEGATIVE_CONTRIBUTION`).
+4. **Safe-Integer Arithmetic & Overflow Protection:**
+   - All ceiling arithmetic executed using native `BigInt` integer division and remainder.
+   - Exact pre-materialization guards against safe-integer overflow on units ($Q_{\text{be}} > \text{Number.MAX\_SAFE\_INTEGER}$) and revenue ($\text{listPriceMinor} \times Q_{\text{be}} > \text{Number.MAX\_SAFE\_INTEGER}$), raising typed `CalcOverflowError`.
+5. **Deterministic Calculation Trace & Deep Immutability:**
+   - `BreakEvenCalculationTrace` records input validation, unit economics, cost variance scaling, ceiling division, and result derivation.
+   - Bit-for-bit canonical JSON reproducibility (`toCanonicalJson`).
+   - Deep recursive freezing (`deepFreeze`) on all results, traces, and trace steps.
+6. **Hand-Derived Golden Fixtures (`fixtures/calc-engine/golden-break-even-cases.json`):**
+   - 21 independently hand-derived golden fixture cases across all 4 synthetic Rule Packs:
+     - 7 Ebook cases (USD, zero fixed cost, fractional delivery fees, positive variance, negative contribution).
+     - 5 Paperback US v1 cases (USD, negative contribution, high fixed cost, whole-dollar pricing).
+     - 4 Paperback US v2 cases (USD, successor cost window, fractional contribution, positive cost variance).
+     - 5 Hardcover Global v1 cases (EUR, `round_down`, `per_total`, exact rational contribution, zero fixed cost).
+7. **Exhaustive Testing & 100% Branch Coverage:**
+   - Precise breakdown of tests added in STEP-007:
+     - 26 break-even calculation tests (`break-even-calc.test.ts`: comprehensive unit, boundary, zero fixed-cost, overflow, and trace tests).
+     - 22 golden break-even tests (`golden-break-even.test.ts`: 1 inventory check + 21 golden case parity verifications).
+     - 5 break-even property tests (`properties.test.ts`: property-based suites with Mulberry32 PRNG for monotonicity, threshold coverage, optimality, determinism, and revenue consistency).
+     - 1 newly added README barrel-verification test (`index.test.ts`: static compile-time and runtime verification of README break-even example).
+   - That is 53 break-even-specific tests plus one new barrel-verification test. The reported overall totals remain 256 calc-engine tests and 589 monorepo tests.
+   - Package total: 256 tests across 14 test files in `@nimphy/calc-engine`.
+   - Monorepo total: 589 tests across 39 test files.
+   - 100% Statement, 100% instrumented Branch, 100% Function, 100% Line coverage maintained in `@nimphy/calc-engine`.
 
 ---
 
-## 11. Open Issues & Dependency Warnings
+## 11. Verification Results
+
+### A. Local Checks Executed & Passed Directly
+
+| Verification Suite            | Exact Command                                 | Result       | Details                                                                                                                                                            |
+| ----------------------------- | --------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Dependency Installation**   | `pnpm install --frozen-lockfile`              | **Passed**   | 9 workspace projects linked; store clean and reproducible                                                                                                          |
+| **Git Hook Setup**            | `pnpm setup:hooks`                            | **Passed**   | `core.hooksPath` configured to `.githooks` locally                                                                                                                 |
+| **Calc-Engine Typecheck**     | `pnpm --filter @nimphy/calc-engine typecheck` | **Passed**   | `@nimphy/calc-engine` typecheck succeeded (`tsc --noEmit`); 0 errors                                                                                               |
+| **Workspace TypeScript**      | `pnpm typecheck`                              | **Passed**   | 8 workspace projects checked (`pnpm -r run typecheck`); 0 errors                                                                                                   |
+| **Code Linting**              | `pnpm lint`                                   | **Passed**   | ESLint 10 with local `@nimphy` plugin; 0 errors, **0 warnings**                                                                                                    |
+| **Prettier Formatting Check** | `pnpm format:check`                           | **Passed**   | All matched files use Prettier code style                                                                                                                          |
+| **Documentation Validation**  | `pnpm docs:check`                             | **Passed**   | 23 docs present, 94 links verified, 22 ADR statuses confirmed                                                                                                      |
+| **Architecture Boundaries**   | `pnpm boundaries:check`                       | **Passed**   | 85 source files checked, 290 import declarations verified; `@nimphy/calc-engine` depends only on `@nimphy/domain`                                                  |
+| **Full Vitest Test Suite**    | `pnpm test`                                   | **Passed**   | Vitest 3.0.8, 39 test files, **589/589 tests passed** (0 failed, 0 skipped; 256 tests in calc-engine across 14 test files)                                         |
+| **V8 Code Coverage**          | `pnpm test:coverage`                          | **Passed**   | **packages/calc-engine: 100% Stmts / 100% instrumented Br / 100% Func / 100% Lines**; monorepo: 99.94% Stmts, 99.40% Br, 100% Funcs, 99.94% Lines (threshold: 95%) |
+| **Production Web Build**      | `pnpm build`                                  | **Passed**   | `@nimphy/web` Next.js Turbopack build succeeded with 0 errors; static prerender succeeded                                                                          |
+| **Git Whitespace Check**      | `git diff --check`                            | **Passed**   | Whitespace and patch integrity check; 0 whitespace or line ending errors reported                                                                                  |
+| **Working Tree Status**       | `git status --short`                          | **Verified** | Modified and untracked STEP-007 files preserved uncommitted awaiting engineering review                                                                            |
+
+---
+
+## 12. Open Issues & Dependency Warnings
 
 1. **ESLint Plugin Peer Dependencies:** Transitive plugins declare peer dependency compatibility up to ESLint 9 (`^8.0.0 || ^9.0.0`), while ESLint `10.14.0` is installed. Our custom local plugin operates natively without third-party dependencies, and all linting executes with 0 runtime errors and 0 warnings.
 2. **Deprecated Transitive Package:** `whatwg-encoding` was noted as deprecated in transitive `jsdom` dependencies. Managed upstream by `jsdom`.
 
 ---
 
-## 12. Next Proposed Step & Roadmap Reconciliation (Awaiting Authorization)
+## 13. Next Proposed Step & Roadmap Reconciliation (Awaiting Authorization)
 
-**STEP-007: Engine: break-even (Proposed — Strictly Unauthorized)**
+**STEP-008: Engine: Sensitivity (Proposed — Strictly Unauthorized)**
 
 - **Status:** Proposed next engineering step; strictly unauthorized until explicit repository-owner review and written approval per `AGENTS.md` §3 ("Step-by-Step Discipline: Implement only the step explicitly authorized by the user. Do not anticipate or partially implement future steps").
-- **STEP-006 Reconciliation Status:**
-  - STEP-006 implementation reported complete.
-  - Final mathematical and monetary-integrity checks completed (safe-integer boundaries enforced across revenue, royalty, cost, and contribution for both `per_unit` and `per_total`).
+- **STEP-007 Reconciliation Status:**
+  - STEP-007 implementation reported complete.
+  - Break-even units and revenue calculations implemented and hardened in `packages/calc-engine`.
   - Formal owner acceptance is pending; owner acceptance is NOT claimed.
 - **Authoritative Roadmap Sequence (per `docs/architecture/17-implementation-roadmap.md`):**
-  - **STEP-006 — Engine: Scenarios and Totals** (Current — Complete & Fully Verified; Awaiting Formal Owner Acceptance)
-  - **STEP-007 — Engine: Break-even** (Next — Strictly Unauthorized)
-  - **STEP-008 — Engine: Sensitivity**
+  - **STEP-007 — Engine: Break-even** (Current — Complete & Fully Verified; Awaiting Formal Owner Acceptance)
+  - **STEP-008 — Engine: Sensitivity** (Next — Strictly Unauthorized)
   - **STEP-009 — Differential Reference Check**
-- **STEP-007 Scope (Authoritative Roadmap §STEP-007):**
-  - Pure break-even functions in `packages/calc-engine` (zero I/O, zero AI, zero clock/randomness).
-  - Units and revenue break-even calculation.
-  - Unreachable case handling (zero or negative contribution).
-  - Exact-integer and ceiling semantics ($Q_{\text{be}} = \lceil \text{FixedCost} / \text{UnitContribution} \rceil$).
-  - Golden fixtures cross-checked against independent hand derivations.
-  - 100% branch coverage maintained for `packages/calc-engine`.
-- **Strict Boundary Constraint:** Do not begin STEP-007 until explicitly authorized by the repository owner.
+  - **STEP-010 — Database Foundation**
+- **STEP-008 Scope (Authoritative Roadmap §STEP-008):**
+  - Sensitivity analysis: vary one parameter while holding others constant.
+  - Price elasticity / variation curves: compute contribution across a range of list prices.
+  - Page count sensitivity: compute print cost impact across page ranges.
+  - Cost variance sensitivity: sweep cost variance percentages.
+  - Maintain 100% branch coverage for `packages/calc-engine`.
+- **Strict Boundary Constraint:** Do not begin STEP-008 until explicitly authorized by the repository owner.

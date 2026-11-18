@@ -73,7 +73,7 @@ export function deepFreeze<T extends object>(
  * - Scientific notation, empty strings, whitespace (including leading/trailing whitespace), and strings > 50 chars are rejected.
  * - Values below -100% are rejected; -100% is accepted.
  */
-function parseCostVariance(costVariancePercent?: string): {
+export function parseCostVariance(costVariancePercent?: string): {
   rational: Rational;
   percentString: string;
 } {

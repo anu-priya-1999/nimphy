@@ -98,13 +98,13 @@ Response `201`:
   "scenarios": {
     "base": { "units": 400, "revenue": {"amountMinor": 0, "currency":"USD"}, "royalty": {"amountMinor": 0, "currency":"USD"}, "netContribution": {"amountMinor": 0, "currency":"USD"} }
   },
-  "breakEven": { "reachable": true, "units": 0 },
+  "breakEven": { "reachable": true, "units": 0, "revenue": {"amountMinor": 0, "currency":"USD"} },
   "sensitivity": [ { "driver": "listPrice", "perturbationPct": 10, "deltaNetContribution": {"amountMinor": 0, "currency":"USD"} } ],
   "disclaimer": "Illustrative scenarios, not guaranteed outcomes.",
   "missingEvidence": ["listPrice"]
 }
 ```
-(Zero values are placeholders in this document, not outputs.)
+(Zero values are placeholders in this document, not outputs. In breakEven, revenue denotes gross retail sales revenue at the formula-defined whole-unit break-even threshold; for unreachable results, units and revenue are omitted.)
 
 **EP-016 Create order** → `201`:
 ```json

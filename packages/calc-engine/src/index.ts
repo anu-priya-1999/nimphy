@@ -64,3 +64,13 @@ export {
   type ScenarioParameters,
   type ScenarioTotals,
 } from './scenarios';
+
+// Break-Even Economics Engine (STEP-007)
+export {
+  calculateBreakEven,
+  type BreakEvenInput,
+  type BreakEvenResult,
+  type BreakEvenUnreachableReason,
+  type BreakEvenTraceStep,
+  type BreakEvenCalculationTrace,
+} from './break-even';

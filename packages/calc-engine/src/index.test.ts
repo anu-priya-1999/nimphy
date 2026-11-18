@@ -1,3 +1,4 @@
+import { Money } from '@nimphy/domain';
 import { describe, expect, it } from 'vitest';
 import ebookPackJson from '../../../fixtures/rules/TEST_EBOOK_STANDARD/1.0.0/pack.json';
 import paperbackV1PackJson from '../../../fixtures/rules/TEST_PAPERBACK_US/1.0.0/pack.json';
@@ -9,6 +10,8 @@ import {
   calculateSingleScenario,
   calculateTriadScenarios,
   evaluateScenarioOrdering,
+  // Break-even economics calculation (STEP-007)
+  calculateBreakEven,
   // Per-unit economics calculation (STEP-005)
   calculatePerUnitEconomics,
   // Exact rational arithmetic
@@ -25,6 +28,7 @@ import {
   type SingleScenarioResult,
   type TriadScenariosResult,
   type PerUnitEconomics,
+  type BreakEvenResult,
 } from './index';
 
 describe('@nimphy/calc-engine Barrel Export & Public API', () => {
@@ -40,12 +44,14 @@ describe('@nimphy/calc-engine Barrel Export & Public API', () => {
     expect(typeof CalcEngine.calculateSingleScenario).toBe('function');
     expect(typeof CalcEngine.calculateTriadScenarios).toBe('function');
     expect(typeof CalcEngine.evaluateScenarioOrdering).toBe('function');
+    expect(typeof CalcEngine.calculateBreakEven).toBe('function');
     expect(typeof CalcEngine.Rational).toBe('function');
 
     expect(typeof calculatePerUnitEconomics).toBe('function');
     expect(typeof calculateSingleScenario).toBe('function');
     expect(typeof calculateTriadScenarios).toBe('function');
     expect(typeof evaluateScenarioOrdering).toBe('function');
+    expect(typeof calculateBreakEven).toBe('function');
     expect(typeof Rational).toBe('function');
   });
 
@@ -165,6 +171,49 @@ describe('README Public API Compile-Time & Runtime Verification', () => {
     expect(applicableCostMinor).toBe(23);
     expect(netContributionMinor).toBe(326);
     expect(perUnit.trace).toBeDefined();
+  });
+
+  it('statically typechecks and executes the exact Break-Even README example', () => {
+    // Exact code snippet from packages/calc-engine/README.md lines 236-258
+    const result: BreakEvenResult = calculateBreakEven(
+      {
+        fixedCost: Money.of(250000, 'USD'), // $2,500.00 fixed production cost
+        listPriceMinor: 1499, // $14.99 list price
+        currency: 'USD',
+        format: 'paperback',
+        pages: 200,
+        costVariancePercent: '0',
+      },
+      paperbackRulePack,
+    );
+
+    // Verify TypeScript discriminated-union behavior
+    expect(result.reachable).toBe(true);
+
+    if (result.reachable) {
+      // Static compile-time type verification of every property accessed in README
+      const units: number = result.units;
+      const formattedRevenue: string = result.revenue.toFormattedString();
+      const unitContributionMinor: number | null = result.unitContributionMinor;
+      const isIllustrative: true = result.isIllustrative;
+      const disclaimer: string = result.disclaimer;
+      const fixedCostMinor: number = result.fixedCost.amountMinor;
+
+      // Runtime value assertions
+      expect(units).toBe(560);
+      expect(formattedRevenue).toBe('$8394.40');
+      expect(result.revenue.amountMinor).toBe(839440);
+      expect(unitContributionMinor).toBe(447);
+      expect(isIllustrative).toBe(true);
+      expect(typeof disclaimer).toBe('string');
+      expect(fixedCostMinor).toBe(250000);
+      expect(result.exactUnitContribution).toBeDefined();
+      expect(result.trace).toBeDefined();
+    } else {
+      // Compile-time verification that unreachable branch exposes unreachableReason
+      const reason: string = result.unreachableReason;
+      expect(reason).toBeUndefined();
+    }
   });
 
   it('statically typechecks exported calculation error classes and hierarchy', () => {

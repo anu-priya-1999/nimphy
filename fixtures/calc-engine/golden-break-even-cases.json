@@ -1,0 +1,529 @@
+{
+  "description": "Independent hand-derived golden fixtures for Nimphy STEP-007 break-even economics calculation engine.",
+  "disclaimer": "SYNTHETIC TEST CASES ONLY. Calculated with independent exact rational arithmetic. Not derived from engine execution.",
+  "engineVersion": "0.1.0",
+  "cases": [
+    {
+      "id": "golden_ebook_exact_division",
+      "description": "Ebook standard $9.99 list price with 2 MB delivery fee and exact integer break-even division",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "input": {
+        "fixedCostMinor": 669000,
+        "listPriceMinor": 999,
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "2.0"
+      },
+      "expectedReachable": true,
+      "expectedUnits": 1000,
+      "expectedRevenueMinor": 999000,
+      "expectedUnitContributionMinor": 669,
+      "expectedExactContribution": {
+        "numerator": "669",
+        "denominator": "1",
+        "decimalString": "669"
+      },
+      "derivation": "List price $9.99 at 70% royalty tier yields 699.3 -> rounds to 699 cents under round_half_up. Delivery cost for 2.0 MB at 15 cents/MB = 30 cents. Unit contribution = 699 - 30 = 669 cents ($6.69). Fixed cost $6,690.00 (669,000 cents). Exact division: 669,000 / 669 = 1,000 units with remainder 0. Revenue = 1,000 * 999 = 999,000 cents ($9,990.00)."
+    },
+    {
+      "id": "golden_ebook_ceiling_remainder",
+      "description": "Ebook standard $9.99 list price requiring ceiling due to non-zero remainder",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "input": {
+        "fixedCostMinor": 100000,
+        "listPriceMinor": 999,
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "2.0"
+      },
+      "expectedReachable": true,
+      "expectedUnits": 150,
+      "expectedRevenueMinor": 149850,
+      "expectedUnitContributionMinor": 669,
+      "expectedExactContribution": {
+        "numerator": "669",
+        "denominator": "1",
+        "decimalString": "669"
+      },
+      "derivation": "Unit contribution is 669 cents. Fixed cost is $1,000.00 (100,000 cents). Division: 100,000 / 669 = 149 quotient with remainder 319. Since remainder > 0, ceil(100,000 / 669) = 150 units. Revenue = 150 * 999 = 149,850 cents ($1,498.50)."
+    },
+    {
+      "id": "golden_ebook_zero_fixed_cost",
+      "description": "Ebook with zero fixed cost and positive contribution yields zero break-even units",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "input": {
+        "fixedCostMinor": 0,
+        "listPriceMinor": 999,
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "2.0"
+      },
+      "expectedReachable": true,
+      "expectedUnits": 0,
+      "expectedRevenueMinor": 0,
+      "expectedUnitContributionMinor": 669,
+      "expectedExactContribution": {
+        "numerator": "669",
+        "denominator": "1",
+        "decimalString": "669"
+      },
+      "derivation": "With zero fixed cost and positive unit contribution (669 cents > 0), zero units are required to cover fixed costs. Revenue is 0 cents."
+    },
+    {
+      "id": "golden_ebook_positive_cost_variance",
+      "description": "Ebook with +20% cost variance reducing contribution and requiring ceiling",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "input": {
+        "fixedCostMinor": 50000,
+        "listPriceMinor": 499,
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "1.0",
+        "costVariancePercent": "20"
+      },
+      "expectedReachable": true,
+      "expectedUnits": 152,
+      "expectedRevenueMinor": 75848,
+      "expectedUnitContributionMinor": 331,
+      "expectedExactContribution": {
+        "numerator": "331",
+        "denominator": "1",
+        "decimalString": "331"
+      },
+      "derivation": "Gross royalty: 499 * 0.70 = 349.3 -> 349 cents. Base delivery: 1.0 * 15 = 15 cents. Varied delivery: 15 * 1.20 = 18 cents. Unit contribution = 349 - 18 = 331 cents. Fixed cost: $500.00 (50,000 cents). 50,000 / 331 = 151 remainder 19 -> ceil is 152 units. Revenue = 152 * 499 = 75,848 cents ($758.48)."
+    },
+    {
+      "id": "golden_ebook_negative_cost_variance",
+      "description": "Ebook with -20% cost variance increasing contribution",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "input": {
+        "fixedCostMinor": 50000,
+        "listPriceMinor": 499,
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "1.0",
+        "costVariancePercent": "-20"
+      },
+      "expectedReachable": true,
+      "expectedUnits": 149,
+      "expectedRevenueMinor": 74351,
+      "expectedUnitContributionMinor": 337,
+      "expectedExactContribution": {
+        "numerator": "337",
+        "denominator": "1",
+        "decimalString": "337"
+      },
+      "derivation": "Gross royalty: 349 cents. Varied delivery: 15 * 0.80 = 12 cents. Unit contribution = 349 - 12 = 337 cents. Fixed cost: 50,000 cents. 50,000 / 337 = 148 remainder 124 -> ceil is 149 units. Revenue = 149 * 499 = 74,351 cents ($743.51)."
+    },
+    {
+      "id": "golden_ebook_tier1_low_price",
+      "description": "Ebook tier 1 (35%) $1.99 price with 0.5 MB delivery fee requiring component rounding",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "input": {
+        "fixedCostMinor": 15000,
+        "listPriceMinor": 199,
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "0.5"
+      },
+      "expectedReachable": true,
+      "expectedUnits": 242,
+      "expectedRevenueMinor": 48158,
+      "expectedUnitContributionMinor": 62,
+      "expectedExactContribution": {
+        "numerator": "62",
+        "denominator": "1",
+        "decimalString": "62"
+      },
+      "derivation": "Gross royalty: 199 * 0.35 = 69.65 -> 70 cents. Delivery cost: 0.5 * 15 = 7.5 -> 8 cents (round_half_up under per_unit). Contribution = 70 - 8 = 62 cents. Fixed cost: $150.00 (15,000 cents). 15,000 / 62 = 241 remainder 58 -> ceil is 242 units. Revenue = 242 * 199 = 48,158 cents ($481.58)."
+    },
+    {
+      "id": "golden_ebook_zero_unit_contribution",
+      "description": "Ebook where gross royalty exactly equals delivery cost yielding zero contribution (unreachable)",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "input": {
+        "fixedCostMinor": 50000,
+        "listPriceMinor": 300,
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "14.0"
+      },
+      "expectedReachable": false,
+      "expectedUnreachableReason": "ZERO_CONTRIBUTION",
+      "expectedUnitContributionMinor": 0,
+      "expectedExactContribution": {
+        "numerator": "0",
+        "denominator": "1",
+        "decimalString": "0"
+      },
+      "derivation": "List price $3.00 at tier 2 (70%) gives 210 cents gross royalty. Delivery fee for 14.0 MB at 15 cents/MB is 210 cents. Unit contribution = 210 - 210 = 0 cents. Break-even is unreachable because sales generate zero margin to cover fixed costs."
+    },
+    {
+      "id": "golden_ebook_negative_unit_contribution",
+      "description": "Ebook where delivery cost exceeds gross royalty yielding negative contribution (unreachable)",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "input": {
+        "fixedCostMinor": 50000,
+        "listPriceMinor": 300,
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "15.0"
+      },
+      "expectedReachable": false,
+      "expectedUnreachableReason": "NEGATIVE_CONTRIBUTION",
+      "expectedUnitContributionMinor": -15,
+      "expectedExactContribution": {
+        "numerator": "-15",
+        "denominator": "1",
+        "decimalString": "-15"
+      },
+      "derivation": "Gross royalty: 210 cents. Delivery fee for 15.0 MB at 15 cents/MB: 225 cents. Unit contribution = 210 - 225 = -15 cents. Break-even is unreachable because each sale increases losses."
+    },
+    {
+      "id": "golden_ebook_zero_fixed_cost_negative_contribution",
+      "description": "Ebook with zero fixed cost but negative contribution must remain unreachable",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "input": {
+        "fixedCostMinor": 0,
+        "listPriceMinor": 300,
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "15.0"
+      },
+      "expectedReachable": false,
+      "expectedUnreachableReason": "NEGATIVE_CONTRIBUTION",
+      "expectedUnitContributionMinor": -15,
+      "expectedExactContribution": {
+        "numerator": "-15",
+        "denominator": "1",
+        "decimalString": "-15"
+      },
+      "derivation": "Enforces boundary rule: A zero or negative unit contribution must not be labelled reachable merely because fixed cost is zero. Even with zero fixed cost, negative margin produces net loss on sales."
+    },
+    {
+      "id": "golden_paperback_v1_exact_division",
+      "description": "Paperback v1 $15.00 list price with exact integer break-even division",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "1.0.0"
+      },
+      "input": {
+        "fixedCostMinor": 448000,
+        "listPriceMinor": 1500,
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 200
+      },
+      "expectedReachable": true,
+      "expectedUnits": 1000,
+      "expectedRevenueMinor": 1500000,
+      "expectedUnitContributionMinor": 448,
+      "expectedExactContribution": {
+        "numerator": "448",
+        "denominator": "1",
+        "decimalString": "448"
+      },
+      "derivation": "Royalty: 60% of 1500 = 900 cents. Print cost: 100 base + (200 - 24) * 2 = 100 + 352 = 452 cents. Unit contribution = 900 - 452 = 448 cents ($4.48). Fixed cost: $4,480.00 (448,000 cents). Division: 448,000 / 448 = 1,000 units exact. Revenue = 1,000 * 1500 = 1,500,000 cents ($15,000.00)."
+    },
+    {
+      "id": "golden_paperback_v1_ceiling_remainder",
+      "description": "Paperback v1 $15.00 list price requiring ceiling",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "1.0.0"
+      },
+      "input": {
+        "fixedCostMinor": 250000,
+        "listPriceMinor": 1500,
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 200
+      },
+      "expectedReachable": true,
+      "expectedUnits": 559,
+      "expectedRevenueMinor": 838500,
+      "expectedUnitContributionMinor": 448,
+      "expectedExactContribution": {
+        "numerator": "448",
+        "denominator": "1",
+        "decimalString": "448"
+      },
+      "derivation": "Unit contribution is 448 cents. Fixed cost is $2,500.00 (250,000 cents). 250,000 / 448 = 558 remainder 16 -> ceil is 559 units. Revenue = 559 * 1500 = 838,500 cents ($8,385.00)."
+    },
+    {
+      "id": "golden_paperback_v1_cost_variance",
+      "description": "Paperback v1 with +10% cost variance requiring ceiling",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "1.0.0"
+      },
+      "input": {
+        "fixedCostMinor": 200000,
+        "listPriceMinor": 1500,
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 200,
+        "costVariancePercent": "10"
+      },
+      "expectedReachable": true,
+      "expectedUnits": 497,
+      "expectedRevenueMinor": 745500,
+      "expectedUnitContributionMinor": 403,
+      "expectedExactContribution": {
+        "numerator": "403",
+        "denominator": "1",
+        "decimalString": "403"
+      },
+      "derivation": "Base cost: 452 cents. Varied cost: 452 * 1.10 = 497.2 -> 497 cents under round_half_even. Contribution = 900 - 497 = 403 cents. Fixed cost: $2,000.00 (200,000 cents). 200,000 / 403 = 496 remainder 112 -> ceil is 497 units. Revenue = 497 * 1500 = 745,500 cents ($7,455.00)."
+    },
+    {
+      "id": "golden_paperback_v1_negative_contribution",
+      "description": "Paperback v1 valid minimum price $5.00 with 300 pages yielding negative contribution",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "1.0.0"
+      },
+      "input": {
+        "fixedCostMinor": 100000,
+        "listPriceMinor": 500,
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 300
+      },
+      "expectedReachable": false,
+      "expectedUnreachableReason": "NEGATIVE_CONTRIBUTION",
+      "expectedUnitContributionMinor": -352,
+      "expectedExactContribution": {
+        "numerator": "-352",
+        "denominator": "1",
+        "decimalString": "-352"
+      },
+      "derivation": "Royalty: 60% of 500 = 300 cents. Print cost: 100 + (300 - 24) * 2 = 652 cents. Contribution = 300 - 652 = -352 cents (-$3.52). Unreachable because unit margin is negative."
+    },
+    {
+      "id": "golden_paperback_v1_zero_fixed_cost_negative_contribution",
+      "description": "Paperback v1 zero fixed cost with negative contribution must remain unreachable",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "1.0.0"
+      },
+      "input": {
+        "fixedCostMinor": 0,
+        "listPriceMinor": 500,
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 300
+      },
+      "expectedReachable": false,
+      "expectedUnreachableReason": "NEGATIVE_CONTRIBUTION",
+      "expectedUnitContributionMinor": -352,
+      "expectedExactContribution": {
+        "numerator": "-352",
+        "denominator": "1",
+        "decimalString": "-352"
+      },
+      "derivation": "Zero fixed cost cannot make negative unit contribution reachable."
+    },
+    {
+      "id": "golden_paperback_v2_exact_division",
+      "description": "Paperback v2 $14.99 list price with 120 base cost and exact division",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "2.0.0"
+      },
+      "input": {
+        "fixedCostMinor": 427000,
+        "listPriceMinor": 1499,
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 200
+      },
+      "expectedReachable": true,
+      "expectedUnits": 1000,
+      "expectedRevenueMinor": 1499000,
+      "expectedUnitContributionMinor": 427,
+      "expectedExactContribution": {
+        "numerator": "427",
+        "denominator": "1",
+        "decimalString": "427"
+      },
+      "derivation": "Royalty: 1499 * 0.60 = 899.4 -> 899 cents. Print cost: 120 base + (200 - 24) * 2 = 120 + 352 = 472 cents. Contribution = 899 - 472 = 427 cents. Fixed cost: $4,270.00 (427,000 cents). 427,000 / 427 = 1,000 units exact. Revenue = 1,000 * 1499 = 1,499,000 cents ($14,990.00)."
+    },
+    {
+      "id": "golden_paperback_v2_ceiling_remainder",
+      "description": "Paperback v2 $14.99 list price requiring ceiling",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "2.0.0"
+      },
+      "input": {
+        "fixedCostMinor": 250000,
+        "listPriceMinor": 1499,
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 200
+      },
+      "expectedReachable": true,
+      "expectedUnits": 586,
+      "expectedRevenueMinor": 878414,
+      "expectedUnitContributionMinor": 427,
+      "expectedExactContribution": {
+        "numerator": "427",
+        "denominator": "1",
+        "decimalString": "427"
+      },
+      "derivation": "Unit contribution is 427 cents. Fixed cost is $2,500.00 (250,000 cents). 250,000 / 427 = 585 remainder 205 -> ceil is 586 units. Revenue = 586 * 1499 = 878,414 cents ($8,784.14)."
+    },
+    {
+      "id": "golden_paperback_v2_zero_fixed_cost",
+      "description": "Paperback v2 with zero fixed cost yields zero units",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "2.0.0"
+      },
+      "input": {
+        "fixedCostMinor": 0,
+        "listPriceMinor": 1499,
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 200
+      },
+      "expectedReachable": true,
+      "expectedUnits": 0,
+      "expectedRevenueMinor": 0,
+      "expectedUnitContributionMinor": 427,
+      "expectedExactContribution": {
+        "numerator": "427",
+        "denominator": "1",
+        "decimalString": "427"
+      },
+      "derivation": "Zero fixed cost and positive contribution (427 cents) yields 0 units."
+    },
+    {
+      "id": "golden_hardcover_exact_division",
+      "description": "Hardcover Global EUR 25.00 list price with exact integer break-even division under per_total",
+      "rulePackRef": {
+        "packKey": "TEST_HARDCOVER_GLOBAL",
+        "version": "1.0.0"
+      },
+      "input": {
+        "fixedCostMinor": 650000,
+        "listPriceMinor": 2500,
+        "currency": "EUR",
+        "format": "hardcover",
+        "pages": 75
+      },
+      "expectedReachable": true,
+      "expectedUnits": 1000,
+      "expectedRevenueMinor": 2500000,
+      "expectedUnitContributionMinor": 650,
+      "expectedExactContribution": {
+        "numerator": "650",
+        "denominator": "1",
+        "decimalString": "650"
+      },
+      "derivation": "Royalty: 50% of 2500 = 1250 cents. Print cost: 600 base (75 pages <= 75 threshold) = 600 cents. Exact contribution = 1250 - 600 = 650 cents. Fixed cost: €6,500.00 (650,000 cents). Division: 650,000 / 650 = 1,000 units exact. Revenue = 1,000 * 2500 = 2,500,000 cents (€25,000.00)."
+    },
+    {
+      "id": "golden_hardcover_fractional_per_total",
+      "description": "Hardcover Global EUR 29.99 list price with fractional per-unit rational under per_total requiring exact rational ceiling",
+      "rulePackRef": {
+        "packKey": "TEST_HARDCOVER_GLOBAL",
+        "version": "1.0.0"
+      },
+      "input": {
+        "fixedCostMinor": 500000,
+        "listPriceMinor": 2999,
+        "currency": "EUR",
+        "format": "hardcover",
+        "pages": 200
+      },
+      "expectedReachable": true,
+      "expectedUnits": 954,
+      "expectedRevenueMinor": 2861046,
+      "expectedUnitContributionMinor": null,
+      "expectedExactContribution": {
+        "numerator": "1049",
+        "denominator": "2",
+        "decimalString": "524.5"
+      },
+      "derivation": "Exact royalty: 2999/2 = 1499.5 cents. Print cost: 600 + (200 - 75) * 3 = 975 cents. Exact unit contribution = 1499.5 - 975 = 524.5 = 1049/2 cents. Under per_total, fractional per-unit minor unit is null. Fixed cost: €5,000.00 (500,000 cents). Formula: ceil(500,000 / (1049/2)) = ceil(1,000,000 / 1049) = 953 quotient with remainder 303 -> ceil is 954 units. Revenue = 954 * 2999 = 2,861,046 cents (€28,610.46)."
+    },
+    {
+      "id": "golden_hardcover_negative_contribution_per_total",
+      "description": "Hardcover Global negative contribution under per_total",
+      "rulePackRef": {
+        "packKey": "TEST_HARDCOVER_GLOBAL",
+        "version": "1.0.0"
+      },
+      "input": {
+        "fixedCostMinor": 100000,
+        "listPriceMinor": 1500,
+        "currency": "EUR",
+        "format": "hardcover",
+        "pages": 500
+      },
+      "expectedReachable": false,
+      "expectedUnreachableReason": "NEGATIVE_CONTRIBUTION",
+      "expectedUnitContributionMinor": -1125,
+      "expectedExactContribution": {
+        "numerator": "-1125",
+        "denominator": "1",
+        "decimalString": "-1125"
+      },
+      "derivation": "Royalty: 50% of 1500 = 750 cents. Print cost: 600 + (500 - 75) * 3 = 1875 cents. Exact unit contribution = 750 - 1875 = -1125 cents (-€11.25). Unreachable because unit margin is negative."
+    },
+    {
+      "id": "golden_hardcover_zero_fixed_cost",
+      "description": "Hardcover Global zero fixed cost yields zero units",
+      "rulePackRef": {
+        "packKey": "TEST_HARDCOVER_GLOBAL",
+        "version": "1.0.0"
+      },
+      "input": {
+        "fixedCostMinor": 0,
+        "listPriceMinor": 2500,
+        "currency": "EUR",
+        "format": "hardcover",
+        "pages": 75
+      },
+      "expectedReachable": true,
+      "expectedUnits": 0,
+      "expectedRevenueMinor": 0,
+      "expectedUnitContributionMinor": 650,
+      "expectedExactContribution": {
+        "numerator": "650",
+        "denominator": "1",
+        "decimalString": "650"
+      },
+      "derivation": "Zero fixed cost and positive contribution (650 cents) yields 0 units."
+    }
+  ]
+}
