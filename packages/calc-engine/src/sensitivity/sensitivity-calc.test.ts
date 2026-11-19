@@ -344,6 +344,124 @@ describe('calculateSensitivity — Unit, Boundary, and Contract Tests', () => {
         ),
       ).toThrow(CalcInputValidationError);
     });
+
+    it('enforces costVariancePercent decimal input length boundary (max 50 chars)', () => {
+      const base = {
+        units: 100,
+        listPriceMinor: 499,
+        currency: 'USD',
+        format: 'ebook',
+        fileSizeMb: '1',
+      };
+
+      // 1. Valid standard input within the 50-character limit
+      const validStandard = calculateSensitivity(
+        { baseline: base, drivers: [{ driver: 'costVariancePercent', perturbation: '10' }] },
+        ebookPack,
+      );
+      expect(validStandard.declaredDrivers[0]?.perturbation).toBe('10');
+
+      // 2. Valid input exactly at the 50-character limit
+      const exactly50 = '0.' + '0'.repeat(47) + '1';
+      expect(exactly50.length).toBe(50);
+
+      const validAt50 = calculateSensitivity(
+        {
+          baseline: { ...base, costVariancePercent: '1' },
+          drivers: [{ driver: 'costVariancePercent', perturbation: exactly50 }],
+        },
+        ebookPack,
+      );
+      expect(validAt50.declaredDrivers[0]?.perturbation).toBe(exactly50);
+
+      // 3. Valid-format input exceeding 50 characters must be rejected
+      const length51 = '5.' + '0'.repeat(48) + '1';
+      expect(length51.length).toBe(51);
+
+      expect(() =>
+        calculateSensitivity(
+          { baseline: base, drivers: [{ driver: 'costVariancePercent', perturbation: length51 }] },
+          ebookPack,
+        ),
+      ).toThrow(CalcInputValidationError);
+
+      let lengthError: unknown;
+
+      try {
+        calculateSensitivity(
+          { baseline: base, drivers: [{ driver: 'costVariancePercent', perturbation: length51 }] },
+          ebookPack,
+        );
+      } catch (error) {
+        lengthError = error;
+      }
+
+      expect(lengthError).toBeInstanceOf(CalcInputValidationError);
+      expect((lengthError as CalcInputValidationError).code).toBe('CALC_INPUT_INVALID');
+      expect((lengthError as CalcInputValidationError).reason).toBe('COST_VARIANCE_INVALID');
+
+      // 4. Empty string must produce the expected typed validation error
+      let emptyError: unknown;
+
+      try {
+        calculateSensitivity(
+          { baseline: base, drivers: [{ driver: 'costVariancePercent', perturbation: '' }] },
+          ebookPack,
+        );
+      } catch (error) {
+        emptyError = error;
+      }
+
+      expect(emptyError).toBeInstanceOf(CalcInputValidationError);
+      expect((emptyError as CalcInputValidationError).code).toBe('CALC_INPUT_INVALID');
+      expect((emptyError as CalcInputValidationError).reason).toBe('COST_VARIANCE_INVALID');
+
+      // 5. Whitespace and malformed decimal inputs must be rejected
+      const malformedCases = [' 10 ', '10 ', ' 10', '   ', 'invalid', '1.2.3', '-5', '5.'];
+
+      for (const malformed of malformedCases) {
+        let malformedError: unknown;
+
+        try {
+          calculateSensitivity(
+            {
+              baseline: base,
+              drivers: [{ driver: 'costVariancePercent', perturbation: malformed }],
+            },
+            ebookPack,
+          );
+        } catch (error) {
+          malformedError = error;
+        }
+
+        expect(malformedError).toBeInstanceOf(CalcInputValidationError);
+        expect((malformedError as CalcInputValidationError).code).toBe('CALC_INPUT_INVALID');
+        expect((malformedError as CalcInputValidationError).reason).toBe('COST_VARIANCE_INVALID');
+      }
+
+      // 6. Zero perturbations must produce PERTURBATION_OUT_OF_BOUNDS
+      const zeroCases = ['0', '0.0', '0.000'];
+
+      for (const zeroVal of zeroCases) {
+        let zeroError: unknown;
+
+        try {
+          calculateSensitivity(
+            {
+              baseline: base,
+              drivers: [{ driver: 'costVariancePercent', perturbation: zeroVal }],
+            },
+            ebookPack,
+          );
+        } catch (error) {
+          zeroError = error;
+        }
+
+        expect(zeroError).toBeInstanceOf(CalcInputValidationError);
+        expect((zeroError as CalcInputValidationError).code).toBe('CALC_INPUT_INVALID');
+        expect((zeroError as CalcInputValidationError).reason).toBe('PERTURBATION_OUT_OF_BOUNDS');
+      }
+    });
   });
 
   describe('2. Perturbation Boundary Failures (Explicit Errors without Silently Clamping)', () => {
@@ -749,6 +867,8 @@ describe('calculateSensitivity — Unit, Boundary, and Contract Tests', () => {
       const result = calculateSensitivity(input, ebookPack);
 
       expect(Object.isFrozen(result)).toBe(true);
+      expect(Object.isFrozen(result.declaredDrivers)).toBe(true);
+      expect(Object.isFrozen(result.declaredDrivers[0])).toBe(true);
       expect(Object.isFrozen(result.rankedDrivers)).toBe(true);
       expect(Object.isFrozen(result.rankedDrivers[0])).toBe(true);
       expect(Object.isFrozen(result.trace)).toBe(true);
@@ -765,6 +885,66 @@ describe('calculateSensitivity — Unit, Boundary, and Contract Tests', () => {
         // @ts-expect-error mutating frozen array
         result.rankedDrivers.push({} as unknown as (typeof result.rankedDrivers)[0]);
       }).toThrow(TypeError);
+    });
+
+    it('prevents freezing caller-owned input driver objects while maintaining deep immutability of results', () => {
+      const callerDriver1 = { driver: 'units' as const, perturbation: 100 };
+      const callerDriver2 = { driver: 'listPriceMinor' as const, perturbation: 50 };
+      const callerDriver3 = {
+        driver: 'costVariancePercent' as const,
+        perturbation: '10',
+      };
+      const callerDrivers: SensitivityDriverConfig[] = [
+        callerDriver1,
+        callerDriver2,
+        callerDriver3,
+      ];
+
+      const input: SensitivityInput = {
+        baseline: {
+          units: 500,
+          listPriceMinor: 499,
+          currency: 'USD',
+          format: 'ebook',
+          fileSizeMb: '1',
+        },
+        drivers: callerDrivers,
+      };
+
+      const result = calculateSensitivity(input, ebookPack);
+
+      // 1. The returned declaredDrivers array is frozen
+      expect(Object.isFrozen(result.declaredDrivers)).toBe(true);
+
+      // 2. Every returned driver object is frozen
+      for (const returnedDriver of result.declaredDrivers) {
+        expect(Object.isFrozen(returnedDriver)).toBe(true);
+      }
+
+      // 3. The original input.drivers array is NOT frozen
+      expect(Object.isFrozen(input.drivers)).toBe(false);
+      expect(Object.isFrozen(callerDrivers)).toBe(false);
+
+      // 4. The original driver objects are NOT frozen
+      expect(Object.isFrozen(callerDriver1)).toBe(false);
+      expect(Object.isFrozen(callerDriver2)).toBe(false);
+      expect(Object.isFrozen(callerDriver3)).toBe(false);
+
+      // 5. Original input values remain unchanged and can be mutated by caller
+      expect(callerDriver1.perturbation).toBe(100);
+      expect(callerDriver2.perturbation).toBe(50);
+      expect(callerDriver3.perturbation).toBe('10');
+
+      // Verify caller can mutate their own objects without TypeError
+      callerDriver1.perturbation = 200;
+      expect(callerDriver1.perturbation).toBe(200);
+
+      // 6. The returned driver values match the originally declared drivers
+      expect(result.declaredDrivers).toEqual([
+        { driver: 'units', perturbation: 100 },
+        { driver: 'listPriceMinor', perturbation: 50 },
+        { driver: 'costVariancePercent', perturbation: '10' },
+      ]);
     });
   });
 

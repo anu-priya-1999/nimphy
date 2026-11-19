@@ -115,6 +115,12 @@ function validateSensitivityInput(input: SensitivityInput, rulePack: CalcRulePac
           `Perturbation for driver "costVariancePercent" must be an exact decimal string, received: ${typeof p}`,
         );
       }
+      if (p.length === 0 || p.length > 50) {
+        throw new CalcInputValidationError(
+          'COST_VARIANCE_INVALID',
+          'Perturbation for driver "costVariancePercent" cannot be empty or excessively long',
+        );
+      }
       if (p !== p.trim() || !/^\d+(\.\d+)?$/.test(p)) {
         throw new CalcInputValidationError(
           'COST_VARIANCE_INVALID',
@@ -579,7 +585,7 @@ export function calculateSensitivity(
   const result: SensitivityResult = {
     baseline: baselineResult,
     currency,
-    declaredDrivers: Object.freeze([...input.drivers]),
+    declaredDrivers: Object.freeze(input.drivers.map((driver) => ({ ...driver }))),
     rankedDrivers: Object.freeze(rankedDrivers),
     drivers: Object.freeze(rankedDrivers),
     rankingMetric: 'total_net_contribution',

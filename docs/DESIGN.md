@@ -627,7 +627,7 @@ nimphy/
    - Enforces domain-appropriate perturbation representations:
      - `units`: positive safe integer.
      - `listPriceMinor`: positive safe integer in minor currency units.
-     - `costVariancePercent`: positive exact decimal string.
+     - `costVariancePercent`: positive exact decimal string ($\le 50$ characters, rejecting empty or excessively long inputs before rational parsing).
 3. **One-at-a-Time Perturbation Model:**
    - Evaluates a valid baseline scenario via `calculateSingleScenario`.
    - For each driver $D_i$ with perturbation $\Delta_i$, computes lower ($D_i - \Delta_i$) and upper ($D_i + \Delta_i$) scenarios.
@@ -650,6 +650,7 @@ nimphy/
    - `SensitivityCalculationTrace` records engine version, rule pack reference and hash, baseline summary, driver configurations, lower/upper scenario runs with deltas, impact scores, and tie-breaking decisions.
    - Bit-for-bit canonical JSON reproducibility (`toCanonicalJson`); zero timestamps, zero random UUIDs.
    - Deep recursive freezing (`deepFreeze`) on all returned result objects, driver result arrays, scenario summaries, and trace trees.
+   - Driver objects are cloned before inclusion in `declaredDrivers` (`input.drivers.map((driver) => ({ ...driver }))`) to preserve caller object ownership and prevent freezing caller-owned inputs.
 7. **Hand-Derived Golden Fixtures (`fixtures/calc-engine/golden-sensitivity-cases.json`):**
    - 21 independently hand-derived golden fixture cases across all 4 synthetic Rule Packs:
      - 7 Ebook cases (USD, delivery fee variations, price sensitivity, volume sensitivity).
@@ -657,14 +658,15 @@ nimphy/
      - 4 Paperback US v2 cases (USD, successor cost window, fractional contribution sensitivities).
      - 5 Hardcover Global v1 cases (EUR, `round_down`, `per_total` exact rational contribution sensitivities).
 8. **Exhaustive Testing & 100% Branch Coverage:**
-   - 63 sensitivity-specific tests plus 1 updated barrel integration test:
-     - 37 sensitivity calculation unit tests (`sensitivity-calc.test.ts`: validation, boundaries, overflow, analytic sign checks, tie-break invariants, immutability).
+   - 65 sensitivity-specific tests plus 1 updated barrel integration test:
+     - 39 sensitivity calculation unit tests (`sensitivity-calc.test.ts`: validation, decimal length boundaries, caller object immutability, boundaries, overflow, analytic sign checks, tie-break invariants, immutability).
      - 22 golden sensitivity tests (`golden-sensitivity.test.ts`: 1 inventory check + 21 golden case parity verifications).
      - 4 sensitivity property tests (`properties.test.ts`: Mulberry32 PRNG suites for determinism, parameter preservation, monotonic ranking, and scenario parity).
      - 1 updated README barrel integration test in `index.test.ts`.
-   - Package total: 320 tests across 17 test files in `@nimphy/calc-engine`.
-   - Monorepo total: 653 tests across 42 test files.
-   - 100% Statement (1,675/1,675), 100% Branch (464/464), 100% Function (43/43), and 100% Line (1,675/1,675) coverage maintained across `packages/calc-engine`.
+   - Package total: 322 tests across 17 test files in `@nimphy/calc-engine`.
+   - Monorepo total: 655 tests across 42 test files.
+   - 100% Statement, 100% Branch, 100% Function, and 100% Line coverage maintained across `packages/calc-engine`.
+   - Automated CI workflow `.github/workflows/ci.yml` upgraded to execute `pnpm test:coverage` to enforce coverage thresholds in remote verification.
 
 ---
 
@@ -682,7 +684,7 @@ nimphy/
 | **Prettier Formatting Check** | `pnpm format:check`                           | **Passed**   | All matched files use Prettier code style                                                                                                             |
 | **Documentation Validation**  | `pnpm docs:check`                             | **Passed**   | 23 docs present, 94 links verified, 22 ADR statuses confirmed                                                                                         |
 | **Architecture Boundaries**   | `pnpm boundaries:check`                       | **Passed**   | 91 source files checked, 331 import declarations verified; `@nimphy/calc-engine` depends only on `@nimphy/domain`                                     |
-| **Full Vitest Test Suite**    | `pnpm test`                                   | **Passed**   | Vitest 3.0.8, 42 test files, **653/653 tests passed** (0 failed, 0 skipped; 320 tests in calc-engine across 17 test files)                            |
+| **Full Vitest Test Suite**    | `pnpm test`                                   | **Passed**   | Vitest 3.0.8, 42 test files, **655/655 tests passed** (0 failed, 0 skipped; 322 tests in calc-engine across 17 test files)                            |
 | **V8 Code Coverage**          | `pnpm test:coverage`                          | **Passed**   | **packages/calc-engine: 100% Stmts / 100% Br / 100% Func / 100% Lines**; monorepo: 99.95% Stmts, 99.44% Br, 100% Funcs, 99.95% Lines (threshold: 95%) |
 | **Production Web Build**      | `pnpm build`                                  | **Passed**   | `@nimphy/web` Next.js Turbopack build succeeded with 0 errors; static prerender succeeded                                                             |
 | **Git Whitespace Check**      | `git diff --check`                            | **Passed**   | Whitespace and patch integrity check; 0 whitespace or line ending errors reported                                                                     |

@@ -39,11 +39,11 @@ STEP-008 delivers the pure deterministic sensitivity analysis engine in `package
 
 ## 2. Sensitivity Drivers & Input Specifications
 
-| Driver                | Type         | Representation                           | Constraints                            |
-| --------------------- | ------------ | ---------------------------------------- | -------------------------------------- |
-| `units`               | Safe Integer | Volume in whole copies                   | $> 0$, $\le \text{MAX\_SAFE\_INTEGER}$ |
-| `listPriceMinor`      | Safe Integer | Minor currency units (e.g. cents)        | $> 0$, $\le \text{MAX\_SAFE\_INTEGER}$ |
-| `costVariancePercent` | String       | Percentage points (e.g. `"10"`, `"5.5"`) | Valid positive decimal string ($> 0$)  |
+| Driver                | Type         | Representation                           | Constraints                                           |
+| --------------------- | ------------ | ---------------------------------------- | ----------------------------------------------------- |
+| `units`               | Safe Integer | Volume in whole copies                   | $> 0$, $\le \text{MAX\_SAFE\_INTEGER}$                |
+| `listPriceMinor`      | Safe Integer | Minor currency units (e.g. cents)        | $> 0$, $\le \text{MAX\_SAFE\_INTEGER}$                |
+| `costVariancePercent` | String       | Percentage points (e.g. `"10"`, `"5.5"`) | Valid positive decimal string ($> 0$, $\le 50$ chars) |
 
 ### Driver Allow-List Validation
 
@@ -104,6 +104,7 @@ Code-point values:
 | Non-positive perturbation       | $\le 0$ or NaN                         | `CalcInputValidationError` |
 | Non-safe integer                | `!Number.isSafeInteger(p)`             | `CalcInputValidationError` |
 | Invalid decimal string          | Regex / Rational parse fail            | `CalcInputValidationError` |
+| Excessively long decimal string | `p.length > 50`                        | `CalcInputValidationError` |
 | Lower units $< 0$               | $Q_i^- < 0$                            | `CalcInputValidationError` |
 | Lower/upper price out of bounds | $< \text{floor}$ or $> \text{ceiling}$ | `CalcInputValidationError` |
 | Lower cost variance $< -100\%$  | $V_i^- < -100$                         | `CalcInputValidationError` |

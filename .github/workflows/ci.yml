@@ -65,8 +65,8 @@ jobs:
           GITHUB_SHA: ${{ github.sha }}
         run: pnpm commit:check --ci
 
-      - name: Run tests
-        run: pnpm test
+      - name: Run tests with coverage
+        run: pnpm test:coverage
 
       - name: Build Next.js application
         run: pnpm build

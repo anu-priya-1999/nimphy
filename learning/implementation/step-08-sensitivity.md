@@ -45,12 +45,14 @@ Following the strict scope and contracts mandated by the repository owner, this 
 6. **Deterministic Canonical Audit Trace (P-03):**
    - Emits structured `SensitivityCalculationTrace` containing engine version, rule pack reference and hash, baseline scenario summary, perturbation configurations, evaluated lower/upper scenarios with contribution deltas, impact scores, and ranking tie-break decisions.
    - Excludes all non-deterministic artifacts (no timestamps, random UUIDs, or machine environment paths).
-7. **Deep Immutability (P-04):**
+7. **Deep Immutability & Caller Object Protection (P-04):**
    - Recursively deep-freezes all returned result structures, summary objects, ranked driver arrays, and trace trees using `deepFreeze`.
+   - Clones declared driver objects (`input.drivers.map((driver) => ({ ...driver }))`) prior to freezing, ensuring caller-owned driver configurations and input arrays remain completely unfrozen and mutable.
 8. **Exhaustive Testing & 100% Branch Coverage (P-09):**
-   - Added 63 new tests across unit tests (37), golden fixtures (22), and deterministic property suites (4).
-   - Achieves 100% statement (1,675/1,675), 100% branch (464/464), 100% function (43/43), and 100% line (1,675/1,675) coverage in `packages/calc-engine`.
-   - Monorepo test suite passes 100% with 653 tests across 42 test files (320 tests in `packages/calc-engine` across 17 test files).
+   - Added 65 tests across unit tests (39), golden fixtures (22), and deterministic property suites (4).
+   - Achieves 100% statement, 100% branch, 100% function, and 100% line coverage in `packages/calc-engine`.
+   - Monorepo test suite passes 100% with 655 tests across 42 test files (322 tests in `packages/calc-engine` across 17 test files).
+   - CI workflow `.github/workflows/ci.yml` upgraded to execute `pnpm test:coverage` to strictly enforce coverage thresholds on remote runners.
 
 ---
 
@@ -73,7 +75,7 @@ Validation guarantees:
 - No duplicate drivers exist in the request.
 - `units` perturbation is a positive safe integer ($> 0$, $\le \text{MAX\_SAFE\_INTEGER}$).
 - `listPriceMinor` perturbation is a positive safe integer ($> 0$, $\le \text{MAX\_SAFE\_INTEGER}$).
-- `costVariancePercent` perturbation is a non-empty string representing a strictly positive exact decimal ($> 0$).
+- `costVariancePercent` perturbation is a non-empty string representing a strictly positive exact decimal ($> 0$), bounded to a maximum length of 50 characters before rational parsing (matching `scenario-calc.ts`).
 - Baseline scenario input is fully validated by `calculateSingleScenario`.
 
 ### 2. Exact Decimal Perturbation for Cost Variance
@@ -158,8 +160,9 @@ All required verification suites executed cleanly with zero errors and zero warn
 3. `pnpm format:check`: Clean (All matched files use Prettier code style).
 4. `pnpm arch:check`: Clean (`pnpm docs:check` and `pnpm boundaries:check` passed 100%).
 5. `pnpm test:coverage`:
-   - `packages/calc-engine`: **100% Statements (1,675/1,675), 100% Branches (464/464), 100% Functions (43/43), 100% Lines (1,675/1,675)** (320 tests across 17 test files).
-   - Monorepo: **653/653 tests passed across 42 test files**.
+   - `packages/calc-engine`: **100% Statements, 100% Branches, 100% Functions, 100% Lines** (322 tests across 17 test files).
+   - Monorepo: **655/655 tests passed across 42 test files**.
+   - Enforced directly in `.github/workflows/ci.yml`.
 6. `git diff --check`: Clean (no trailing whitespace or conflict markers).
 
 ---
