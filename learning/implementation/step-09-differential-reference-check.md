@@ -374,7 +374,7 @@ Analysis of timeout causes reveals two distinct mechanisms:
 
 #### Complete Reconciled Audit & Classification of Surviving Mutants (443 Total)
 
-All 443 surviving mutants from `reports/mutation/mutation.json` were comprehensively audited and classified into the six canonical survivor categories. An auditable, itemized inventory of every single mutant is permanently preserved in untracked, non-ignored working-tree documentation at [learning/notes/step-09-survivor-inventory.md](../notes/step-09-survivor-inventory.md) (and mirrored as an additional artifact at [reports/mutation/survivor-inventory.md](../../reports/mutation/survivor-inventory.md)).
+All 443 surviving mutants from `reports/mutation/mutation.json` were comprehensively audited and classified into the six canonical survivor categories. An auditable, itemized inventory of every single mutant is permanently preserved in untracked, non-ignored working-tree documentation at [learning/notes/step-09-survivor-inventory.md](../notes/step-09-survivor-inventory.md) (and mirrored as an additional artifact at [reports/mutation/survivor-inventory.md](../notes/step-09-survivor-inventory.md)).
 
 | Category #     | Category Name                                                  |   Count | % of Survivors | Technical Rationale & Scope                                                                                                                                                               |
 | -------------- | -------------------------------------------------------------- | ------: | -------------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
