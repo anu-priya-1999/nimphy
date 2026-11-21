@@ -21,9 +21,13 @@
     "arch:check": "node scripts/check-docs.mjs && node scripts/check-boundaries.mjs",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:differential": "vitest run tests/differential",
+    "test:mutation:calc-engine": "stryker run stryker.calc-engine.config.mjs",
     "test:watch": "vitest"
   },
   "devDependencies": {
+    "@stryker-mutator/core": "10.1.1",
+    "@stryker-mutator/vitest-runner": "10.1.1",
     "@testing-library/dom": "10.4.0",
     "@testing-library/react": "16.2.0",
     "@types/node": "24.19.2",

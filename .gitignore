@@ -17,6 +17,8 @@ out/
 # Test & coverage
 coverage/
 *.lcov
+.stryker-tmp/
+reports/
 
 # TypeScript build info
 *.tsbuildinfo

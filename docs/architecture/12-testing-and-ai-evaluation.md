@@ -1,18 +1,20 @@
 # 12 — Testing and AI Evaluation
 
-Related: [05](05-component-responsibilities.md), [08](08-event-schema-and-payment-lifecycle.md), [09](09-ai-architecture.md), [22](22-definition-of-done.md). Tool names are **Proposed** (Vitest, Playwright, a Postgres test container); none exist yet.
+Related: [05](05-component-responsibilities.md), [08](08-event-schema-and-payment-lifecycle.md), [09](09-ai-architecture.md), [22](22-definition-of-done.md). Tools for unit, property, differential, and mutation testing are implemented and active (Vitest, fast-check, StrykerJS); database container, Playwright, and AI eval harnesses are proposed for subsequent steps.
 
 ## 1. Test pyramid
 
-| Layer | Scope | Target tooling (Proposed) |
+| Layer | Scope | Target tooling |
 |---|---|---|
-| Unit | `domain`, `calc-engine`, `rules`, validators, renderers | Vitest |
-| Property | engine invariants | fast-check |
-| Integration | use-cases + real Postgres | Vitest + ephemeral Postgres |
-| API | route handlers, auth, errors, idempotency | Vitest + HTTP harness |
-| E2E | critical user journeys | Playwright |
-| Security | authz matrix, webhook forgery, scanning | scripted + CI tools |
-| AI eval | memo quality and grounding | custom harness, fake + real provider |
+| Unit | `domain`, `calc-engine`, `rules`, validators, renderers | Vitest (Active) |
+| Property | engine invariants | fast-check / custom PRNG (Active) |
+| Differential | independent reference cross-check against `calc-engine` | Custom BigInt Rational Oracle + Mulberry32 PRNG (Active) |
+| Mutation | assertion strength on `calc-engine` | StrykerJS + Vitest runner (Active) |
+| Integration | use-cases + real Postgres | Vitest + ephemeral Postgres (Proposed) |
+| API | route handlers, auth, errors, idempotency | Vitest + HTTP harness (Proposed) |
+| E2E | critical user journeys | Playwright (Proposed) |
+| Security | authz matrix, webhook forgery, scanning | scripted + CI tools (Proposed) |
+| AI eval | memo quality and grounding | custom harness, fake + real provider (Proposed) |
 
 ## 2. Unit testing
 
@@ -31,8 +33,14 @@ Pure modules only; no network, clock, or randomness (injected). Coverage gate: `
 7. **Determinism:** run twice, compare byte-equal canonical JSON trace; run across Node versions in CI matrix; assert zero nondeterministic keys (timestamps, random IDs, filesystem paths).
 8. **Properties:** raising units never lowers total net contribution when per-unit contribution ≥ 0; scenario ordering low ≤ base ≤ high holds when parameters are ordered; sensitivity sign matches analytic direction; currency mismatch rejected; addition associativity in integer minor units.
 9. **Trace completeness:** every output number has an audited trace entry whose inputs resolve bit-for-bit.
-10. **Mutation testing** on `calc-engine` (target score OPEN) to catch weak assertions.
-11. **Cross-check:** an independent reference implementation of core formulas compared against the engine on random inputs (differential test).
+10. **Mutation testing** on `calc-engine` (target score OPEN per §3.10) to catch weak assertions and expose test gaps using StrykerJS (`@stryker-mutator/core@10.1.1`, `@stryker-mutator/vitest-runner@10.1.1`) configured in `stryker.calc-engine.config.mjs` and executed via `pnpm test:mutation:calc-engine`. Uses focused runner `vitest.calc-engine.config.ts` targeting the 5 core calculation source files (`packages/calc-engine/src/**/*.ts` excluding tests, types, errors, index, and golden fixtures) across unit, boundary, error, golden, and differential reference suites; property tests are excluded only from the focused mutation runner due to multi-iteration generative loop overhead while remaining fully active in normal test suites and CI. The executed full baseline evaluated 1,728 generated mutants across the 5 calculation source files (including 1 ignored static mutant in `per-unit-calc.ts`, yielding 1,727 score-eligible mutants): 1,204 killed, 72 timed out (intentional non-terminating mutations in GCD, factorization, and long division loops alongside test runner duration timeouts under high test volumes), 443 survived, 8 no coverage (defensive overflow blocks), achieving an overall mutation score of 73.89% (74.23% covered; `math/rational.ts` 91.67%, `per-unit-calc.ts` 75.18% [420 generated, 1 ignored static, 419 score-eligible], `sensitivity-calc.ts` 74.31%, `scenario-calc.ts` 69.71%, `break-even-calc.ts` 57.14%). The completed baseline historically executed with `incremental: false` in 114m54s (reported); for future runs, `stryker.calc-engine.config.mjs` is configured with `incremental: true` and `incrementalFile: 'reports/stryker-step-09-completion.json'`. All 443 surviving mutants were audited, reclassified into the six canonical categories, and itemized in the untracked, non-ignored working-tree inventory `learning/notes/step-09-survivor-inventory.md` (and mirrored in `reports/mutation/survivor-inventory.md`): genuine assertion gaps (17 mutants: 11 triad ordering [1383, 1385, 1386, 1389, 1394, 1395, 1398, 1418, 1426, 1427, 1430], 2 sensitivity tie metadata [1815, 1817], 4 rational equality [411, 413, 414, 416]; all 17 remain recorded as Survived in historical JSON and were confirmed eliminated via post-baseline regression verification rather than a new Stryker run), behaviorally equivalent mutations (12 mutants: 7 rational identities, 1 duplicate-free driver sorting invariant, 4 zero-variance fast paths), unreachable under accepted input contracts (67 mutants: defensive safe-integer bounds mathematically verified across individual module reachable ranges for per-unit, single scenario, triad scenarios, break-even, and sensitivity, distinguishing exact-boundary acceptance, overflow rejection, and near-boundary coverage), trace or metadata-only behavior (31 mutants), validation/defensive boundary behavior (316 mutants), and potentially meaningful financial or public-result behavior (0 mutants). Focused regression tests were added for all genuine gaps (triad ordering, single-driver tie-breaking, rational equality); the archived historical mutation baseline strictly predates these new tests and its 73.89% score is preserved without modification. Reports are archived in `reports/mutation/` (`mutation.json`, `mutation.html`, `survivor-inventory.md`) and working-tree documentation `learning/notes/step-09-survivor-inventory.md`. Target score policy remains OPEN (`thresholds.break: null`).
+11. **Differential reference cross-check:** an independent test-only reference implementation (`tests/differential/reference-oracle/`) using native arbitrary-precision `BigInt` exact rational arithmetic (`RefRational`) and an independent reference oracle (`ref-oracle.ts`) with zero dependencies on or imports from `@nimphy/calc-engine`. Directly cross-checks all public calculation contracts:
+    - **Per-unit economics:** Exact rational numerators and denominators for gross royalty, applicable cost, and unit net contribution, alongside rounded Money values under `per_unit` and deferred null values under `per_total`.
+    - **Single-scenario totals:** Exact rational totals (`exactTotalRoyalty`, `exactTotalCost`, `exactTotalContribution`) compared numerator-by-numerator and denominator-by-denominator without floating-point conversion, alongside rounded Money amounts.
+    - **Break-even:** Reachability determination, exact unit contribution rational components, integer break-even units (exact and ceiling), break-even revenue, and unreachable reason codes (`ZERO_CONTRIBUTION`, `NEGATIVE_CONTRIBUTION`).
+    - **Sensitivity analysis:** Baseline revenue and contribution, lower/upper perturbed revenue and contribution, revenue deltas, contribution deltas, impact scores, and driver rank ordering with deterministic UTF-16 code-point tie-breaking.
+    - **Triad scenarios (`refCalculateTriadScenarios`):** Low, base, and high revenue, gross royalty, applicable cost, and net contribution; exact total royalty, total cost, and total contribution; input-ordering, revenue-ordering, and net-contribution-ordering evaluations.
+    - **Coverage & Execution:** Verified against 14 independently hand-calculated reference checkpoints (`fixtures/calc-engine/reference-checkpoints.json`), 1,024 deterministic pseudo-random vectors (Mulberry32 PRNG, seed `0x57e9009` / `92180489`) in normal runs exercising 5,120 calculation comparisons across all 5 calculation operations (and 32 vectors in focused Stryker runs) testing all 32 configuration permutations (4 synthetic Rule Packs $\times$ 4 rounding modes $\times$ 2 aggregation points), and an edge-case matrix (positive, zero, and negative contribution; safe-integer boundaries near `Number.MAX_SAFE_INTEGER`; sensitivity ranking ties; perturbation limits). Executed via `pnpm test:differential`, discovered automatically in CI test and coverage runs, and verified across Node versions in CI (`determinism-compatibility` matrix job on Node `24.18.0` and `24.x`).
 
 ## 4. Royalty-rule test fixtures
 

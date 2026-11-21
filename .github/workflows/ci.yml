@@ -70,3 +70,32 @@ jobs:
 
       - name: Build Next.js application
         run: pnpm build
+
+  determinism-compatibility:
+    name: Cross-Node Determinism Compatibility
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: ['24.18.0', '24.x']
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.5
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run differential and scenario determinism tests
+        run: pnpm exec vitest run tests/differential packages/calc-engine/src/scenarios/determinism.test.ts

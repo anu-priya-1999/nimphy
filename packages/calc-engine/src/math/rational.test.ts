@@ -152,7 +152,13 @@ describe('Rational Math Value Object', () => {
       expect(b.compare(a)).toBe(1);
       expect(a.compare(c)).toBe(0);
       expect(a.equals(c)).toBe(true);
+      expect(a.equals(b)).toBe(false);
+      expect(b.equals(a)).toBe(false);
+      expect(Rational.from(1, 3).equals(Rational.from(2, 3))).toBe(false);
+      expect(Rational.from(1, 3).equals(Rational.from(1, 4))).toBe(false);
       expect(a.equals('not a rational')).toBe(false);
+      expect(a.equals(null)).toBe(false);
+      expect(a.equals({})).toBe(false);
     });
 
     it('checks positive, negative, zero, and integer', () => {

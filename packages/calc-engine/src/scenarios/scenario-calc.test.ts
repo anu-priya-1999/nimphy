@@ -395,6 +395,32 @@ describe('Scenario Calculation Engine (STEP-006 Unit & Validation Suite)', () =>
           ebookPack,
         ),
       ).toThrow(CalcInputValidationError);
+
+      expect(() =>
+        calculateTriadScenarios(
+          {
+            ...validTriadInput,
+            scenarios: {
+              base: validTriadInput.scenarios.base,
+              high: validTriadInput.scenarios.high,
+            } as unknown as CaseScenariosInput['scenarios'],
+          },
+          ebookPack,
+        ),
+      ).toThrow(CalcInputValidationError);
+
+      expect(() =>
+        calculateTriadScenarios(
+          {
+            ...validTriadInput,
+            scenarios: {
+              low: validTriadInput.scenarios.low,
+              high: validTriadInput.scenarios.high,
+            } as unknown as CaseScenariosInput['scenarios'],
+          },
+          ebookPack,
+        ),
+      ).toThrow(CalcInputValidationError);
     });
 
     it('enforces scenario name agreement with triad keys when scenarioName is explicitly provided', () => {
@@ -493,6 +519,128 @@ describe('Scenario Calculation Engine (STEP-006 Unit & Validation Suite)', () =>
       expect(triad.ordering.areInputsMonotonicallyOrdered).toBe(false);
       expect(triad.ordering.areTotalsMonotonicallyOrdered).toBe(false);
       expect(triad.ordering.netContributionOrderingSatisfied).toBe(false);
+      expect(triad.ordering.revenueOrderingSatisfied).toBe(false);
+    });
+
+    it('evaluates individual dimensions of input monotonicity independently', () => {
+      // 1a. Price non-monotonic alone (low price > base price, units and variance ordered)
+      const priceUnorderedInput: CaseScenariosInput = {
+        scenarios: {
+          low: { units: 100, listPriceMinor: 599, costVariancePercent: '10' },
+          base: { units: 200, listPriceMinor: 499, costVariancePercent: '0' },
+          high: { units: 300, listPriceMinor: 699, costVariancePercent: '-10' },
+        },
+        currency: 'USD',
+        format: 'ebook',
+        fileSizeMb: '1',
+      };
+      const priceResult = calculateTriadScenarios(priceUnorderedInput, ebookPack);
+      expect(priceResult.ordering.areInputsMonotonicallyOrdered).toBe(false);
+
+      // 1b. Price non-monotonic on base > high (base price > high price, low <= base)
+      const priceBaseHighUnorderedInput: CaseScenariosInput = {
+        scenarios: {
+          low: { units: 100, listPriceMinor: 399, costVariancePercent: '10' },
+          base: { units: 200, listPriceMinor: 699, costVariancePercent: '0' },
+          high: { units: 300, listPriceMinor: 499, costVariancePercent: '-10' },
+        },
+        currency: 'USD',
+        format: 'ebook',
+        fileSizeMb: '1',
+      };
+      const priceBaseHighResult = calculateTriadScenarios(priceBaseHighUnorderedInput, ebookPack);
+      expect(priceBaseHighResult.ordering.areInputsMonotonicallyOrdered).toBe(false);
+
+      // 2a. Units non-monotonic alone (low units > base units, price and variance ordered)
+      const unitsUnorderedInput: CaseScenariosInput = {
+        scenarios: {
+          low: { units: 250, listPriceMinor: 399, costVariancePercent: '10' },
+          base: { units: 200, listPriceMinor: 499, costVariancePercent: '0' },
+          high: { units: 300, listPriceMinor: 599, costVariancePercent: '-10' },
+        },
+        currency: 'USD',
+        format: 'ebook',
+        fileSizeMb: '1',
+      };
+      const unitsResult = calculateTriadScenarios(unitsUnorderedInput, ebookPack);
+      expect(unitsResult.ordering.areInputsMonotonicallyOrdered).toBe(false);
+
+      // 2b. Units non-monotonic on base > high (base units > high units, low <= base)
+      const unitsBaseHighUnorderedInput: CaseScenariosInput = {
+        scenarios: {
+          low: { units: 100, listPriceMinor: 399, costVariancePercent: '10' },
+          base: { units: 300, listPriceMinor: 499, costVariancePercent: '0' },
+          high: { units: 200, listPriceMinor: 599, costVariancePercent: '-10' },
+        },
+        currency: 'USD',
+        format: 'ebook',
+        fileSizeMb: '1',
+      };
+      const unitsBaseHighResult = calculateTriadScenarios(unitsBaseHighUnorderedInput, ebookPack);
+      expect(unitsBaseHighResult.ordering.areInputsMonotonicallyOrdered).toBe(false);
+
+      // 3. Cost variance adverse ordering violated (low has lower/more favorable cost variance than base)
+      const costVarianceUnorderedInput: CaseScenariosInput = {
+        scenarios: {
+          low: { units: 100, listPriceMinor: 399, costVariancePercent: '-10' },
+          base: { units: 200, listPriceMinor: 499, costVariancePercent: '0' },
+          high: { units: 300, listPriceMinor: 599, costVariancePercent: '10' },
+        },
+        currency: 'USD',
+        format: 'ebook',
+        fileSizeMb: '1',
+      };
+      const costResult = calculateTriadScenarios(costVarianceUnorderedInput, ebookPack);
+      expect(costResult.ordering.areInputsMonotonicallyOrdered).toBe(false);
+    });
+
+    it('reports non-monotonic totals when revenue or net contribution ordering is violated', () => {
+      // 1. Revenue ordering satisfied, but net contribution ordering violated
+      const contribViolatedInput: CaseScenariosInput = {
+        scenarios: {
+          low: { units: 100, listPriceMinor: 1000, costVariancePercent: '0' },
+          base: { units: 105, listPriceMinor: 1000, costVariancePercent: '100' },
+          high: { units: 300, listPriceMinor: 1500, costVariancePercent: '-10' },
+        },
+        currency: 'USD',
+        format: 'paperback',
+        pages: 300,
+      };
+      const resContrib = calculateTriadScenarios(contribViolatedInput, paperbackV1Pack);
+      expect(resContrib.ordering.revenueOrderingSatisfied).toBe(true);
+      expect(resContrib.ordering.netContributionOrderingSatisfied).toBe(false);
+      expect(resContrib.ordering.areTotalsMonotonicallyOrdered).toBe(false);
+
+      // 2a. Net contribution ordering satisfied, but revenue ordering violated (low.revenue > base.revenue)
+      // e.g. low list price > base list price with small unit difference
+      const revViolatedInput: CaseScenariosInput = {
+        scenarios: {
+          low: { units: 100, listPriceMinor: 1500, costVariancePercent: '0' },
+          base: { units: 50, listPriceMinor: 1000, costVariancePercent: '0' },
+          high: { units: 300, listPriceMinor: 2000, costVariancePercent: '0' },
+        },
+        currency: 'USD',
+        format: 'paperback',
+        pages: 100,
+      };
+      const resRev = calculateTriadScenarios(revViolatedInput, paperbackV1Pack);
+      expect(resRev.ordering.revenueOrderingSatisfied).toBe(false);
+      expect(resRev.ordering.areTotalsMonotonicallyOrdered).toBe(false);
+
+      // 2b. Net contribution ordering satisfied, but revenue ordering violated (base.revenue > high.revenue)
+      const revBaseHighViolatedInput: CaseScenariosInput = {
+        scenarios: {
+          low: { units: 50, listPriceMinor: 1000, costVariancePercent: '0' },
+          base: { units: 300, listPriceMinor: 2000, costVariancePercent: '0' },
+          high: { units: 100, listPriceMinor: 1500, costVariancePercent: '0' },
+        },
+        currency: 'USD',
+        format: 'paperback',
+        pages: 100,
+      };
+      const resRevBaseHigh = calculateTriadScenarios(revBaseHighViolatedInput, paperbackV1Pack);
+      expect(resRevBaseHigh.ordering.revenueOrderingSatisfied).toBe(false);
+      expect(resRevBaseHigh.ordering.areTotalsMonotonicallyOrdered).toBe(false);
     });
   });
 

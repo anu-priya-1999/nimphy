@@ -1,0 +1,535 @@
+{
+  "description": "Independent hand-derived reference checkpoints for Nimphy STEP-009 differential reference verification.",
+  "disclaimer": "SYNTHETIC REFERENCE CHECKPOINTS ONLY. Independently hand-derived using exact BigInt rational arithmetic. Not generated from production engine.",
+  "engineVersion": "0.1.0",
+  "checkpoints": [
+    {
+      "id": "checkpoint_tie_round_half_up",
+      "type": "per_unit",
+      "description": "Exact half-cent rounding tie under round_half_up rounding away from zero",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "roundingOverride": {
+        "mode": "round_half_up",
+        "point": "per_unit"
+      },
+      "input": {
+        "listPriceMinor": 305,
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "1.0"
+      },
+      "expected": {
+        "exactGrossRoyalty": { "numerator": "427", "denominator": "2" },
+        "exactProductionCost": { "numerator": "15", "denominator": "1" },
+        "grossRoyaltyMinor": 214,
+        "productionCostMinor": 15,
+        "unitContributionMinor": 199
+      },
+      "derivation": "List price $3.05 (305 cents) in standard_mid 70% royalty tier yields exact rational 305 * 7/10 = 2135/10 = 427/2 = 213.5 cents. Exact tie of .5 under round_half_up rounds away from zero to 214 cents. Delivery cost for 1.0 MB at 15 cents/MB is 15 cents. Unit contribution = 214 - 15 = 199 cents."
+    },
+    {
+      "id": "checkpoint_tie_round_half_even_to_even",
+      "type": "per_unit",
+      "description": "Exact half-cent rounding tie under round_half_even rounding to nearest even integer (220.5 -> 220)",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "roundingOverride": {
+        "mode": "round_half_even",
+        "point": "per_unit"
+      },
+      "input": {
+        "listPriceMinor": 315,
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "1.0"
+      },
+      "expected": {
+        "exactGrossRoyalty": { "numerator": "441", "denominator": "2" },
+        "exactProductionCost": { "numerator": "15", "denominator": "1" },
+        "grossRoyaltyMinor": 220,
+        "productionCostMinor": 15,
+        "unitContributionMinor": 205
+      },
+      "derivation": "List price $3.15 (315 cents) at 70% rate yields exact rational 315 * 7/10 = 2205/10 = 441/2 = 220.5 cents. Under round_half_even (Banker's rounding), 220 is even, so 220.5 rounds to 220 cents (unlike round_half_up which rounds to 221). Delivery cost is 15 cents. Unit contribution = 220 - 15 = 205 cents."
+    },
+    {
+      "id": "checkpoint_tie_round_half_even_to_odd_up",
+      "type": "per_unit",
+      "description": "Exact half-cent rounding tie under round_half_even rounding to nearest even integer where quotient is odd (213.5 -> 214)",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "roundingOverride": {
+        "mode": "round_half_even",
+        "point": "per_unit"
+      },
+      "input": {
+        "listPriceMinor": 305,
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "1.0"
+      },
+      "expected": {
+        "exactGrossRoyalty": { "numerator": "427", "denominator": "2" },
+        "exactProductionCost": { "numerator": "15", "denominator": "1" },
+        "grossRoyaltyMinor": 214,
+        "productionCostMinor": 15,
+        "unitContributionMinor": 199
+      },
+      "derivation": "List price 305 cents at 70% yields 213.5 cents. Integer part 213 is odd, so Banker's rounding rounds up to 214 cents (even). Delivery cost = 15 cents. Contribution = 214 - 15 = 199 cents."
+    },
+    {
+      "id": "checkpoint_tie_round_down",
+      "type": "per_unit",
+      "description": "Rounding under round_down truncating towards zero on exact half-cent values",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "roundingOverride": {
+        "mode": "round_down",
+        "point": "per_unit"
+      },
+      "input": {
+        "listPriceMinor": 315,
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "0.5"
+      },
+      "expected": {
+        "exactGrossRoyalty": { "numerator": "441", "denominator": "2" },
+        "exactProductionCost": { "numerator": "15", "denominator": "2" },
+        "grossRoyaltyMinor": 220,
+        "productionCostMinor": 7,
+        "unitContributionMinor": 213
+      },
+      "derivation": "List price 315 cents at 70% yields 220.5 cents -> round_down truncates to 220 cents. Delivery cost for 0.5 MB is 15 * 1/2 = 7.5 cents -> round_down truncates to 7 cents. Contribution = 220 - 7 = 213 cents."
+    },
+    {
+      "id": "checkpoint_tie_round_up",
+      "type": "per_unit",
+      "description": "Rounding under round_up rounding away from zero on fractional values",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "roundingOverride": {
+        "mode": "round_up",
+        "point": "per_unit"
+      },
+      "input": {
+        "listPriceMinor": 315,
+        "currency": "USD",
+        "format": "ebook",
+        "fileSizeMb": "0.5"
+      },
+      "expected": {
+        "exactGrossRoyalty": { "numerator": "441", "denominator": "2" },
+        "exactProductionCost": { "numerator": "15", "denominator": "2" },
+        "grossRoyaltyMinor": 221,
+        "productionCostMinor": 8,
+        "unitContributionMinor": 213
+      },
+      "derivation": "List price 315 cents at 70% yields 220.5 cents -> round_up rounds away from zero to 221 cents. Delivery cost for 0.5 MB is 7.5 cents -> round_up rounds away from zero to 8 cents. Contribution = 221 - 8 = 213 cents."
+    },
+    {
+      "id": "checkpoint_scenario_per_total",
+      "type": "scenario",
+      "description": "Multi-unit scenario aggregation under per_total rounding point with cost variance",
+      "rulePackRef": {
+        "packKey": "TEST_HARDCOVER_GLOBAL",
+        "version": "1.0.0"
+      },
+      "roundingOverride": {
+        "mode": "round_down",
+        "point": "per_total"
+      },
+      "input": {
+        "units": 7,
+        "listPriceMinor": 2000,
+        "currency": "EUR",
+        "format": "hardcover",
+        "pages": 100,
+        "costVariancePercent": "10"
+      },
+      "expected": {
+        "revenueMinor": 14000,
+        "grossRoyaltyMinor": 7000,
+        "productionCostMinor": 5197,
+        "netContributionMinor": 1803,
+        "exactTotalRoyalty": { "numerator": "7000", "denominator": "1" },
+        "exactTotalCost": { "numerator": "10395", "denominator": "2" },
+        "exactTotalContribution": { "numerator": "3605", "denominator": "2" }
+      },
+      "derivation": "Hardcover €20.00 (2000 cents) at 100 pages. Base cost 600 + (100 - 75) * 3 = 675 cents. +10% cost variance yields 675 * 110/100 = 742.5 cents per unit. Royalty 50% = 1000 cents per unit. 7 units: total exact royalty = 7 * 1000 = 7000 cents; total exact cost = 7 * 742.5 = 5197.5 cents. Under round_down per_total: gross royalty = 7000, production cost = 5197, net contribution = 7000 - 5197 = 1803 cents. Revenue = 7 * 2000 = 14000 cents."
+    },
+    {
+      "id": "checkpoint_break_even_exact_integer",
+      "type": "break_even",
+      "description": "Reachable break-even with exact integer division (zero remainder)",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "1.0.0"
+      },
+      "roundingOverride": {
+        "mode": "round_half_even",
+        "point": "per_unit"
+      },
+      "input": {
+        "fixedCostMinor": 64800,
+        "listPriceMinor": 1500,
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 100
+      },
+      "expected": {
+        "reachable": true,
+        "breakEvenUnits": 100,
+        "breakEvenRevenueMinor": 150000,
+        "unitContributionMinor": 648,
+        "exactUnitContribution": { "numerator": "648", "denominator": "1" }
+      },
+      "derivation": "List price $15.00 (1500 cents) with 60% royalty = 900 cents. Print cost for 100 pages = 100 + (100 - 24) * 2 = 252 cents. Unit contribution = 900 - 252 = 648 cents. Fixed cost $648.00 (64800 cents). Division: 64800 / 648 = 100 units exactly (remainder 0). Break-even revenue = 100 * 1500 = 150000 cents ($1,500.00)."
+    },
+    {
+      "id": "checkpoint_break_even_ceiling_remainder",
+      "type": "break_even",
+      "description": "Reachable break-even requiring integer ceiling due to positive remainder",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "1.0.0"
+      },
+      "roundingOverride": {
+        "mode": "round_half_even",
+        "point": "per_unit"
+      },
+      "input": {
+        "fixedCostMinor": 65000,
+        "listPriceMinor": 1500,
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 100
+      },
+      "expected": {
+        "reachable": true,
+        "breakEvenUnits": 101,
+        "breakEvenRevenueMinor": 151500,
+        "unitContributionMinor": 648,
+        "exactUnitContribution": { "numerator": "648", "denominator": "1" }
+      },
+      "derivation": "Unit contribution = 648 cents. Fixed cost = 65000 cents. Division: 65000 / 648 = 100 with remainder 200 cents. Ceiling requires 100 + 1 = 101 units. Break-even revenue = 101 * 1500 = 151500 cents ($1,515.00)."
+    },
+    {
+      "id": "checkpoint_break_even_unreachable_negative",
+      "type": "break_even",
+      "description": "Unreachable break-even due to negative unit contribution",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "1.0.0"
+      },
+      "roundingOverride": {
+        "mode": "round_half_even",
+        "point": "per_unit"
+      },
+      "input": {
+        "fixedCostMinor": 10000,
+        "listPriceMinor": 500,
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 300
+      },
+      "expected": {
+        "reachable": false,
+        "unreachableReason": "NEGATIVE_CONTRIBUTION",
+        "breakEvenUnits": null,
+        "breakEvenRevenueMinor": null,
+        "unitContributionMinor": -352,
+        "exactUnitContribution": { "numerator": "-352", "denominator": "1" }
+      },
+      "derivation": "List price $5.00 (500 cents) at 60% = 300 cents royalty. Print cost for 300 pages = 100 + (300 - 24) * 2 = 652 cents. Unit contribution = 300 - 652 = -352 cents (negative). Break-even is mathematically unreachable; unitContributionMinor = -352, breakEvenUnits = null."
+    },
+    {
+      "id": "checkpoint_sensitivity_multidriver_ranking",
+      "type": "sensitivity",
+      "description": "Multi-driver sensitivity analysis with deterministic ranking across three drivers",
+      "rulePackRef": {
+        "packKey": "TEST_EBOOK_STANDARD",
+        "version": "1.0.0"
+      },
+      "roundingOverride": {
+        "mode": "round_half_up",
+        "point": "per_unit"
+      },
+      "input": {
+        "baseline": {
+          "units": 1000,
+          "listPriceMinor": 999,
+          "currency": "USD",
+          "format": "ebook",
+          "fileSizeMb": "1.0",
+          "costVariancePercent": "0"
+        },
+        "drivers": [
+          { "driver": "units", "perturbation": 100 },
+          { "driver": "listPriceMinor", "perturbation": 100 },
+          { "driver": "costVariancePercent", "perturbation": "50" }
+        ]
+      },
+      "expected": {
+        "baselineNetContributionMinor": 684000,
+        "baselineRevenueMinor": 999000,
+        "rankedDrivers": [
+          {
+            "driver": "listPriceMinor",
+            "rank": 1,
+            "impactScoreMinor": 314000,
+            "lowerNetContributionMinor": 614000,
+            "upperNetContributionMinor": 370000,
+            "deltaLowerMinor": -70000,
+            "deltaUpperMinor": -314000,
+            "lowerRevenueMinor": 899000,
+            "upperRevenueMinor": 1099000,
+            "deltaLowerRevenueMinor": -100000,
+            "deltaUpperRevenueMinor": 100000
+          },
+          {
+            "driver": "units",
+            "rank": 2,
+            "impactScoreMinor": 68400,
+            "lowerNetContributionMinor": 615600,
+            "upperNetContributionMinor": 752400,
+            "deltaLowerMinor": -68400,
+            "deltaUpperMinor": 68400,
+            "lowerRevenueMinor": 899100,
+            "upperRevenueMinor": 1098900,
+            "deltaLowerRevenueMinor": -99900,
+            "deltaUpperRevenueMinor": 99900
+          },
+          {
+            "driver": "costVariancePercent",
+            "rank": 3,
+            "impactScoreMinor": 8000,
+            "lowerNetContributionMinor": 691000,
+            "upperNetContributionMinor": 676000,
+            "deltaLowerMinor": 7000,
+            "deltaUpperMinor": -8000,
+            "lowerRevenueMinor": 999000,
+            "upperRevenueMinor": 999000,
+            "deltaLowerRevenueMinor": 0,
+            "deltaUpperRevenueMinor": 0
+          }
+        ]
+      },
+      "derivation": "Baseline $9.99 70% yields 699 cents royalty - 15 delivery = 684 cents * 1000 units = 684,000 cents. units delta 100 gives +/-68,400 impact. listPrice -100 yields $8.99 (629-15 = 614 * 1000 = 614,000, delta -70,000); listPrice +100 yields $10.99 in 35% tier (385-15 = 370 * 1000 = 370,000, delta -314,000), max impact 314,000. costVariance delta 50% gives delivery 8 cents (lower contrib 691,000, delta +7000) and 23 cents (upper contrib 676,000, delta -8000), max impact 8000. Deterministic ranking: 1. listPriceMinor (314,000), 2. units (68,400), 3. costVariancePercent (8,000)."
+    },
+    {
+      "id": "checkpoint_break_even_zero_contribution",
+      "type": "break_even",
+      "description": "Unreachable break-even due to exactly zero unit contribution",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "1.0.0"
+      },
+      "roundingOverride": {
+        "mode": "round_half_even",
+        "point": "per_unit"
+      },
+      "input": {
+        "fixedCostMinor": 10000,
+        "listPriceMinor": 500,
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 124
+      },
+      "expected": {
+        "reachable": false,
+        "unreachableReason": "ZERO_CONTRIBUTION",
+        "breakEvenUnits": null,
+        "breakEvenRevenueMinor": null,
+        "unitContributionMinor": 0,
+        "exactUnitContribution": { "numerator": "0", "denominator": "1" }
+      },
+      "derivation": "List price $5.00 (500 cents) at 60% royalty = 300 cents. Print cost for 124 pages: base 100 + (124 - 24) * 2 = 300 cents. Unit contribution = 300 - 300 = 0 cents. Break-even is mathematically unreachable because unit contribution is zero; reachable: false, unreachableReason: 'ZERO_CONTRIBUTION', breakEvenUnits: null."
+    },
+    {
+      "id": "checkpoint_sensitivity_ranking_tie",
+      "type": "sensitivity",
+      "description": "Multi-driver sensitivity analysis exercising exact impact-score ties and deterministic alphabetical ordering",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "1.0.0"
+      },
+      "roundingOverride": {
+        "mode": "round_half_up",
+        "point": "per_unit"
+      },
+      "input": {
+        "baseline": {
+          "units": 1000,
+          "listPriceMinor": 1000,
+          "currency": "USD",
+          "format": "paperback",
+          "pages": 24,
+          "costVariancePercent": "0"
+        },
+        "drivers": [
+          { "driver": "units", "perturbation": 120 },
+          { "driver": "listPriceMinor", "perturbation": 100 },
+          { "driver": "costVariancePercent", "perturbation": "60" }
+        ]
+      },
+      "expected": {
+        "baselineNetContributionMinor": 500000,
+        "baselineRevenueMinor": 1000000,
+        "rankedDrivers": [
+          {
+            "driver": "costVariancePercent",
+            "rank": 1,
+            "impactScoreMinor": 60000,
+            "lowerNetContributionMinor": 560000,
+            "upperNetContributionMinor": 440000,
+            "deltaLowerMinor": 60000,
+            "deltaUpperMinor": -60000,
+            "lowerRevenueMinor": 1000000,
+            "upperRevenueMinor": 1000000,
+            "deltaLowerRevenueMinor": 0,
+            "deltaUpperRevenueMinor": 0
+          },
+          {
+            "driver": "listPriceMinor",
+            "rank": 2,
+            "impactScoreMinor": 60000,
+            "lowerNetContributionMinor": 440000,
+            "upperNetContributionMinor": 560000,
+            "deltaLowerMinor": -60000,
+            "deltaUpperMinor": 60000,
+            "lowerRevenueMinor": 900000,
+            "upperRevenueMinor": 1100000,
+            "deltaLowerRevenueMinor": -100000,
+            "deltaUpperRevenueMinor": 100000
+          },
+          {
+            "driver": "units",
+            "rank": 3,
+            "impactScoreMinor": 60000,
+            "lowerNetContributionMinor": 440000,
+            "upperNetContributionMinor": 560000,
+            "deltaLowerMinor": -60000,
+            "deltaUpperMinor": 60000,
+            "lowerRevenueMinor": 880000,
+            "upperRevenueMinor": 1120000,
+            "deltaLowerRevenueMinor": -120000,
+            "deltaUpperRevenueMinor": 120000
+          }
+        ]
+      },
+      "derivation": "Baseline $10.00 (1000 cents), 24 pages (print cost = 100 cents), 1000 units yields royalty 600 - 100 = 500 cents * 1000 units = 500,000 cents net contribution and 1,000,000 cents revenue. costVariancePercent perturbation 60% yields lower cost 40 cents (contrib 560,000, delta +60,000) and upper cost 160 cents (contrib 440,000, delta -60,000), impact 60,000. listPriceMinor perturbation 100 cents yields lower price $9.00 (royalty 540 - 100 = 440, contrib 440,000, delta -60,000) and upper price $11.00 (royalty 660 - 100 = 560, contrib 560,000, delta +60,000), impact 60,000. units perturbation 120 units yields lower units 880 (contrib 440,000, delta -60,000) and upper units 1120 (contrib 560,000, delta +60,000), impact 60,000. All three drivers produce exact identical impactScoreMinor = 60000. Deterministic UTF-16 code-point order breaks the three-way tie: costVariancePercent (rank 1), listPriceMinor (rank 2), units (rank 3)."
+    },
+    {
+      "id": "checkpoint_triad_scenarios_ordering",
+      "type": "triad",
+      "description": "Triad scenario calculation (low, base, high) with exact totals and monotonic ordering",
+      "rulePackRef": {
+        "packKey": "TEST_PAPERBACK_US",
+        "version": "1.0.0"
+      },
+      "roundingOverride": {
+        "mode": "round_half_even",
+        "point": "per_unit"
+      },
+      "input": {
+        "scenarios": {
+          "low": { "units": 100, "listPriceMinor": 1000, "costVariancePercent": "10" },
+          "base": { "units": 200, "listPriceMinor": 1500, "costVariancePercent": "0" },
+          "high": { "units": 500, "listPriceMinor": 2000, "costVariancePercent": "-10" }
+        },
+        "currency": "USD",
+        "format": "paperback",
+        "pages": 24
+      },
+      "expected": {
+        "scenarios": {
+          "low": {
+            "revenueMinor": 100000,
+            "grossRoyaltyMinor": 60000,
+            "productionCostMinor": 11000,
+            "netContributionMinor": 49000,
+            "exactTotalRoyalty": { "numerator": "60000", "denominator": "1" },
+            "exactTotalCost": { "numerator": "11000", "denominator": "1" },
+            "exactTotalContribution": { "numerator": "49000", "denominator": "1" }
+          },
+          "base": {
+            "revenueMinor": 300000,
+            "grossRoyaltyMinor": 180000,
+            "productionCostMinor": 20000,
+            "netContributionMinor": 160000,
+            "exactTotalRoyalty": { "numerator": "180000", "denominator": "1" },
+            "exactTotalCost": { "numerator": "20000", "denominator": "1" },
+            "exactTotalContribution": { "numerator": "160000", "denominator": "1" }
+          },
+          "high": {
+            "revenueMinor": 1000000,
+            "grossRoyaltyMinor": 600000,
+            "productionCostMinor": 45000,
+            "netContributionMinor": 555000,
+            "exactTotalRoyalty": { "numerator": "600000", "denominator": "1" },
+            "exactTotalCost": { "numerator": "45000", "denominator": "1" },
+            "exactTotalContribution": { "numerator": "555000", "denominator": "1" }
+          }
+        },
+        "ordering": {
+          "areInputsMonotonicallyOrdered": true,
+          "areTotalsMonotonicallyOrdered": true,
+          "netContributionOrderingSatisfied": true,
+          "revenueOrderingSatisfied": true,
+          "details": {
+            "lowContributionMinor": 49000,
+            "baseContributionMinor": 160000,
+            "highContributionMinor": 555000,
+            "lowRevenueMinor": 100000,
+            "baseRevenueMinor": 300000,
+            "highRevenueMinor": 1000000
+          }
+        }
+      },
+      "derivation": "Paperback 24 pages has base print cost 100 cents. Royalty is 60%. Low: 100 units @ $10.00, +10% cost (110 cents/unit) -> revenue $1,000 (100000 cents), gross royalty 60000, cost 11000, contribution 49000. Base: 200 units @ $15.00, 0% cost (100 cents/unit) -> revenue $3,000 (300000 cents), gross royalty 180000, cost 20000, contribution 160000. High: 500 units @ $20.00, -10% cost (90 cents/unit) -> revenue $10,000 (1000000 cents), gross royalty 600000, cost 45000, contribution 555000. Monotonic input ordering (price 1000<=1500<=2000, units 100<=200<=500, cost variance 10>=0>=-10) and total ordering (revenue 100k<=300k<=1000k, contribution 49k<=160k<=555k) both hold true."
+    },
+    {
+      "id": "checkpoint_scenario_safe_integer_boundary",
+      "type": "scenario",
+      "description": "Valid scenario totals near Number.MAX_SAFE_INTEGER without precision loss",
+      "rulePackRef": {
+        "packKey": "TEST_HARDCOVER_GLOBAL",
+        "version": "1.0.0"
+      },
+      "roundingOverride": {
+        "mode": "round_down",
+        "point": "per_unit"
+      },
+      "input": {
+        "units": 4503599627370,
+        "listPriceMinor": 2000,
+        "currency": "EUR",
+        "format": "hardcover",
+        "pages": 75,
+        "costVariancePercent": "0"
+      },
+      "expected": {
+        "revenueMinor": 9007199254740000,
+        "grossRoyaltyMinor": 4503599627370000,
+        "productionCostMinor": 2702159776422000,
+        "netContributionMinor": 1801439850948000,
+        "exactTotalRoyalty": { "numerator": "4503599627370000", "denominator": "1" },
+        "exactTotalCost": { "numerator": "2702159776422000", "denominator": "1" },
+        "exactTotalContribution": { "numerator": "1801439850948000", "denominator": "1" }
+      },
+      "derivation": "Hardcover €20.00 (2000 cents) at 75 pages. Base print cost = 600 cents. 50% royalty tier = 1000 cents. Unit contribution = 400 cents. At 4,503,599,627,370 units, total retail revenue is 4,503,599,627,370 * 2000 = 9,007,199,254,740,000 cents, within 991 cents of Number.MAX_SAFE_INTEGER (9,007,199,254,740,091). Gross royalty = 4,503,599,627,370,000 cents; print cost = 2,702,159,776,422,000 cents; net contribution = 1,801,439,850,948,000 cents. All values are valid safe integers that do not overflow."
+    }
+  ]
+}

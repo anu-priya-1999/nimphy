@@ -740,6 +740,48 @@ describe('calculateSensitivity — Unit, Boundary, and Contract Tests', () => {
       expect(result1.trace.rankingDecisions[1]!.tieBrokenByDriverName).toBe(true);
     });
 
+    it('proves that single-driver rankings and non-tied drivers are not marked as tie-broken', () => {
+      // 1. Single driver
+      const singleDriverInput: SensitivityInput = {
+        baseline: {
+          units: 500,
+          listPriceMinor: 499,
+          currency: 'USD',
+          format: 'ebook',
+          fileSizeMb: '1',
+        },
+        drivers: [{ driver: 'units', perturbation: 100 }],
+      };
+      const singleResult = calculateSensitivity(singleDriverInput, ebookPack);
+      expect(singleResult.rankedDrivers).toHaveLength(1);
+      expect(singleResult.trace.rankingDecisions).toHaveLength(1);
+      expect(singleResult.trace.rankingDecisions[0]!.rank).toBe(1);
+      expect(singleResult.trace.rankingDecisions[0]!.driver).toBe('units');
+      expect(singleResult.trace.rankingDecisions[0]!.tieBrokenByDriverName).toBe(false);
+
+      // 2. Multiple drivers with strictly distinct impact scores
+      const multiDistinctInput: SensitivityInput = {
+        baseline: {
+          units: 1000,
+          listPriceMinor: 999,
+          currency: 'USD',
+          format: 'ebook',
+          fileSizeMb: '1',
+        },
+        drivers: [
+          { driver: 'units', perturbation: 500 },
+          { driver: 'listPriceMinor', perturbation: 10 },
+        ],
+      };
+      const multiResult = calculateSensitivity(multiDistinctInput, ebookPack);
+      expect(multiResult.rankedDrivers).toHaveLength(2);
+      expect(multiResult.rankedDrivers[0]!.impactScoreMinor).not.toBe(
+        multiResult.rankedDrivers[1]!.impactScoreMinor,
+      );
+      expect(multiResult.trace.rankingDecisions[0]!.tieBrokenByDriverName).toBe(false);
+      expect(multiResult.trace.rankingDecisions[1]!.tieBrokenByDriverName).toBe(false);
+    });
+
     it('produces identical ranked output order regardless of input driver declaration order', () => {
       const base = {
         units: 500,
