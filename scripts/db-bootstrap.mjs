@@ -74,16 +74,6 @@ export async function bootstrap(databaseUrl) {
       END $$;
     `);
 
-    // 3. Grant nimphy_migrator to CURRENT_USER with INHERIT FALSE, SET TRUE so administrative deployer/runner can execute SET ROLE nimphy_migrator
-    await client.query(`
-      DO $$
-      BEGIN
-        GRANT nimphy_migrator TO CURRENT_USER WITH INHERIT FALSE, SET TRUE;
-        GRANT nimphy_app TO CURRENT_USER WITH INHERIT FALSE, SET TRUE;
-        GRANT nimphy_purge TO CURRENT_USER WITH INHERIT FALSE, SET TRUE;
-      END $$;
-    `);
-
     console.log('Database bootstrap completed successfully.');
   } finally {
     client.release();
