@@ -92,7 +92,7 @@ Related: [03](03-architecture-principles.md) (dependency rule), [06](06-database
 - **Responsibility:** repositories, transactions, migrations.
 - **Owned data:** schema itself. **Public interface:** repository interfaces consumed by use-cases.
 - **Security:** parameterised queries only; per-query ownership predicates.
-- **Tests:** migration up/down on empty DB; constraint tests.
+- **Tests:** migration from empty DB on forward-only schema; constraint tests; transactional rollback on migration failure; disposable databases for test cleanup.
 
 ## M-10 `web` (UI + HTTP edge) (I)
 

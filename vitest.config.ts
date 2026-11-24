@@ -9,6 +9,7 @@ export default defineConfig({
     environment: 'jsdom',
     testTimeout: 20000,
     include: ['apps/**/*.test.{ts,tsx}', 'packages/**/*.test.{ts,tsx}', 'tests/**/*.test.{ts,tsx}'],
+    exclude: ['**/node_modules/**', '**/dist/**', '**/*.db.test.{ts,tsx}', 'tests/db/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

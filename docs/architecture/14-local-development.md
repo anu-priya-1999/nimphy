@@ -11,8 +11,8 @@ Related: [13](13-deployment-and-infrastructure.md), [12](12-testing-and-ai-evalu
 | Git | version control |
 | Node.js `24.18.0` (Active LTS; pinned in `.nvmrc` and root `package.json` `engines`) | runtime (verified in STEP-001) |
 | pnpm `10.34.5` (via Corepack; pinned in root `packageManager`) | package manager (verified in STEP-001) |
-| PostgreSQL 16-class (local install or container) | exact major version / setup planned for STEP-010 `[UNVERIFIED]` |
-| Docker (optional) | simplest local Postgres `[UNVERIFIED]` |
+| PostgreSQL 16-class (local install or container) | verified in STEP-010 (PostgreSQL 16 in CI, PostgreSQL 16/18 supported locally) |
+| Docker (optional) | simplest local Postgres container |
 | PayPal developer sandbox account | for checkout testing (planned for STEP-024 `[UNVERIFIED]`) |
 | AI provider key (optional) | otherwise fake provider (planned for STEP-019 `[UNVERIFIED]`) |
 
@@ -58,23 +58,37 @@ cp .env.example .env.local    # on Windows PowerShell: Copy-Item .env.example .e
 | Format write | `pnpm format` | Verified in STEP-001 (Prettier 3.5.3) |
 | Unit tests | `pnpm test` | Verified in STEP-001 (Vitest 3.0.8, 2/2 tests passed) |
 | Test watch | `pnpm test:watch` | Verified in STEP-001 (Vitest interactive watcher) |
-| Docs check | `pnpm docs:check` | Planned / `[UNVERIFIED]` (scheduled for STEP-002) |
-| DB migrate | `pnpm db:migrate` | Planned / `[UNVERIFIED]` (scheduled for STEP-010) |
-| DB reset (dev only) | `pnpm db:reset` | Planned / `[UNVERIFIED]` (scheduled for STEP-010) |
-| Seed synthetic data / test Rule Packs | `pnpm db:seed:dev` | Planned / `[UNVERIFIED]` (scheduled for STEP-010) |
-| Integration tests | `pnpm test:integration` | Planned / `[UNVERIFIED]` (scheduled for STEP-010+) |
+| Docs check | `pnpm docs:check` | Verified in STEP-002 |
+| DB migrate | `pnpm db:migrate` | Verified in STEP-010 (applies forward-only migrations via Node pg runner) |
+| DB tests | `pnpm test:db` | Verified in STEP-010 (PostgreSQL integration tests against DATABASE_URL or local instance) |
+| Integration tests | `pnpm test:integration` | Planned / `[UNVERIFIED]` (scheduled for STEP-012+) |
 | E2E | `pnpm test:e2e` | Planned / `[UNVERIFIED]` (scheduled for STEP-028) |
 
-## 5. Database setup `[UNVERIFIED]`
+## 5. Database setup (verified in STEP-010)
 
+### Option A: Docker container (recommended for containerized workflows)
 ```bash
 docker run --name nimphy-pg -e POSTGRES_PASSWORD=dev -p 5432:5432 -d postgres:16
-# then set DATABASE_URL and run:
+# Run cluster and database bootstrap once as admin (creates nimphy_migrator, nimphy_app, nimphy_purge roles and sets schema ownership via identifier-safe dynamic SQL):
+# psql -h localhost -U postgres -d postgres -f packages/persistence/scripts/bootstrap.sql
+# Then provision dedicated non-superuser service logins (nimphy_migrator_login, nimphy_app_login, nimphy_purge_login) with controlled membership:
+# GRANT nimphy_migrator TO nimphy_migrator_login WITH INHERIT FALSE, SET TRUE;
+# Set DATABASE_URL in .env.local connecting as the migration login:
+# DATABASE_URL="postgresql://nimphy_migrator_login:pass@localhost:5432/nimphy_dev"
 pnpm db:migrate
-pnpm db:seed:dev
+pnpm test:db
 ```
 
-Database setup, migrations, and seed scripts are planned for STEP-010 (doc 17). Seeds contain **synthetic** `TEST_*` Rule Packs only. Real Rule Packs are published by an explicit operator command after sourcing (OQ-006).
+### Option B: Local PostgreSQL instance (native install or service)
+```bash
+# Ensure PostgreSQL 16 or 18 is running locally.
+# When DATABASE_URL is omitted during local development/tests, `pnpm test:db`
+# automatically spins up an ephemeral test database cluster on port 5433 using local pg_ctl/initdb
+# and automatically bootstraps roles and schema ownership.
+pnpm test:db
+```
+
+Database setup, migration runner, and integration test suite were verified in STEP-010 (ADR-015). Database seeding (`pnpm db:seed:dev`) is deferred; synthetic Rule Packs (`TEST_*`) are loaded from `fixtures/rules/` in tests without requiring production seeds. Real Rule Packs are published by an explicit operator command after sourcing (OQ-006).
 
 ## 6. Webhook testing locally
 

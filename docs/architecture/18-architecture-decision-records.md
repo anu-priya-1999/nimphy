@@ -22,7 +22,7 @@ Status vocabulary: **Accepted** (owner approved), **Proposed** (recommended, awa
 | 012 | PDF rendering approach | OPEN |
 | 013 | Store generated dossiers vs regenerate | OPEN |
 | 014 | Postgres row-level security | OPEN |
-| 015 | Migration tool | OPEN |
+| 015 | Migration tool | Accepted |
 | 016 | ADR file layout; reconciliation with any pre-existing repository decisions | OPEN |
 | 017 | AI provider and model | OPEN |
 | 018 | Entitlement scope and refund policy | OPEN |
@@ -130,8 +130,19 @@ Status: OPEN — requires explicit decision. Store files in object storage (simp
 ## ADR-014 Row-level security — OPEN
 Status: OPEN — requires explicit decision. Defence-in-depth vs added complexity with serverless pooling. **Carry-over candidate:** the predecessor plan included row-level security (doc 01 R-3). Doc 06's lock order, purge role and webhook claim queries must be re-tested under RLS if adopted.
 
-## ADR-015 Migration tool — OPEN
-Status: OPEN — requires explicit decision. Plain SQL files with a runner vs ORM-integrated migrations. **Carry-over candidate:** Drizzle (predecessor plan, doc 01 R-3). Whatever is chosen must express partial unique indexes, `CHECK` constraints, triggers and `FOR UPDATE SKIP LOCKED` queries (doc 06).
+## ADR-015 Migration tool — Accepted
+
+- **Context:** Database foundation (STEP-010) requires establishing schema migration infrastructure for PostgreSQL 16. The schema requires partial unique indexes, CHECK constraints, immutability triggers, fine-grained role privileges, and security-definer purge functions.
+- **Problem:** Choose a migration strategy and toolchain that safely evolves the database schema without leaky abstractions or unnecessary dependencies.
+- **Alternatives considered:**
+  - **Option A (Chosen):** Numbered, forward-only plain-SQL migration files with a lightweight Node.js runner in `packages/persistence`, using PostgreSQL advisory locks (`pg_advisory_lock`) and SHA-256 checksum tracking in a dedicated metadata schema (`nimphy_meta.schema_migrations`).
+  - **Option B (Carry-over candidate):** ORM-integrated migrations via Drizzle (`drizzle-orm` + `drizzle-kit`). While Drizzle supports PostgreSQL partial indexes and SQL migrations, plain SQL was selected because it provides one authoritative database schema, explicit PostgreSQL-specific DDL, and fewer unnecessary dependencies—avoiding ORM tooling churn before data-access repositories exist.
+- **Decision:** Option A. Numbered, forward-only plain-SQL files (`001_initial_schema.sql`, etc.) executed by a lightweight Node.js runner using the standard `pg` driver (`pg@8.23.1`). Production schema evolution is forward-only; migration failures roll back the enclosing transaction. Test cleanup uses disposable databases rather than destructive down-migrations.
+- **Rationale:** Plain SQL keeps DDL, indexes, triggers, and privileges unambiguous and bit-for-bit auditable in Git; avoids premature ORM coupling before repository requirements exist in STEP-012/013; aligns with P-01, P-02, P-04, and doc 06 §10.
+- **Consequences:** Migrations are written in plain SQL; the runner handles advisory locking, checksum verification, and idempotent re-runs; repositories in later steps can use `pg` directly or evaluate query builders independently without coupling to migration tooling.
+- **Security and operational implications:** Migrations execute within individual transactions under advisory locks to prevent concurrent execution; checksum mismatches fail closed; credentials are scrubbed from error output. Role creation is decoupled from runtime credentials.
+- **Status:** Accepted — repository owner approved 2026-11-22.
+- **Revisit when:** Schema scale or repository data-access patterns justify introducing a dedicated query builder or data-access library.
 
 ## ADR-016 ADR layout and reconciliation — OPEN
 Status: OPEN — requires explicit decision. (a) Keep ADRs in this file; (b) split into `docs/adr/NNNN-*.md`. Also: if a pre-existing repository, research register, or validation report exists, reconcile this package against it and record superseded decisions here. **Re-checked 2026-11-03 and 2026-11-04: none exists in the workspace**; the only extra inputs are owner-stated predecessor plans, reconciled in doc 01 §12 (ADR-022).

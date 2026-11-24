@@ -99,3 +99,50 @@ jobs:
 
       - name: Run differential and scenario determinism tests
         run: pnpm exec vitest run tests/differential packages/calc-engine/src/scenarios/determinism.test.ts
+
+  database-integration:
+    name: PostgreSQL 16 Database Integration
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: dev
+          POSTGRES_DB: nimphy_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.18.0
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run database migrations on empty PostgreSQL 16 database
+        env:
+          DATABASE_URL: postgresql://postgres:dev@localhost:5432/nimphy_test
+        run: pnpm db:migrate
+
+      - name: Run PostgreSQL integration, constraint, and immutability tests
+        env:
+          DATABASE_URL: postgresql://postgres:dev@localhost:5432/nimphy_test
+        run: pnpm test:db

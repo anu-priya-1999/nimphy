@@ -8,6 +8,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@nimphy/domain": "workspace:*"
+    "@nimphy/domain": "workspace:*",
+    "pg": "8.23.1"
+  },
+  "devDependencies": {
+    "@types/pg": "8.23.1"
   }
 }
