@@ -50,14 +50,28 @@ describe('Database Foundation — Role Model, Non-Superuser Migrations & Runtime
         DO $$
         BEGIN
           IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'nimphy_migrator') THEN
-            CREATE ROLE nimphy_migrator WITH NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE;
+            CREATE ROLE nimphy_migrator WITH NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS NOREPLICATION;
           END IF;
           IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'nimphy_app') THEN
-            CREATE ROLE nimphy_app WITH NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE;
+            CREATE ROLE nimphy_app WITH NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS NOREPLICATION;
           END IF;
           IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'nimphy_purge') THEN
-            CREATE ROLE nimphy_purge WITH NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE;
+            CREATE ROLE nimphy_purge WITH NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS NOREPLICATION;
           END IF;
+
+          IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'nimphy_migrator_login') THEN
+            CREATE ROLE nimphy_migrator_login WITH LOGIN PASSWORD 'migrator_pwd' NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS NOREPLICATION;
+          END IF;
+          IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'nimphy_app_login') THEN
+            CREATE ROLE nimphy_app_login WITH LOGIN PASSWORD 'app_pwd' NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS NOREPLICATION;
+          END IF;
+          IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'nimphy_purge_login') THEN
+            CREATE ROLE nimphy_purge_login WITH LOGIN PASSWORD 'purge_pwd' NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS NOREPLICATION;
+          END IF;
+
+          GRANT nimphy_migrator TO nimphy_migrator_login WITH INHERIT FALSE, SET TRUE;
+          GRANT nimphy_app TO nimphy_app_login WITH INHERIT FALSE, SET TRUE;
+          GRANT nimphy_purge TO nimphy_purge_login WITH INHERIT FALSE, SET TRUE;
         END $$;
       `);
 
@@ -88,9 +102,9 @@ describe('Database Foundation — Role Model, Non-Superuser Migrations & Runtime
       await bootstrapDatabase(targetAdminClient, {
         dbName: testDbName,
         allowedMembers: {
-          nimphy_migrator: [migratorUsername],
-          nimphy_app: [appUsername],
-          nimphy_purge: [purgeUsername],
+          nimphy_migrator: ['nimphy_migrator_login', migratorUsername],
+          nimphy_app: ['nimphy_app_login', appUsername],
+          nimphy_purge: ['nimphy_purge_login', purgeUsername],
         },
       });
 
@@ -793,9 +807,9 @@ describe('Database Foundation — Role Model, Non-Superuser Migrations & Runtime
         await bootstrapDatabase(targetClient, {
           dbName: bootTargetDb,
           allowedMembers: {
-            nimphy_migrator: [migratorUsername],
-            nimphy_app: [appUsername],
-            nimphy_purge: [purgeUsername],
+            nimphy_migrator: ['nimphy_migrator_login', migratorUsername],
+            nimphy_app: ['nimphy_app_login', appUsername],
+            nimphy_purge: ['nimphy_purge_login', purgeUsername],
           },
         });
 
@@ -816,9 +830,9 @@ describe('Database Foundation — Role Model, Non-Superuser Migrations & Runtime
           bootstrapDatabase(targetClient, {
             dbName: bootTargetDb,
             allowedMembers: {
-              nimphy_migrator: [migratorUsername],
-              nimphy_app: [appUsername],
-              nimphy_purge: [purgeUsername],
+              nimphy_migrator: ['nimphy_migrator_login', migratorUsername],
+              nimphy_app: ['nimphy_app_login', appUsername],
+              nimphy_purge: ['nimphy_purge_login', purgeUsername],
             },
           }),
         ).resolves.not.toThrow();
