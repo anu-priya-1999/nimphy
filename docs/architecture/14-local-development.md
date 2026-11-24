@@ -59,6 +59,7 @@ cp .env.example .env.local    # on Windows PowerShell: Copy-Item .env.example .e
 | Unit tests | `pnpm test` | Verified in STEP-001 (Vitest 3.0.8, 2/2 tests passed) |
 | Test watch | `pnpm test:watch` | Verified in STEP-001 (Vitest interactive watcher) |
 | Docs check | `pnpm docs:check` | Verified in STEP-002 |
+| DB bootstrap | `pnpm db:bootstrap` | Verified in STEP-010 (provisions roles and schema ownership on target PostgreSQL cluster) |
 | DB migrate | `pnpm db:migrate` | Verified in STEP-010 (applies forward-only migrations via Node pg runner) |
 | DB tests | `pnpm test:db` | Verified in STEP-010 (PostgreSQL integration tests against DATABASE_URL or local instance) |
 | Integration tests | `pnpm test:integration` | Planned / `[UNVERIFIED]` (scheduled for STEP-012+) |
@@ -69,12 +70,10 @@ cp .env.example .env.local    # on Windows PowerShell: Copy-Item .env.example .e
 ### Option A: Docker container (recommended for containerized workflows)
 ```bash
 docker run --name nimphy-pg -e POSTGRES_PASSWORD=dev -p 5432:5432 -d postgres:16
-# Run cluster and database bootstrap once as admin (creates nimphy_migrator, nimphy_app, nimphy_purge roles and sets schema ownership via identifier-safe dynamic SQL):
-# psql -h localhost -U postgres -d postgres -f packages/persistence/scripts/bootstrap.sql
-# Then provision dedicated non-superuser service logins (nimphy_migrator_login, nimphy_app_login, nimphy_purge_login) with controlled membership:
-# GRANT nimphy_migrator TO nimphy_migrator_login WITH INHERIT FALSE, SET TRUE;
+# Run cluster and database bootstrap once as admin (or run pnpm db:bootstrap with admin DATABASE_URL):
+pnpm db:bootstrap
 # Set DATABASE_URL in .env.local connecting as the migration login:
-# DATABASE_URL="postgresql://nimphy_migrator_login:pass@localhost:5432/nimphy_dev"
+# DATABASE_URL="postgresql://nimphy_migrator_login:migrator_pwd@localhost:5432/nimphy_dev"
 pnpm db:migrate
 pnpm test:db
 ```

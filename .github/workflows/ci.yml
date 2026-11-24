@@ -137,6 +137,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Bootstrap PostgreSQL 16 cluster and database
+        env:
+          DATABASE_URL: postgresql://postgres:dev@localhost:5432/nimphy_test
+        run: pnpm db:bootstrap
+
       - name: Run database migrations on empty PostgreSQL 16 database
         env:
           DATABASE_URL: postgresql://postgres:dev@localhost:5432/nimphy_test

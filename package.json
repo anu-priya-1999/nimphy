@@ -22,6 +22,7 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:db": "node scripts/run-db-tests.mjs",
+    "db:bootstrap": "node scripts/db-bootstrap.mjs",
     "db:migrate": "node scripts/db-migrate.mjs",
     "test:differential": "vitest run tests/differential",
     "test:mutation:calc-engine": "stryker run stryker.calc-engine.config.mjs",
