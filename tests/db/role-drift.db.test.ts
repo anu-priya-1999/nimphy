@@ -1,11 +1,12 @@
+import crypto from 'crypto';
 import { Pool } from 'pg';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { bootstrapDatabase } from '../../packages/persistence/src/index';
-import { getBaseDatabaseUrl } from './test-helper';
+import { dropDatabaseCleanly, getBaseDatabaseUrl } from './test-helper';
 
 describe('Database Foundation — Bootstrap Role Drift & Membership Security Audit', () => {
   const baseDbUrl = getBaseDatabaseUrl();
-  const testDbName = `nimphy_test_roledrift_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+  const testDbName = `nimphy_test_roledrift_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
 
   let adminPool: Pool;
   let targetAdminPool: Pool;
@@ -96,14 +97,50 @@ describe('Database Foundation — Bootstrap Role Drift & Membership Security Aud
   });
 
   afterAll(async () => {
-    await targetAdminPool.end();
+    const teardownErrors: unknown[] = [];
+    if (targetAdminPool) {
+      try {
+        await targetAdminPool.end();
+      } catch (err) {
+        teardownErrors.push(err);
+      }
+    }
 
-    const adminClient = await adminPool.connect();
-    try {
-      await adminClient.query(`DROP DATABASE IF EXISTS "${testDbName}" WITH (FORCE);`);
-    } finally {
-      adminClient.release();
-      await adminPool.end();
+    if (adminPool) {
+      let adminClient = null;
+      try {
+        adminClient = await adminPool.connect();
+        try {
+          await dropDatabaseCleanly(adminClient, testDbName);
+        } catch (err) {
+          teardownErrors.push(err);
+        }
+      } catch (err) {
+        teardownErrors.push(err);
+      } finally {
+        if (adminClient) {
+          try {
+            adminClient.release();
+          } catch (err) {
+            teardownErrors.push(err);
+          }
+        }
+        try {
+          await adminPool.end();
+        } catch (err) {
+          teardownErrors.push(err);
+        }
+      }
+    }
+
+    if (teardownErrors.length > 0) {
+      if (teardownErrors.length === 1) {
+        throw teardownErrors[0];
+      }
+      const msgs = teardownErrors
+        .map((e) => (e instanceof Error ? e.message : String(e)))
+        .join('; ');
+      throw new Error(`Role-drift teardown failed with ${teardownErrors.length} error(s): ${msgs}`);
     }
   });
 

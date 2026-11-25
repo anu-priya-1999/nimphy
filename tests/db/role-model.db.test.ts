@@ -1,20 +1,31 @@
-import { Pool } from 'pg';
+import crypto from 'crypto';
+import { Pool, type PoolClient } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   bootstrapDatabase,
   createDatabasePool,
   runMigrations,
 } from '../../packages/persistence/src/index';
-import { getBaseDatabaseUrl, MIGRATIONS_DIR } from './test-helper';
+import {
+  createManagedTestPool,
+  dropDatabaseCleanly,
+  getBaseDatabaseUrl,
+  MIGRATIONS_DIR,
+  type ManagedTestPool,
+} from './test-helper';
 
 describe('Database Foundation — Role Model, Non-Superuser Migrations & Runtime Login Audit', () => {
   const baseDbUrl = getBaseDatabaseUrl();
-  const testDbName = `nimphy_test_role_audit_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+  const testDbName = `nimphy_test_role_audit_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
 
   let adminPool: Pool;
+  let migratorLoginManaged: ManagedTestPool;
   let migratorLoginPool: Pool;
+  let appLoginManaged: ManagedTestPool;
   let appLoginPool: Pool;
+  let purgeLoginManaged: ManagedTestPool;
   let purgeLoginPool: Pool;
+  let unauthManaged: ManagedTestPool;
   let unauthPool: Pool;
 
   const migratorUsername = `nimphy_migrator_login_${Date.now()}`;
@@ -131,48 +142,108 @@ describe('Database Foundation — Role Model, Non-Superuser Migrations & Runtime
     migratorUrlObj.username = migratorUsername;
     migratorUrlObj.password = migratorPassword;
     testDbMigratorUrl = migratorUrlObj.toString();
-    migratorLoginPool = createDatabasePool({ connectionString: testDbMigratorUrl });
+    migratorLoginManaged = createManagedTestPool({ connectionString: testDbMigratorUrl });
+    migratorLoginPool = migratorLoginManaged.pool;
 
     const appUrlObj = new URL(targetDbAdminUrl.toString());
     appUrlObj.username = appUsername;
     appUrlObj.password = appPassword;
     testDbAppUrl = appUrlObj.toString();
-    appLoginPool = createDatabasePool({ connectionString: testDbAppUrl });
+    appLoginManaged = createManagedTestPool({ connectionString: testDbAppUrl });
+    appLoginPool = appLoginManaged.pool;
 
     const purgeUrlObj = new URL(targetDbAdminUrl.toString());
     purgeUrlObj.username = purgeUsername;
     purgeUrlObj.password = purgePassword;
     testDbPurgeUrl = purgeUrlObj.toString();
-    purgeLoginPool = createDatabasePool({ connectionString: testDbPurgeUrl });
+    purgeLoginManaged = createManagedTestPool({ connectionString: testDbPurgeUrl });
+    purgeLoginPool = purgeLoginManaged.pool;
 
     const unauthUrlObj = new URL(targetDbAdminUrl.toString());
     unauthUrlObj.username = unauthorizedUsername;
     unauthUrlObj.password = unauthorizedPassword;
     testDbUnauthUrl = unauthUrlObj.toString();
-    unauthPool = createDatabasePool({ connectionString: testDbUnauthUrl });
+    unauthManaged = createManagedTestPool({ connectionString: testDbUnauthUrl });
+    unauthPool = unauthManaged.pool;
   });
 
   afterAll(async () => {
-    if (migratorLoginPool) await migratorLoginPool.end().catch(() => {});
-    if (appLoginPool) await appLoginPool.end().catch(() => {});
-    if (purgeLoginPool) await purgeLoginPool.end().catch(() => {});
-    if (unauthPool) await unauthPool.end().catch(() => {});
+    const teardownErrors: unknown[] = [];
 
-    // Cleanup roles and test database
-    if (adminPool) {
-      const adminClient = await adminPool.connect();
-      try {
-        await adminClient.query(`DROP DATABASE IF EXISTS "${testDbName}" WITH (FORCE);`);
-        await adminClient.query(`DROP ROLE IF EXISTS "${migratorUsername}";`);
-        await adminClient.query(`DROP ROLE IF EXISTS "${appUsername}";`);
-        await adminClient.query(`DROP ROLE IF EXISTS "${purgeUsername}";`);
-        await adminClient.query(`DROP ROLE IF EXISTS "${unauthorizedUsername}";`);
-      } catch {
-        // Best-effort cleanup
-      } finally {
-        adminClient.release();
-        await adminPool.end().catch(() => {});
+    // 1. Attempt to close every managed pool even if another pool's close() rejects
+    const managedPools = [migratorLoginManaged, appLoginManaged, purgeLoginManaged, unauthManaged];
+
+    for (const managed of managedPools) {
+      if (managed) {
+        try {
+          await managed.close();
+        } catch (err) {
+          teardownErrors.push(err);
+        }
       }
+    }
+
+    // 2. Assert zero unexpected pool errors occurred across all test pools
+    for (const managed of managedPools) {
+      if (managed) {
+        try {
+          managed.assertZeroErrors();
+        } catch (err) {
+          teardownErrors.push(err);
+        }
+      }
+    }
+
+    // 3. Administrative cleanup on postgres database
+    if (adminPool) {
+      let adminClient: PoolClient | null = null;
+      try {
+        adminClient = await adminPool.connect();
+        try {
+          await dropDatabaseCleanly(adminClient, testDbName);
+        } catch (err) {
+          teardownErrors.push(err);
+        }
+
+        for (const roleName of [
+          migratorUsername,
+          appUsername,
+          purgeUsername,
+          unauthorizedUsername,
+        ]) {
+          try {
+            await adminClient.query(`DROP ROLE IF EXISTS "${roleName}";`);
+          } catch (err) {
+            teardownErrors.push(err);
+          }
+        }
+      } catch (err) {
+        teardownErrors.push(err);
+      } finally {
+        if (adminClient) {
+          try {
+            adminClient.release();
+          } catch (err) {
+            teardownErrors.push(err);
+          }
+        }
+        try {
+          await adminPool.end();
+        } catch (err) {
+          teardownErrors.push(err);
+        }
+      }
+    }
+
+    // 4. Report collected failures after cleanup; do not silently suppress them
+    if (teardownErrors.length > 0) {
+      if (teardownErrors.length === 1) {
+        throw teardownErrors[0];
+      }
+      const errMsgs = teardownErrors
+        .map((e) => (e instanceof Error ? e.message : String(e)))
+        .join('; ');
+      throw new Error(`Teardown failed with ${teardownErrors.length} error(s): ${errMsgs}`);
     }
   });
 
@@ -222,13 +293,12 @@ describe('Database Foundation — Role Model, Non-Superuser Migrations & Runtime
   });
 
   it('proves service logins cannot perform administrative role provisioning (CREATE ROLE)', async () => {
-    const clients = [
-      await migratorLoginPool.connect(),
-      await appLoginPool.connect(),
-      await purgeLoginPool.connect(),
-    ];
-
+    const clients: PoolClient[] = [];
     try {
+      clients.push(await migratorLoginPool.connect());
+      clients.push(await appLoginPool.connect());
+      clients.push(await purgeLoginPool.connect());
+
       // Direct CREATE ROLE attempt as each login
       for (const client of clients) {
         await expect(client.query('CREATE ROLE test_hacker_role;')).rejects.toThrowError(
@@ -260,12 +330,17 @@ describe('Database Foundation — Role Model, Non-Superuser Migrations & Runtime
   });
 
   it('proves controlled role assumption: logins can assume ONLY their intended functional role', async () => {
-    const migClient = await migratorLoginPool.connect();
-    const appClient = await appLoginPool.connect();
-    const purgeClient = await purgeLoginPool.connect();
-    const unauthClient = await unauthPool.connect();
-
+    const clients: PoolClient[] = [];
     try {
+      const migClient = await migratorLoginPool.connect();
+      clients.push(migClient);
+      const appClient = await appLoginPool.connect();
+      clients.push(appClient);
+      const purgeClient = await purgeLoginPool.connect();
+      clients.push(purgeClient);
+      const unauthClient = await unauthPool.connect();
+      clients.push(unauthClient);
+
       // 1. Initial connection: current_user matches the login principal
       const migInit = await migClient.query<{ current_user: string }>('SELECT current_user;');
       expect(migInit.rows[0]?.current_user).toBe(migratorUsername);
@@ -327,13 +402,10 @@ describe('Database Foundation — Role Model, Non-Superuser Migrations & Runtime
         /permission denied to set role/i,
       );
     } finally {
-      await migClient.query('RESET ROLE;').catch(() => {});
-      await appClient.query('RESET ROLE;').catch(() => {});
-      await purgeClient.query('RESET ROLE;').catch(() => {});
-      migClient.release();
-      appClient.release();
-      purgeClient.release();
-      unauthClient.release();
+      if (clients[0]) await clients[0].query('RESET ROLE;').catch(() => {});
+      if (clients[1]) await clients[1].query('RESET ROLE;').catch(() => {});
+      if (clients[2]) await clients[2].query('RESET ROLE;').catch(() => {});
+      for (const c of clients) c.release();
     }
   });
 
@@ -452,11 +524,15 @@ describe('Database Foundation — Role Model, Non-Superuser Migrations & Runtime
   });
 
   it('verifies real effective permissions: schema privileges for non-superuser connections', async () => {
-    const migClient = await migratorLoginPool.connect();
-    const appClient = await appLoginPool.connect();
-    const purgeClient = await purgeLoginPool.connect();
-
+    const clients: PoolClient[] = [];
     try {
+      const migClient = await migratorLoginPool.connect();
+      clients.push(migClient);
+      const appClient = await appLoginPool.connect();
+      clients.push(appClient);
+      const purgeClient = await purgeLoginPool.connect();
+      clients.push(purgeClient);
+
       // 1. nimphy_migrator CAN create objects in public and nimphy_meta schemas
       await migClient.query('SET ROLE nimphy_migrator;');
       await migClient.query('CREATE TABLE public.mig_schema_test (id int);');
@@ -483,20 +559,21 @@ describe('Database Foundation — Role Model, Non-Superuser Migrations & Runtime
       ).rejects.toThrowError(/permission denied for schema nimphy_meta/i);
       await purgeClient.query('RESET ROLE;');
     } finally {
-      await migClient.query('RESET ROLE;').catch(() => {});
-      await appClient.query('RESET ROLE;').catch(() => {});
-      await purgeClient.query('RESET ROLE;').catch(() => {});
-      migClient.release();
-      appClient.release();
-      purgeClient.release();
+      if (clients[0]) await clients[0].query('RESET ROLE;').catch(() => {});
+      if (clients[1]) await clients[1].query('RESET ROLE;').catch(() => {});
+      if (clients[2]) await clients[2].query('RESET ROLE;').catch(() => {});
+      for (const c of clients) c.release();
     }
   });
 
   it('verifies real effective permissions: table access boundaries for app and purge logins', async () => {
-    const appClient = await appLoginPool.connect();
-    const purgeClient = await purgeLoginPool.connect();
-
+    const clients: PoolClient[] = [];
     try {
+      const appClient = await appLoginPool.connect();
+      clients.push(appClient);
+      const purgeClient = await purgeLoginPool.connect();
+      clients.push(purgeClient);
+
       // --- APP LOGIN (SET ROLE nimphy_app) ---
       await appClient.query('SET ROLE nimphy_app;');
 
@@ -581,19 +658,22 @@ describe('Database Foundation — Role Model, Non-Superuser Migrations & Runtime
 
       await purgeClient.query('RESET ROLE;');
     } finally {
-      await appClient.query('RESET ROLE;').catch(() => {});
-      await purgeClient.query('RESET ROLE;').catch(() => {});
-      appClient.release();
-      purgeClient.release();
+      if (clients[0]) await clients[0].query('RESET ROLE;').catch(() => {});
+      if (clients[1]) await clients[1].query('RESET ROLE;').catch(() => {});
+      for (const c of clients) c.release();
     }
   });
 
   it('verifies real effective permissions: purge function execution boundaries', async () => {
-    const appClient = await appLoginPool.connect();
-    const purgeClient = await purgeLoginPool.connect();
-    const unauthClient = await unauthPool.connect();
-
+    const clients: PoolClient[] = [];
     try {
+      const appClient = await appLoginPool.connect();
+      clients.push(appClient);
+      const purgeClient = await purgeLoginPool.connect();
+      clients.push(purgeClient);
+      const unauthClient = await unauthPool.connect();
+      clients.push(unauthClient);
+
       // 1. Setup a pending_deletion case using app login
       await appClient.query('SET ROLE nimphy_app;');
       const userRes = await appClient.query<{ id: string }>(`
@@ -640,20 +720,22 @@ describe('Database Foundation — Role Model, Non-Superuser Migrations & Runtime
       expect(verifyCase.rows[0].cnt).toBe(0);
       await appClient.query('RESET ROLE;');
     } finally {
-      await appClient.query('RESET ROLE;').catch(() => {});
-      await purgeClient.query('RESET ROLE;').catch(() => {});
-      appClient.release();
-      purgeClient.release();
-      unauthClient.release();
+      if (clients[0]) await clients[0].query('RESET ROLE;').catch(() => {});
+      if (clients[1]) await clients[1].query('RESET ROLE;').catch(() => {});
+      for (const c of clients) c.release();
     }
   });
 
   it('verifies real effective permissions: audit function execution boundaries', async () => {
-    const appClient = await appLoginPool.connect();
-    const purgeClient = await purgeLoginPool.connect();
-    const unauthClient = await unauthPool.connect();
-
+    const clients: PoolClient[] = [];
     try {
+      const appClient = await appLoginPool.connect();
+      clients.push(appClient);
+      const purgeClient = await purgeLoginPool.connect();
+      clients.push(purgeClient);
+      const unauthClient = await unauthPool.connect();
+      clients.push(unauthClient);
+
       // 1. App login CAN execute nimphy_write_audit_log
       await appClient.query('SET ROLE nimphy_app;');
       const auditRes = await appClient.query(
@@ -702,19 +784,20 @@ describe('Database Foundation — Role Model, Non-Superuser Migrations & Runtime
         ),
       ).rejects.toThrowError(/permission denied for function nimphy_write_audit_log/i);
     } finally {
-      await appClient.query('RESET ROLE;').catch(() => {});
-      await purgeClient.query('RESET ROLE;').catch(() => {});
-      appClient.release();
-      purgeClient.release();
-      unauthClient.release();
+      if (clients[0]) await clients[0].query('RESET ROLE;').catch(() => {});
+      if (clients[1]) await clients[1].query('RESET ROLE;').catch(() => {});
+      for (const c of clients) c.release();
     }
   });
 
   it('verifies default ACLs for future functions created by non-superuser migration login (Section 4)', async () => {
-    const client = await migratorLoginPool.connect();
-    const appClient = await appLoginPool.connect();
-
+    const clients: PoolClient[] = [];
     try {
+      const client = await migratorLoginPool.connect();
+      clients.push(client);
+      const appClient = await appLoginPool.connect();
+      clients.push(appClient);
+
       // 1. Switch to nimphy_migrator on migration connection
       await client.query('SET ROLE nimphy_migrator;');
 
@@ -754,14 +837,16 @@ describe('Database Foundation — Role Model, Non-Superuser Migrations & Runtime
     } finally {
       // Cleanup test function
       try {
-        await client.query('DROP FUNCTION IF EXISTS public.nimphy_test_future_secure_func();');
+        if (clients[0])
+          await clients[0].query(
+            'DROP FUNCTION IF EXISTS public.nimphy_test_future_secure_func();',
+          );
       } catch {
         // ignore
       }
-      await client.query('RESET ROLE;').catch(() => {});
-      await appClient.query('RESET ROLE;').catch(() => {});
-      client.release();
-      appClient.release();
+      if (clients[0]) await clients[0].query('RESET ROLE;').catch(() => {});
+      if (clients[1]) await clients[1].query('RESET ROLE;').catch(() => {});
+      for (const c of clients) c.release();
     }
   });
 
@@ -789,8 +874,8 @@ describe('Database Foundation — Role Model, Non-Superuser Migrations & Runtime
     adminUrl.pathname = '/postgres';
     const adminClient = await adminPool.connect();
 
-    const bootTargetDb = `nimphy_boot_target_${Date.now()}`;
-    const bootUnrelatedDb = `nimphy_boot_unrelated_${Date.now()}`;
+    const bootTargetDb = `nimphy_boot_target_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+    const bootUnrelatedDb = `nimphy_boot_unrelated_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
 
     try {
       await adminClient.query(`CREATE DATABASE "${bootTargetDb}";`);
@@ -881,10 +966,34 @@ describe('Database Foundation — Role Model, Non-Superuser Migrations & Runtime
         await unrelatedPool.end();
       }
     } finally {
-      // Cleanup both test databases
-      await adminClient.query(`DROP DATABASE IF EXISTS "${bootTargetDb}" WITH (FORCE);`);
-      await adminClient.query(`DROP DATABASE IF EXISTS "${bootUnrelatedDb}" WITH (FORCE);`);
-      adminClient.release();
+      // Cleanup both test databases cleanly without WITH (FORCE)
+      const cleanupErrors: unknown[] = [];
+      try {
+        await dropDatabaseCleanly(adminClient, bootTargetDb);
+      } catch (err) {
+        cleanupErrors.push(err);
+      }
+      try {
+        await dropDatabaseCleanly(adminClient, bootUnrelatedDb);
+      } catch (err) {
+        cleanupErrors.push(err);
+      }
+      try {
+        adminClient.release();
+      } catch (err) {
+        cleanupErrors.push(err);
+      }
+      if (cleanupErrors.length > 0) {
+        if (cleanupErrors.length === 1) {
+          throw cleanupErrors[0];
+        }
+        const msgs = cleanupErrors
+          .map((e) => (e instanceof Error ? e.message : String(e)))
+          .join('; ');
+        throw new Error(
+          `Section 1 test cleanup failed with ${cleanupErrors.length} error(s): ${msgs}`,
+        );
+      }
     }
   });
 });

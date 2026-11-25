@@ -82,12 +82,14 @@ export async function runMigrations(
 
   const client = 'connect' in poolOrClient ? await poolOrClient.connect() : poolOrClient;
   const isDedicatedClient = 'connect' in poolOrClient;
+  let roleSwitched = false;
 
   try {
     // 1. If targetRole is specified, switch to it and verify current_user before running migrations
     if (targetRole) {
       const safeRole = targetRole.replace(/"/g, '""');
       await client.query(`SET ROLE "${safeRole}";`);
+      roleSwitched = true;
       const checkRes = await client.query<{ current_user: string }>('SELECT current_user;');
       const effectiveUser = checkRes.rows[0]?.current_user;
       if (effectiveUser !== targetRole) {
@@ -207,7 +209,7 @@ export async function runMigrations(
       ]);
     }
   } finally {
-    if (targetRole) {
+    if (roleSwitched) {
       try {
         await client.query('RESET ROLE;');
       } catch {
