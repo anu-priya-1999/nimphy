@@ -18,7 +18,7 @@ Status vocabulary: **Accepted** (owner approved), **Proposed** (recommended, awa
 | 008 | Payment proof via verified webhooks + reconciliation | **Superseded** by 019 and 020 |
 | 009 | No queue at MVP; DB-backed jobs on trigger | Proposed |
 | 010 | Hosting platform | OPEN (leaning A: serverless + managed Postgres) |
-| 011 | Authentication provider | OPEN |
+| 011 | Authentication provider | Accepted |
 | 012 | PDF rendering approach | OPEN |
 | 013 | Store generated dossiers vs regenerate | OPEN |
 | 014 | Postgres row-level security | OPEN |
@@ -118,8 +118,14 @@ Template for each: Context · Problem · Alternatives · Decision · Rationale �
 ## ADR-010 Hosting — OPEN
 Status: OPEN — requires explicit decision. Leaning Option A in doc 13 §3; decision needs verified free-tier limits, function time limits for PDF/AI, and commercial-use terms. **Carry-over candidate:** the owner-stated predecessor plan named AWS (doc 01 R-3); compatible with either option; resolved by owner confirmation (OQ-014).
 
-## ADR-011 Authentication — OPEN
-Status: OPEN — requires explicit decision. Candidates: managed auth service, open-source auth library with OAuth providers, provider bundled with the database host. Criteria: cost, MFA, session security, lock-in, data residency.
+## ADR-011 Authentication — Accepted
+
+- **Context:** Nimphy requires an identity provider for user authentication, session management, and local `app_users` linkage (STEP-011) while preserving anonymous access to non-persistent calculations (OQ-010).
+- **Decision:** Adopt **Clerk** (`@clerk/nextjs`) as Nimphy's managed authentication and session provider, provisioned as a **separate Clerk application** isolated from Fluxora (separate credentials, sessions, cookies, callbacks, and environment configuration).
+- **Session & Cost Policy:** Start on Clerk's Hobby tier without paid-plan dependencies. Accept Clerk's default fixed seven-day session lifetime initially without building custom session infrastructure or storing provider session tokens in Nimphy's database.
+- **Identity Mapping & Boundaries:** Clerk owns authentication session creation, rotation, and cookies. Nimphy resolves the authenticated Clerk subject (`auth()`) to a local `app_users` row via `idp_subject` (never merging accounts by email alone, never resurrecting tombstoned rows), enforces `app_users.status = 'active'` on every protected request, and uses signed double-submit CSRF tokens + `Origin` checks for mutations.
+- **Status:** Accepted — owner approved 2026-11-26 for STEP-011.
+- **Revisit when:** Custom idle/absolute session lifetimes, SAML/SSO, or multi-tenant organizations become required (which would require a paid Clerk tier or re-evaluation).
 
 ## ADR-012 PDF rendering — OPEN
 Status: OPEN — requires explicit decision. Candidates: React-based PDF library (pure JS, runtime-light), HTML→PDF via headless browser (higher fidelity, heavier, SSRF surface), Markdown→HTML→PDF toolchain. Criteria: host limits, fidelity, security, cost.

@@ -1,3 +1,4 @@
+import { ClerkProvider } from '@clerk/nextjs';
 import type { Metadata } from 'next';
 import './globals.css';
 
@@ -12,9 +13,17 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
   return (
     <html lang="en">
-      <body className="antialiased min-h-screen bg-slate-50 text-slate-900">{children}</body>
+      <body className="antialiased min-h-screen bg-slate-50 text-slate-900">
+        {publishableKey ? (
+          <ClerkProvider publishableKey={publishableKey}>{children}</ClerkProvider>
+        ) : (
+          children
+        )}
+      </body>
     </html>
   );
 }

@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.10.10",
     "@nimphy/ai": "workspace:*",
     "@nimphy/calc-engine": "workspace:*",
     "@nimphy/documents": "workspace:*",

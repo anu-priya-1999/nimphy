@@ -19,7 +19,10 @@ describe('Database Foundation — Bootstrap Role Drift & Membership Security Aud
     // 1. Administrative setup on default 'postgres' database
     const adminUrl = new URL(baseDbUrl);
     adminUrl.pathname = '/postgres';
-    adminPool = new Pool({ connectionString: adminUrl.toString() });
+    adminPool = new Pool({
+      connectionString: adminUrl.toString(),
+      connectionTimeoutMillis: 5000,
+    });
 
     const adminClient = await adminPool.connect();
     try {
@@ -71,10 +74,14 @@ describe('Database Foundation — Bootstrap Role Drift & Membership Security Aud
     // 2. Pool to target database
     const targetDbAdminUrl = new URL(baseDbUrl);
     targetDbAdminUrl.pathname = `/${testDbName}`;
-    targetAdminPool = new Pool({ connectionString: targetDbAdminUrl.toString() });
+    targetAdminPool = new Pool({
+      connectionString: targetDbAdminUrl.toString(),
+      connectionTimeoutMillis: 5000,
+    });
   });
 
   afterEach(async () => {
+    if (!adminPool) return;
     // Reset functional roles and service logins to secure attributes and baseline memberships
     const adminClient = await adminPool.connect();
     try {
@@ -292,9 +299,12 @@ describe('Database Foundation — Bootstrap Role Drift & Membership Security Aud
         targetClient.release();
       }
     } finally {
-      await adminClient.query(`REVOKE "${parentRole}" FROM nimphy_migrator;`);
-      await adminClient.query(`DROP ROLE IF EXISTS "${parentRole}";`);
-      adminClient.release();
+      try {
+        await adminClient.query(`REVOKE "${parentRole}" FROM nimphy_migrator;`);
+        await adminClient.query(`DROP ROLE IF EXISTS "${parentRole}";`);
+      } finally {
+        adminClient.release();
+      }
     }
   });
 
@@ -316,9 +326,12 @@ describe('Database Foundation — Bootstrap Role Drift & Membership Security Aud
         targetClient.release();
       }
     } finally {
-      await adminClient.query(`REVOKE nimphy_app FROM "${intruder}";`);
-      await adminClient.query(`DROP ROLE IF EXISTS "${intruder}";`);
-      adminClient.release();
+      try {
+        await adminClient.query(`REVOKE nimphy_app FROM "${intruder}";`);
+        await adminClient.query(`DROP ROLE IF EXISTS "${intruder}";`);
+      } finally {
+        adminClient.release();
+      }
     }
   });
 
@@ -336,10 +349,13 @@ describe('Database Foundation — Bootstrap Role Drift & Membership Security Aud
         targetClient.release();
       }
     } finally {
-      await adminClient.query(
-        `REVOKE ADMIN OPTION FOR nimphy_migrator FROM "${migratorUsername}";`,
-      );
-      adminClient.release();
+      try {
+        await adminClient.query(
+          `REVOKE ADMIN OPTION FOR nimphy_migrator FROM "${migratorUsername}";`,
+        );
+      } finally {
+        adminClient.release();
+      }
     }
   });
 
@@ -357,8 +373,13 @@ describe('Database Foundation — Bootstrap Role Drift & Membership Security Aud
         targetClient.release();
       }
     } finally {
-      await adminClient.query(`GRANT nimphy_app TO "${appUsername}" WITH INHERIT FALSE, SET TRUE;`);
-      adminClient.release();
+      try {
+        await adminClient.query(
+          `GRANT nimphy_app TO "${appUsername}" WITH INHERIT FALSE, SET TRUE;`,
+        );
+      } finally {
+        adminClient.release();
+      }
     }
   });
 
@@ -515,8 +536,11 @@ describe('Database Foundation — Bootstrap Role Drift & Membership Security Aud
         targetClient.release();
       }
     } finally {
-      await adminClient.query(`DROP ROLE IF EXISTS "${unrelatedRole}";`);
-      adminClient.release();
+      try {
+        await adminClient.query(`DROP ROLE IF EXISTS "${unrelatedRole}";`);
+      } finally {
+        adminClient.release();
+      }
     }
   });
 
@@ -538,9 +562,12 @@ describe('Database Foundation — Bootstrap Role Drift & Membership Security Aud
         targetClient.release();
       }
     } finally {
-      await adminClient.query(`REVOKE "${unrelatedRole}" FROM "${appUsername}";`);
-      await adminClient.query(`DROP ROLE IF EXISTS "${unrelatedRole}";`);
-      adminClient.release();
+      try {
+        await adminClient.query(`REVOKE "${unrelatedRole}" FROM "${appUsername}";`);
+        await adminClient.query(`DROP ROLE IF EXISTS "${unrelatedRole}";`);
+      } finally {
+        adminClient.release();
+      }
     }
   });
 
@@ -564,9 +591,12 @@ describe('Database Foundation — Bootstrap Role Drift & Membership Security Aud
         targetClient.release();
       }
     } finally {
-      await adminClient.query(`REVOKE "${unrelatedRole}" FROM "${appUsername}";`);
-      await adminClient.query(`DROP ROLE IF EXISTS "${unrelatedRole}";`);
-      adminClient.release();
+      try {
+        await adminClient.query(`REVOKE "${unrelatedRole}" FROM "${appUsername}";`);
+        await adminClient.query(`DROP ROLE IF EXISTS "${unrelatedRole}";`);
+      } finally {
+        adminClient.release();
+      }
     }
   });
 
@@ -595,11 +625,14 @@ describe('Database Foundation — Bootstrap Role Drift & Membership Security Aud
         targetClient.release();
       }
     } finally {
-      await adminClient.query(`REVOKE "${intermediateRole}" FROM "${appUsername}";`);
-      await adminClient.query(`REVOKE "${targetPrivRole}" FROM "${intermediateRole}";`);
-      await adminClient.query(`DROP ROLE IF EXISTS "${intermediateRole}";`);
-      await adminClient.query(`DROP ROLE IF EXISTS "${targetPrivRole}";`);
-      adminClient.release();
+      try {
+        await adminClient.query(`REVOKE "${intermediateRole}" FROM "${appUsername}";`);
+        await adminClient.query(`REVOKE "${targetPrivRole}" FROM "${intermediateRole}";`);
+        await adminClient.query(`DROP ROLE IF EXISTS "${intermediateRole}";`);
+        await adminClient.query(`DROP ROLE IF EXISTS "${targetPrivRole}";`);
+      } finally {
+        adminClient.release();
+      }
     }
   });
 
@@ -623,10 +656,13 @@ describe('Database Foundation — Bootstrap Role Drift & Membership Security Aud
       }
     } finally {
       // Restore legitimate membership with SET TRUE
-      await adminClient.query(`
-        GRANT nimphy_app TO "${appUsername}" WITH INHERIT FALSE, SET TRUE;
-      `);
-      adminClient.release();
+      try {
+        await adminClient.query(`
+          GRANT nimphy_app TO "${appUsername}" WITH INHERIT FALSE, SET TRUE;
+        `);
+      } finally {
+        adminClient.release();
+      }
     }
   });
 
@@ -646,8 +682,11 @@ describe('Database Foundation — Bootstrap Role Drift & Membership Security Aud
         targetClient.release();
       }
     } finally {
-      await adminClient.query(`ALTER ROLE "${appUsername}" WITH NOCREATEROLE;`);
-      adminClient.release();
+      try {
+        await adminClient.query(`ALTER ROLE "${appUsername}" WITH NOCREATEROLE;`);
+      } finally {
+        adminClient.release();
+      }
     }
   });
 
@@ -748,9 +787,12 @@ describe('Database Foundation — Bootstrap Role Drift & Membership Security Aud
         targetClient.release();
       }
     } finally {
-      await adminClient.query(`REVOKE nimphy_app FROM "${attackerRole}";`);
-      await adminClient.query(`DROP ROLE IF EXISTS "${attackerRole}";`);
-      adminClient.release();
+      try {
+        await adminClient.query(`REVOKE nimphy_app FROM "${attackerRole}";`);
+        await adminClient.query(`DROP ROLE IF EXISTS "${attackerRole}";`);
+      } finally {
+        adminClient.release();
+      }
     }
   });
 
@@ -774,9 +816,12 @@ describe('Database Foundation — Bootstrap Role Drift & Membership Security Aud
         targetClient.release();
       }
     } finally {
-      await adminClient.query(`REVOKE nimphy_migrator FROM "${extraRole}";`);
-      await adminClient.query(`DROP ROLE IF EXISTS "${extraRole}";`);
-      adminClient.release();
+      try {
+        await adminClient.query(`REVOKE nimphy_migrator FROM "${extraRole}";`);
+        await adminClient.query(`DROP ROLE IF EXISTS "${extraRole}";`);
+      } finally {
+        adminClient.release();
+      }
     }
   });
 
@@ -800,9 +845,12 @@ describe('Database Foundation — Bootstrap Role Drift & Membership Security Aud
         targetClient.release();
       }
     } finally {
-      await adminClient.query(`REVOKE nimphy_purge FROM "${testPurgeRole}";`);
-      await adminClient.query(`DROP ROLE IF EXISTS "${testPurgeRole}";`);
-      adminClient.release();
+      try {
+        await adminClient.query(`REVOKE nimphy_purge FROM "${testPurgeRole}";`);
+        await adminClient.query(`DROP ROLE IF EXISTS "${testPurgeRole}";`);
+      } finally {
+        adminClient.release();
+      }
     }
   });
 
@@ -820,8 +868,11 @@ describe('Database Foundation — Bootstrap Role Drift & Membership Security Aud
         targetClient.release();
       }
     } finally {
-      await adminClient.query(`ALTER ROLE "${appUsername}" WITH LOGIN;`);
-      adminClient.release();
+      try {
+        await adminClient.query(`ALTER ROLE "${appUsername}" WITH LOGIN;`);
+      } finally {
+        adminClient.release();
+      }
     }
   });
 
@@ -899,8 +950,13 @@ describe('Database Foundation — Bootstrap Role Drift & Membership Security Aud
         targetClient.release();
       }
     } finally {
-      await adminClient.query(`GRANT nimphy_app TO "${appUsername}" WITH INHERIT FALSE, SET TRUE;`);
-      adminClient.release();
+      try {
+        await adminClient.query(
+          `GRANT nimphy_app TO "${appUsername}" WITH INHERIT FALSE, SET TRUE;`,
+        );
+      } finally {
+        adminClient.release();
+      }
     }
   });
 
@@ -921,9 +977,14 @@ describe('Database Foundation — Bootstrap Role Drift & Membership Security Aud
         targetClient.release();
       }
     } finally {
-      await adminClient.query(`REVOKE nimphy_purge FROM "${appUsername}";`);
-      await adminClient.query(`GRANT nimphy_app TO "${appUsername}" WITH INHERIT FALSE, SET TRUE;`);
-      adminClient.release();
+      try {
+        await adminClient.query(`REVOKE nimphy_purge FROM "${appUsername}";`);
+        await adminClient.query(
+          `GRANT nimphy_app TO "${appUsername}" WITH INHERIT FALSE, SET TRUE;`,
+        );
+      } finally {
+        adminClient.release();
+      }
     }
   });
 

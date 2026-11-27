@@ -8,10 +8,10 @@ This document is the living record of the system state, architecture decisions, 
 
 - **Architecture Package Version:** 0.4.0
 - **Current Phase:** Phase 2 (Persistence & Identity)
-- **Current Step:** STEP-010 (Database Foundation)
-- **Actual Implementation Status:** Implementation Complete, Hardened & Fully Verified across PostgreSQL 18.6 (Local) and PostgreSQL 16.16 (Remote CI); Awaiting Formal Owner Review (Database foundation established for PostgreSQL 16/18 class with `pg@8.23.1` and `@types/pg@8.23.1`; ADR-015 decided as Option A [numbered, forward-only plain-SQL migrations with lightweight Node.js runner]; Migration 001 [`packages/persistence/migrations/001_initial_schema.sql`] creates exactly seven domain tables [`app_users`, `business_cases`, `case_revisions`, `evidence_items`, `rule_packs`, `calculation_runs`, `audit_log`] and internal metadata table `nimphy_meta.schema_migrations`; advisory lock `pg_advisory_lock(481927, 391823)` on dedicated connection, LF-normalized SHA-256 checksum tracking, and fail-closed detection of modified files or unexpected database migration versions; hardened least-privilege role separation: `REVOKE CREATE ON SCHEMA public FROM PUBLIC;`, dedicated roles `nimphy_migrator`, `nimphy_app`, and `nimphy_purge`; bootstrap grant uses identifier-safe dynamic SQL `format('%I', current_database())` to grant `CONNECT, CREATE ON DATABASE` safely to `nimphy_migrator` without altering unrelated databases; runtime authentication model establishes 3 dedicated service logins [`nimphy_migrator_login`, `nimphy_app_login`, `nimphy_purge_login`] with controlled role membership `WITH INHERIT FALSE, SET TRUE`, requiring explicit role switching via `SET ROLE` and denying ambient cross-role privileges and role creation; bootstrap role-drift security audit enforces a fail-closed default policy on any unexpected insecure attributes [LOGIN, SUPERUSER, CREATEDB, CREATEROLE, BYPASSRLS, REPLICATION] or unauthorized memberships, with exact login allow-lists (all `LIKE 'nimphy_%_login%'` pattern matching removed), `rolcanlogin = true` requirement, and rejection of designated logins with `NOLOGIN`, with explicit normalization capability via `onRoleDrift: 'normalize'`, preserving unrelated database roles; `nimphy_app` runtime role has no UPDATE/DELETE on `case_revisions`, `calculation_runs`, `audit_log`, cannot delete `app_users` or `business_cases` directly, cannot alter published Rule Packs, and cannot execute purge procedures or assume the purge role; direct `INSERT` on `audit_log` revoked from `nimphy_app` in favor of database-enforced `nimphy_write_audit_log` (`SECURITY DEFINER`, `search_path = public, pg_temp`) validating 15 registered actions, identifier bounds, scalar detail limits, action-specific keys, and prohibiting PII key patterns; value sanitization and prevention of sensitive free-text content under permitted keys empirically established as an application-layer responsibility; default routine EXECUTE privileges revoked from `PUBLIC` via `ALTER DEFAULT PRIVILEGES REVOKE EXECUTE ON ROUTINES FROM PUBLIC;` for future migrations; `nimphy_purge` dedicated role executes security-definer procedures `nimphy_purge_business_case` and `nimphy_purge_app_user` with fixed search_path, explicit row-level locking [`FOR UPDATE`], deterministic parent-to-child lock order, verifying `pending_deletion` status and asserting zero active business cases before user deletion; four immutability triggers [`trg_case_revisions_immutability`, `trg_calculation_runs_immutability`, `trg_audit_log_immutability`, `trg_rule_packs_immutability`] with fixed `search_path` and `EXECUTE` revoked from `PUBLIC`; dedicated `vitest.db.config.ts` running 85 real PostgreSQL integration tests across 7 test files [role-drift (31), role-model (12), immutability (12), audit-writer (11), migration (7), schema (7), foreign-keys (5)] including 4 deterministic two-connection concurrency race tests, 12 role-model & non-superuser isolation tests, 31 role-drift audit & normalization tests with exact login allow-lists, and rejection of designated logins with NOLOGIN, 100% green; teardown lifecycle root-cause repaired by eliminating `WITH (FORCE)` in active test cleanup, verifying zero active sessions via `pg_stat_activity` before dropping collision-resistant test databases (`crypto.randomBytes(4)`), wrapping login pools in managed test pools that collect sanitized `{ code, message }` errors preventing credential leakage, and ensuring client release; verified locally against ephemeral PostgreSQL 18.6 cluster with 85/85 integration tests passing (7/7 test files, 0 unhandled errors, exit code 0; local host environment has only PostgreSQL 18.6 installed, not PostgreSQL 16); PostgreSQL 16.16 compatibility verified remotely via GitHub Actions CI workflow run #15 (commit `069a24593c14ff90e6fb918409ed86ad11507542`, Job 139239934475) with 85/85 database integration tests passing across 7/7 test files (0 unhandled errors and 0 credential leaks); local runner `scripts/run-db-tests.mjs` automatically provisions ephemeral PostgreSQL 18.6 cluster on port 5433 when `DATABASE_URL` is omitted; isolated unit test suite [`pnpm test`] runs 45 test files and 697 unit tests with zero database dependencies [694 at STEP-009 initial baseline + 3 mutation regression tests = 697 active; 701 was historical documentation typo in DESIGN.md]; total active tests: 782 [697 unit + 85 database integration]; next step STEP-011 strictly unauthorized until explicit repository-owner review and written authorization; STEP-011 preserved as Identity and Sessions)
+- **Current Step:** STEP-011 (Identity and Sessions) — STEP-010 formally accepted by owner on 2026-11-26
+- **Actual Implementation Status:** STEP-010 formally accepted by repository owner on 2026-11-26. STEP-011 implemented and verified: Clerk (`@clerk/nextjs@7.10.10`) integrated as a separate Nimphy application (ADR-011 Accepted; OQ-010 Closed for anonymous non-persistent trial and authenticated persistence); Next.js 16 `apps/web/proxy.ts` (`clerkMiddleware()`), `<ClerkProvider>` in `apps/web/app/layout.tsx`, `/sign-in` and `/sign-up` App Router pages, server-side `currentUser()` / `requireCurrentUser()` / `resolveCurrentUser()` abstraction (`apps/web/lib/auth/`) returning branded `UserId`, atomic `app_users` repository (`packages/persistence/src/users/user-repository.ts`) with `ON CONFLICT (idp_subject) WHERE idp_subject IS NOT NULL DO NOTHING`, strict `status = 'active'` enforcement, zero email-based account merging or tombstone resurrection, reusable server-side guards (`requirePageUser`, `requireApiUser`, `assertResourceOwner`), and signed double-submit CSRF protection (`apps/web/lib/security/csrf.ts`, `GET /api/auth/csrf`, `__Host-nimphy_csrf` in production, `Origin` check, `crypto.timingSafeEqual`, fail-closed config).
 - **Strategic Alignment:** Long-term product vision, competitive differentiation, customer segmentation, 6-pillar capability framework, and repository alignment documented in [product-strategy.md](product-strategy.md) (Canonical Master Product Vision & Strategy).
-- **Next Proposed Step:** STEP-011 (Identity and Sessions) — strictly unauthorized until explicit repository-owner review and written authorization.
+- **Next Proposed Step:** STEP-012 (Case and Revision Use-Cases + API) — strictly unauthorized until explicit repository-owner review and written authorization.
 
 ---
 
@@ -302,7 +302,7 @@ nimphy/
 - **Open Questions Status:**
   - OQ-005: MVP marketplace/format scope (Resolved for synthetic packs in STEP-004: formats ebook, paperback, hardcover; marketplaces `TEST_MARKETPLACE` and `TEST_GLOBAL`).
   - OQ-006: Sourcing of official publisher data (Deferred to future operator ingestion steps; synthetic `TEST_*` data quarantined).
-  - OQ-010: Anonymous usage limits prior to checkout (Pending P6).
+  - OQ-010: Closed (2026-11-26) — visitors may run non-persistent calculations anonymously; sign-in is required before creating/saving persistent cases or accessing user-specific data (see `docs/architecture/02-product-scope-and-requirements.md` §8).
   - OQ-011: Legal data retention requirements for financial records.
   - OQ-013: Project license determination (Pending).
   - OQ-014: Carry-over candidates from predecessor plans recorded.
@@ -817,22 +817,39 @@ nimphy/
 
 ---
 
-## 15. Next Proposed Step & Roadmap Reconciliation (Awaiting Authorization)
+## 15. STEP-011 — Clerk Identity and Sessions
 
-**STEP-011: Identity and Sessions (Proposed — Strictly Unauthorized)**
+### A. Architectural & Implementation Decisions
 
-- **Status:** Proposed next engineering step; strictly unauthorized until explicit repository-owner review and written approval per `AGENTS.md` §3 ("Step-by-Step Discipline: Implement only the step explicitly authorized by the user. Do not anticipate or partially implement future steps").
-- **STEP-010 Reconciliation Status:**
-  - STEP-010 implementation complete, hardened, and verified.
-  - Numbered plain SQL migration 001, migration runner, advisory locking, checksum verification, immutability triggers, hardened least-privilege roles (`nimphy_migrator`, `nimphy_app`, `nimphy_purge`), dedicated security-definer purge procedures, database-enforced allow-list audit writer, exact login allow-lists, required direct membership validation, and non-superuser migration execution implemented and tested (85/85 database tests passed).
-  - Both local PostgreSQL 18.6 (85/85 tests) and remote GitHub Actions PostgreSQL 16.16 (workflow run #15, commit `069a24593c14ff90e6fb918409ed86ad11507542`: 85/85 tests) fully verified with zero teardown or connection lifecycle errors.
-  - Formal owner acceptance is pending; owner acceptance is NOT claimed.
+1. **Clerk Identity Provider Integration (ADR-011 Accepted; OQ-010 Closed):**
+
+   - Pinned `@clerk/nextjs@7.10.10` in `@nimphy/web` (`apps/web/package.json`), provisioned as a separate Clerk application isolated from Fluxora.
+   - Next.js 16 proxy entrypoint established at `apps/web/proxy.ts` using `clerkMiddleware()`. All routes remain public by default to preserve anonymous non-persistent calculation trials (`OQ-010` closed).
+   - `<ClerkProvider>` integrated in `apps/web/app/layout.tsx` when `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` is configured (allowing static CI builds without production secrets).
+   - Dynamic App Router authentication routes added at `apps/web/app/sign-in/[[...sign-in]]/page.tsx` and `apps/web/app/sign-up/[[...sign-up]]/page.tsx`.
+   - Initial Hobby-tier session policy: accepts Clerk's default fixed 7-day session lifetime without custom session tables or Redis dependencies; limitations and trade-offs documented in `docs/architecture/11-security-and-privacy-architecture.md` §5.
+
+2. **Server-Side Identity Abstraction & Local User Mapping:**
+
+   - `packages/persistence/src/users/user-repository.ts`: implements `findUserByIdpSubject` and atomic `findOrCreateUserByIdpSubject` (`INSERT ... ON CONFLICT (idp_subject) WHERE idp_subject IS NOT NULL DO NOTHING` + fallback `SELECT`) returning branded `UserId` (`@nimphy/domain`).
+   - Never identifies or merges accounts by email alone; never reactivates `pending_deletion` or resurrects `deleted` tombstoned rows.
+   - `apps/web/lib/auth/identity.ts` & `apps/web/lib/auth/index.ts`: exposes `resolveCurrentUser`, `currentUser()`, and `requireCurrentUser()`. Uses Clerk `auth()` per request and queries Clerk Backend API for verified primary email only during first-time provisioning. Enforces `app_users.status === 'active'` and fails closed (`IdentityInfrastructureError`) on provider or persistence errors.
+
+3. **Reusable Guards & CSRF Protection:**
+   - `apps/web/lib/auth/guards.ts`: `requirePageUser`, `requireApiUser`, `assertResourceOwner` (`404 ERR-RES-001` on cross-user access), and RFC 7807 `mapAuthErrorToResponse` (`ERR-AUTH-001`, `ERR-AUTH-002`, `ERR-RES-001`, `ERR-SYS-001`).
+   - `apps/web/lib/security/csrf.ts` & `apps/web/app/api/auth/csrf/route.ts`: signed double-submit CSRF cookie (`__Host-nimphy_csrf` in production, `nimphy_csrf` in dev; `HttpOnly`, `SameSite=Lax`, `Path=/`, `Secure` in prod) using `crypto.randomBytes(32)`, HMAC-SHA256 (`CSRF_SECRET` ≥ 32 chars), `crypto.timingSafeEqual`, and strict `Origin` check against `APP_BASE_URL` (fail-closed when missing).
+
+---
+
+## 16. Next Proposed Step & Roadmap Reconciliation (Awaiting Authorization)
+
+**STEP-012: Case and Revision Use-Cases + API (Proposed — Strictly Unauthorized)**
+
+- **Status:** Proposed next engineering step; strictly unauthorized until explicit repository-owner review and written approval per `AGENTS.md` §3.
+- **STEP-010 Reconciliation:** Formally accepted by repository owner on **2026-11-26**.
+- **STEP-011 Reconciliation:** Implementation complete and verified (unit tests, authorization harness, CSRF tests, PostgreSQL `app_users` identity integration tests, typecheck, lint, format, docs/boundary checks, and Next.js production build).
 - **Authoritative Roadmap Sequence (per `docs/architecture/17-implementation-roadmap.md`):**
-  - **STEP-009 — Differential Reference Check & Mutation Testing** (Accepted)
-  - **STEP-010 — Database Foundation** (Current — Complete & Fully Verified; Awaiting Formal Owner Review)
-  - **STEP-011 — Identity and Sessions** (Next — Strictly Unauthorized)
-  - **STEP-012 — Case and Revision Use-Cases + API**
-- **STEP-011 Scope (Authoritative Roadmap §STEP-011):**
-  - Identity provider integration (ADR-011).
-  - `currentUser()`, CSRF, route guards, session cookies.
-- **Strict Boundary Constraint:** Do not begin STEP-011 until explicitly authorized by the repository owner.
+  - **STEP-010 — Database Foundation** (Accepted 2026-11-26)
+  - **STEP-011 — Identity and Sessions** (Current — Complete & Verified; Awaiting Formal Owner Review)
+  - **STEP-012 — Case and Revision Use-Cases + API** (Next — Strictly Unauthorized)
+- **Strict Boundary Constraint:** Do not begin STEP-012 until explicitly authorized by the repository owner.

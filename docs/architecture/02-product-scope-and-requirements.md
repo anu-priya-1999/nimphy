@@ -128,7 +128,7 @@ Priority key: **P0** = MVP-blocking, **P1** = MVP-desired, **P2** = post-MVP can
 | OQ-007 | Refund policy and entitlement behaviour on refund/reversal | OPEN |
 | OQ-008 | Is a concierge phase (manual dossiers) run before building billing? | OPEN |
 | OQ-009 | Tax/VAT handling for sales | OPEN — requires legal/tax advice |
-| OQ-010 | Account model: required sign-in before calculation, or anonymous until checkout? | OPEN |
+| OQ-010 | Account model: required sign-in before calculation, or anonymous until checkout? | **Closed (2026-11-26):** Visitors may run non-persistent calculations anonymously without signing in; sign-in is required before creating/saving a persistent business case or accessing persistent user-specific data. |
 | OQ-011 | How long must orders, payment events, entitlements, audit rows and the tombstone user row be retained after deletion, and do pseudonymous ids count as personal data? | OPEN — requires legal/tax review; no period is asserted |
 | OQ-012 | Should deletion have an undo or cooling-off period? (Default proposal: none; explicit confirmation and paid-loss acknowledgement instead.) | OPEN |
 | OQ-013 | Is the Apache-2.0 licence the owner approved for the hackathon repository (2026-11-01) confirmed for the Nimphy repository? | OPEN — requires explicit decision |

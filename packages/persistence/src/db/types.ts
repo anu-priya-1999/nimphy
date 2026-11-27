@@ -11,6 +11,7 @@ export interface DatabaseConfig {
   max?: number;
   idleTimeoutMillis?: number;
   connectionTimeoutMillis?: number;
+  role?: string;
 }
 
 export interface SqlQueryClient {

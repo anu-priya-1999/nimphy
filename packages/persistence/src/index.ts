@@ -45,3 +45,17 @@ export {
   type AuditEventInput,
   type AuditRecord,
 } from './audit/types';
+
+// User Identity Mapping Repository (STEP-011)
+export {
+  findUserByIdpSubject,
+  findOrCreateUserByIdpSubject,
+  createPgUserRepository,
+} from './users/user-repository';
+export type {
+  AppUserStatus,
+  AppUserRecord,
+  ProvisionUserInput,
+  ProvisionUserResult,
+  UserRepository,
+} from './users/types';

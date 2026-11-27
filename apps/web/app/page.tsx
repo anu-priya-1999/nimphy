@@ -1,3 +1,5 @@
+import { Suspense } from 'react';
+import { Show, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs';
 export default function HomePage() {
   return (
     <main className="min-h-screen flex flex-col justify-between p-6 sm:p-12 max-w-5xl mx-auto">
@@ -8,8 +10,34 @@ export default function HomePage() {
             v0.1.0-alpha (P0 / STEP-001)
           </span>
         </div>
-        <nav className="text-sm font-medium text-slate-600">
-          <span className="text-slate-400">Phase 0 Foundation</span>
+        <nav className="flex items-center gap-3 text-sm font-medium">
+          <span className="hidden sm:inline text-slate-400 mr-2">Phase 0 Foundation</span>
+
+          <Suspense fallback={<span className="text-slate-400">Loading...</span>}>
+            <Show when="signed-out">
+              <SignInButton>
+                <button
+                  type="button"
+                  className="px-4 py-2 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors"
+                >
+                  Sign in
+                </button>
+              </SignInButton>
+
+              <SignUpButton>
+                <button
+                  type="button"
+                  className="px-4 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-700 transition-colors"
+                >
+                  Get started
+                </button>
+              </SignUpButton>
+            </Show>
+
+            <Show when="signed-in">
+              <UserButton />
+            </Show>
+          </Suspense>
         </nav>
       </header>
 

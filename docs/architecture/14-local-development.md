@@ -31,8 +31,9 @@ cp .env.example .env.local    # on Windows PowerShell: Copy-Item .env.example .e
 | Variable | Purpose | Secret? |
 |---|---|---|
 | `DATABASE_URL` | Postgres connection | yes |
-| `SESSION_SECRET` | session signing | yes |
-| `AUTH_*` | identity provider settings (ADR-011 OPEN) | yes |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key for Nimphy (ADR-011 Accepted) | no |
+| `CLERK_SECRET_KEY` | Clerk secret key for Nimphy (ADR-011 Accepted) | yes |
+| `CSRF_SECRET` | HMAC-SHA256 secret (≥32 chars) for signed double-submit CSRF cookies | yes |
 | `PAYPAL_ENV` | `sandbox` \| `live` | no |
 | `PAYPAL_CLIENT_ID` / `PAYPAL_CLIENT_SECRET` | server-only | yes |
 | `PAYPAL_WEBHOOK_ID` | webhook verification | yes |

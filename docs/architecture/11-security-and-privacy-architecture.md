@@ -35,15 +35,15 @@ Payment/entitlement integrity; users' unpublished book plans and cost data; acco
 
 ## 3. Authentication
 
-Delegated to an identity provider (ADR-011 OPEN). Requirements: verified email or OAuth identity, secure session cookies (HttpOnly, Secure, SameSite=Lax), rotation on sign-in, idle and absolute expiry (values OPEN), no password handling in Nimphy if avoidable.
+Delegated to **Clerk** (`ADR-011 Accepted`), provisioned as a separate Clerk application isolated from Fluxora. Supports verified email and OAuth identities with secure Clerk-managed session cookies (`HttpOnly`, `Secure`, `SameSite=Lax`), automatic rotation on sign-in, and zero password handling in Nimphy. Visitors may run non-persistent calculations anonymously (`OQ-010` closed); sign-in is required before creating or saving persistent business cases or accessing user-specific data. Server-side identity resolution maps the Clerk subject to `app_users.idp_subject` (never matching/merging by email alone and never resurrecting tombstoned rows) and permits only `active` local accounts.
 
 ## 4. Authorization
 
-Single role (`user`) plus non-public operator capability. Policy: *a user may access only rows reachable from their `user_id`*. Implemented in use-cases (not only handlers). Optional Postgres row-level security as defence-in-depth (ADR-014 OPEN). Operator functions are not exposed on public routes and require separate credentials.
+Single role (`user`) plus non-public operator capability. Policy: *a user may access only rows reachable from their `user_id`*. Implemented in use-cases and server-side guards (`requirePageUser`, `requireApiUser`, `assertResourceOwner`), not solely in `proxy.ts` middleware. Optional Postgres row-level security as defence-in-depth (`ADR-014 OPEN`). Operator functions are not exposed on public routes and require separate credentials.
 
 ## 5. Session management
 
-Server-validated sessions; logout invalidates; sensitive actions (account deletion) require recent authentication (**OPEN**).
+Clerk owns authentication session creation, rotation, and session cookies; Nimphy stores no provider session tokens in PostgreSQL and implements no second session system. Under the initial Hobby-tier policy, Nimphy accepts Clerk's default **fixed 7-day session lifetime** without custom idle-timeout overrides. **Security trade-off / limitation:** a fixed 7-day session window remains valid until expiry or sign-out/revocation even during periods of inactivity, and sensitive actions (e.g. account deletion in STEP-030) will enforce recent-authentication / step-up checks when implemented. Server-side `currentUser()` / `requireCurrentUser()` enforce `app_users.status = 'active'` on every protected request so `pending_deletion` or `deleted` local accounts are immediately denied. Application mutations are additionally protected by signed double-submit CSRF tokens (`__Host-nimphy_csrf` in production, `CSRF_SECRET` HMAC-SHA256, `crypto.timingSafeEqual`) and strict `Origin` validation against `APP_BASE_URL` (fail-closed if missing).
 
 ## 6. Secrets management
 

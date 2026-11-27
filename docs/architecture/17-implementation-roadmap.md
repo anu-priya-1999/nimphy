@@ -81,6 +81,7 @@ Each step lists: Objective · Scope · Depends on · Files expected · Acceptanc
 - **Scope:** local Postgres, migration tool (ADR-015), migration 001: `app_users` (with `status`, tombstone columns and `CHECK` of doc 06), `business_cases` (with `status` incl. `pending_deletion`), `case_revisions`, `evidence_items`, `rule_packs`, `calculation_runs`, **`audit_log`** (with its allow-list writer, needed by STEPs 012 and 013) and the immutability triggers/privileges, including the purge role of doc 06 §5. **Depends:** 003–004. **Files:** `packages/persistence/**`. **Tests:** migrate-from-empty, constraint tests, immutability tests. **Exit:** CI runs DB tests. **Docs:** 06, 14, DESIGN.md.
 
 ### STEP-011 Identity and sessions
+- **Status:** Implementation complete; awaiting formal owner review (see `docs/DESIGN.md`).
 - **Scope:** IdP integration (ADR-011), `currentUser()`, CSRF, route guards. **Depends:** 010. **Tests:** unauthenticated/cross-user. **Exit:** authz test harness exists. **Docs:** 11, 18.
 
 ### STEP-012 Case and revision use-cases + API
