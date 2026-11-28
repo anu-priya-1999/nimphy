@@ -59,3 +59,49 @@ export type {
   ProvisionUserResult,
   UserRepository,
 } from './users/types';
+
+// Database Transaction Helper (STEP-012)
+export { withTransaction } from './db/transaction';
+
+// Business Cases, Revisions, Evidence & Purge Repositories (STEP-012)
+export {
+  PgCaseRepository,
+  createPgCaseRepository,
+  createPgCaseRepositoryForTransaction,
+} from './cases/case-repository';
+export { purgePendingBusinessCase, type PurgeCaseResult } from './cases/case-purge';
+export type {
+  BusinessCaseStatus,
+  UpdatableCaseStatus,
+  EvidenceKind,
+  BusinessCaseRecord,
+  CaseRevisionSummary,
+  CaseRevisionRecord,
+  EvidenceItemRecord,
+  ListCasesCursor,
+  CreateCaseInput,
+  ListCasesInput,
+  ListCasesResult,
+  GetCaseInput,
+  GetCaseResult,
+  UpdateCaseInput,
+  RequestCaseDeletionInput,
+  SaveRevisionInput,
+  GetRevisionInput,
+  GetRevisionResult,
+  AttachEvidenceInput,
+  CaseRepository,
+} from './cases/types';
+
+// Idempotency Keys Repository (STEP-012)
+export {
+  PgIdempotencyRepository,
+  createPgIdempotencyRepository,
+} from './idempotency/idempotency-repository';
+export type {
+  IdempotencyClaimResult,
+  IdempotencyClaimInput,
+  IdempotencyCompleteInput,
+  IdempotencyReleaseInput,
+  IdempotencyRepository,
+} from './idempotency/types';

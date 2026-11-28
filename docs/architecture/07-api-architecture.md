@@ -11,7 +11,7 @@ Related: [05](05-component-responsibilities.md), [06](06-database-architecture-a
 - Money: `{ "amountMinor": 1999, "currency": "USD" }` — never floats.
 - IDs: UUID strings. Timestamps: ISO-8601 UTC.
 - Every response carries `x-correlation-id`.
-- Validation: Zod (Proposed) schemas shared with the UI; reject unknown fields.
+- Validation: Strict schemas (implemented as pure TypeScript validators in `apps/web/lib/cases/validation.ts` for EP-001…EP-008); reject unknown fields (`ERR-VAL-001` / `ERR-VAL-002`).
 - Versioning: URI major version; additive changes are non-breaking; breaking ⇒ `/v2`.
 - Resources whose status is `pending_deletion` (cases, accounts) behave as **404** on every endpoint (doc 06 §8).
 - Order statuses in responses use exactly the doc 08 §1 vocabulary: `CREATED`, `APPROVAL_PENDING`, `APPROVED`, `CAPTURE_REQUESTED`, `COMPLETED`, `FAILED`, `EXPIRED`, `REFUNDED`, `REVERSED`.
@@ -191,7 +191,7 @@ A duplicate event id is **never** treated as proof of successful processing; the
 
 ## 7. Idempotency
 
-`Idempotency-Key` (client UUID) stored in `idempotency_keys` with a request hash; replay with the same key and body returns the stored response; same key with different body ⇒ ERR-IDEM-001. Required on EP-011 and EP-016 (cost and money); optional on EP-023, which is idempotent by construction (compare-and-set under the order lock plus a deterministic PayPal request id, doc 08 §3.2 Q7). Webhooks are idempotent by `paypal_event_id` combined with `processing_status` (doc 08 §5.3).
+`Idempotency-Key` (client UUID or opaque string ≤ 200 chars) stored in `idempotency_keys` with a canonical JSON SHA-256 request hash; replay with the same key and body returns the stored response; same key with different body ⇒ `ERR-IDEM-001`. Optional on EP-001, EP-006, and EP-008 (enforced when the header is supplied); required on EP-011 and EP-016 (cost and money); optional on EP-023, which is idempotent by construction (compare-and-set under the order lock plus a deterministic PayPal request id, doc 08 §3.2 Q7). Webhooks are idempotent by `paypal_event_id` combined with `processing_status` (doc 08 §5.3).
 
 ## 8. Pagination
 

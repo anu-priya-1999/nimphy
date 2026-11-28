@@ -410,23 +410,29 @@ describe('Database Foundation — Role Model, Non-Superuser Migrations & Runtime
   });
 
   it('successfully applies migrations using non-superuser migration login via SET ROLE nimphy_migrator', async () => {
-    // Migration runner connects using migratorLoginPool, switches to nimphy_migrator, applies Migration 001
+    // Migration runner connects using migratorLoginPool, switches to nimphy_migrator, applies Migrations 001 & 002
     const report = await runMigrations(migratorLoginPool, { migrationsDir: MIGRATIONS_DIR });
 
-    expect(report.totalMigrations).toBe(1);
-    expect(report.appliedCount).toBe(1);
+    expect(report.totalMigrations).toBe(2);
+    expect(report.appliedCount).toBe(2);
     expect(report.skippedCount).toBe(0);
     expect(report.migrations[0]?.name).toBe('initial_schema');
     expect(report.migrations[0]?.status).toBe('applied');
+    expect(report.migrations[1]?.name).toBe('idempotency_keys');
+    expect(report.migrations[1]?.status).toBe('applied');
 
     // Confirm metadata was recorded in nimphy_meta.schema_migrations
     const client = await migratorLoginPool.connect();
     try {
       await client.query('SET ROLE nimphy_migrator;');
-      const res = await client.query('SELECT version, name FROM nimphy_meta.schema_migrations;');
-      expect(res.rows).toHaveLength(1);
+      const res = await client.query(
+        'SELECT version, name FROM nimphy_meta.schema_migrations ORDER BY version ASC;',
+      );
+      expect(res.rows).toHaveLength(2);
       expect(res.rows[0].version).toBe(1);
       expect(res.rows[0].name).toBe('initial_schema');
+      expect(res.rows[1].version).toBe(2);
+      expect(res.rows[1].name).toBe('idempotency_keys');
     } finally {
       await client.query('RESET ROLE;').catch(() => {});
       client.release();
@@ -450,7 +456,7 @@ describe('Database Foundation — Role Model, Non-Superuser Migrations & Runtime
         { schema_name: 'public', schema_owner: 'nimphy_migrator' },
       ]);
 
-      // 2. Tables ownership (7 domain tables + 1 metadata table)
+      // 2. Tables ownership (8 domain/web tables + 1 metadata table)
       const tablesRes = await client.query<{ tablename: string; tableowner: string }>(`
         SELECT tablename, tableowner
         FROM pg_tables
@@ -465,6 +471,7 @@ describe('Database Foundation — Role Model, Non-Superuser Migrations & Runtime
         'calculation_runs',
         'case_revisions',
         'evidence_items',
+        'idempotency_keys',
         'rule_packs',
         'schema_migrations',
       ]);
@@ -935,8 +942,8 @@ describe('Database Foundation — Role Model, Non-Superuser Migrations & Runtime
 
         try {
           const rep = await runMigrations(migTargetPool, { migrationsDir: MIGRATIONS_DIR });
-          expect(rep.appliedCount).toBe(1);
-          expect(rep.totalMigrations).toBe(1);
+          expect(rep.appliedCount).toBe(2);
+          expect(rep.totalMigrations).toBe(2);
         } finally {
           await migTargetPool.end();
         }

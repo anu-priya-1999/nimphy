@@ -21,7 +21,7 @@ describe('Database Foundation — Schema & Constraint Tests', () => {
     if (dropTestDb) await dropTestDb();
   });
 
-  it('creates exactly seven domain tables in the public schema', async () => {
+  it('creates the eight domain/web tables in the public schema (STEP-010 + STEP-012)', async () => {
     const client = await pool.connect();
     try {
       const res = await client.query<{ table_name: string }>(`
@@ -38,6 +38,7 @@ describe('Database Foundation — Schema & Constraint Tests', () => {
         'calculation_runs',
         'case_revisions',
         'evidence_items',
+        'idempotency_keys',
         'rule_packs',
       ]);
 
@@ -50,7 +51,6 @@ describe('Database Foundation — Schema & Constraint Tests', () => {
         'orders',
         'payment_events',
         'entitlements',
-        'idempotency_keys',
       ];
       for (const ft of futureTables) {
         expect(tableNames).not.toContain(ft);

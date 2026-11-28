@@ -85,6 +85,7 @@ Each step lists: Objective · Scope · Depends on · Files expected · Acceptanc
 - **Scope:** IdP integration (ADR-011), `currentUser()`, CSRF, route guards. **Depends:** 010. **Tests:** unauthenticated/cross-user. **Exit:** authz test harness exists. **Docs:** 11, 18.
 
 ### STEP-012 Case and revision use-cases + API
+- **Status:** Formally accepted by repository owner on 2026-11-28 (see `docs/DESIGN.md`).
 - **Scope:** EP-001…EP-008, validation schemas, idempotency table + middleware, error contract; **case deletion (EP-005) in the two-phase shape** (phase 1 hide to `pending_deletion` with 404 everywhere, resumable purge of the content tables existing at this point; see Deletion implementation staging). **Depends:** 010–011. **Tests:** API contract + ownership matrix. **Exit:** ERR codes implemented as in doc 07. **Docs:** 07 reconciled with reality, DESIGN.md.
 
 ### STEP-013 Calculation use-case + API

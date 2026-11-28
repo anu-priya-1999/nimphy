@@ -8,10 +8,10 @@ This document is the living record of the system state, architecture decisions, 
 
 - **Architecture Package Version:** 0.4.0
 - **Current Phase:** Phase 2 (Persistence & Identity)
-- **Current Step:** STEP-011 (Identity and Sessions) — STEP-010 formally accepted by owner on 2026-11-26
-- **Actual Implementation Status:** STEP-010 formally accepted by repository owner on 2026-11-26. STEP-011 implemented and verified: Clerk (`@clerk/nextjs@7.10.10`) integrated as a separate Nimphy application (ADR-011 Accepted; OQ-010 Closed for anonymous non-persistent trial and authenticated persistence); Next.js 16 `apps/web/proxy.ts` (`clerkMiddleware()`), `<ClerkProvider>` in `apps/web/app/layout.tsx`, `/sign-in` and `/sign-up` App Router pages, server-side `currentUser()` / `requireCurrentUser()` / `resolveCurrentUser()` abstraction (`apps/web/lib/auth/`) returning branded `UserId`, atomic `app_users` repository (`packages/persistence/src/users/user-repository.ts`) with `ON CONFLICT (idp_subject) WHERE idp_subject IS NOT NULL DO NOTHING`, strict `status = 'active'` enforcement, zero email-based account merging or tombstone resurrection, reusable server-side guards (`requirePageUser`, `requireApiUser`, `assertResourceOwner`), and signed double-submit CSRF protection (`apps/web/lib/security/csrf.ts`, `GET /api/auth/csrf`, `__Host-nimphy_csrf` in production, `Origin` check, `crypto.timingSafeEqual`, fail-closed config).
+- **Current Step:** STEP-012 (Case and Revision Use-Cases + API) — Formally accepted by repository owner on 2026-11-28
+- **Actual Implementation Status:** STEP-010 formally accepted by repository owner on 2026-11-26. STEP-011 implemented and verified. STEP-012 formally accepted by repository owner on 2026-11-28: Migration `002_idempotency_keys.sql` (`idempotency_keys` with least-privilege `nimphy_app` grants), `PgCaseRepository` (supporting `createPgCaseRepositoryForTransaction` for single-transaction execution), `PgIdempotencyRepository`, `withTransaction`, `purgePendingBusinessCase`, RFC 7807 `ERROR_CATALOG` (`ERR-AUTH-001`..`ERR-SYS-001`), single-transaction atomic `Idempotency-Key` middleware using `hashCanonicalJson`, strict TypeScript validators rejecting unknown fields (`ERR-VAL-001` / `ERR-VAL-002`), decoupled case/revision/evidence/deletion use-cases, and thin Next.js App Router handlers for `EP-001` through `EP-008` with two-phase case deletion (`pending_deletion` hide + `nimphy_purge_business_case`).
 - **Strategic Alignment:** Long-term product vision, competitive differentiation, customer segmentation, 6-pillar capability framework, and repository alignment documented in [product-strategy.md](product-strategy.md) (Canonical Master Product Vision & Strategy).
-- **Next Proposed Step:** STEP-012 (Case and Revision Use-Cases + API) — strictly unauthorized until explicit repository-owner review and written authorization.
+- **Next Proposed Step:** STEP-013 (Calculation Use-Case + API) — strictly unauthorized until explicit repository-owner review and written authorization.
 
 ---
 
@@ -841,15 +841,42 @@ nimphy/
 
 ---
 
-## 16. Next Proposed Step & Roadmap Reconciliation (Awaiting Authorization)
+## 16. STEP-012 — Case and Revision Use-Cases + API
 
-**STEP-012: Case and Revision Use-Cases + API (Proposed — Strictly Unauthorized)**
+### A. Architectural & Implementation Decisions
+
+1. **Migration 002 (`packages/persistence/migrations/002_idempotency_keys.sql`):**
+
+   - Creates `idempotency_keys (key, user_id, endpoint, request_hash, response_status, response_body, created_at)` with `PRIMARY KEY (user_id, endpoint, key)` and `ON DELETE CASCADE` from `app_users(id)`.
+   - Grants `SELECT, INSERT, UPDATE, DELETE` to `nimphy_app` and explicitly revokes `INSERT, UPDATE, DELETE` from `nimphy_purge`.
+
+2. **Persistence Repositories & Transaction Helper (`packages/persistence/src/`):**
+
+   - `db/transaction.ts`: `withTransaction` wraps `BEGIN ... COMMIT / ROLLBACK` and guarantees client release.
+   - `cases/case-repository.ts`: `PgCaseRepository` accepts `DatabasePool | SqlQueryClient` (allowing callers to share a single transaction without nested transactions) and implements `createCase`, `listCases` (keyset cursor pagination `(updated_at DESC, id DESC)`), `getCaseWithLatestRevision`, `updateCase`, `requestCaseDeletion` (Phase 1 `pending_deletion`), `saveRevision` (parent `business_cases FOR UPDATE` lock + `COALESCE(MAX(revision_no), 0) + 1`), `getRevision`, and `attachEvidence`. Every query scopes to `user_id` and `status <> 'pending_deletion'`, and mutations write allow-listed `audit_log` entries via `nimphy_write_audit_log`.
+   - `cases/case-purge.ts`: `purgePendingBusinessCase` invokes `nimphy_purge_business_case` under the `nimphy_purge` role.
+   - `idempotency/idempotency-repository.ts`: `PgIdempotencyRepository` provides atomic `claim` (`INSERT ... ON CONFLICT DO NOTHING`), `complete`, and `release`.
+
+3. **Validation, RFC 7807 Error Contract & Idempotency (`apps/web/lib/api/`, `apps/web/lib/cases/`):**
+   - `api/errors.ts`: Complete `ERROR_CATALOG` for doc 07 §5 `ERR-*` codes, `ApiProblemError`, `createProblemResponse`, and `mapErrorToResponse` with `x-correlation-id`.
+   - `api/request.ts`: `parseJsonObjectBody` enforcing `application/json` and 1 MiB body limit.
+   - `api/idempotency.ts`: `extractIdempotencyKey` and `withIdempotency` using `@nimphy/domain`'s `hashCanonicalJson` (`ERR-IDEM-001` on payload mismatch or in-flight conflict, `ERR-IDEM-002` on invalid key). When `Idempotency-Key` is provided, `claim`, the business mutation + audit write, and `complete` execute atomically inside a single PostgreSQL transaction on the same transaction-bound client.
+   - `cases/validation.ts`: Pure TypeScript strict validators rejecting unknown fields (`ERR-VAL-001` / `ERR-VAL-002`) and enforcing `BookFormat`, `CurrencyCode` consistency, `Provenance`, `ScenarioInput`, and calendar-valid `capturedAt`.
+   - `cases/use-cases.ts`, `cases/handlers.ts`, and `app/api/v1/cases/**`: Decoupled use-cases and thin App Router handlers for `EP-001` through `EP-008` protected by `requireApiUser` (Clerk auth + CSRF).
+
+---
+
+## 17. Next Proposed Step & Roadmap Reconciliation (Awaiting Authorization)
+
+**STEP-013: Calculation Use-Case + API (Proposed — Strictly Unauthorized)**
 
 - **Status:** Proposed next engineering step; strictly unauthorized until explicit repository-owner review and written approval per `AGENTS.md` §3.
 - **STEP-010 Reconciliation:** Formally accepted by repository owner on **2026-11-26**.
-- **STEP-011 Reconciliation:** Implementation complete and verified (unit tests, authorization harness, CSRF tests, PostgreSQL `app_users` identity integration tests, typecheck, lint, format, docs/boundary checks, and Next.js production build).
+- **STEP-011 Reconciliation:** Implementation complete and verified; awaiting formal owner review.
+- **STEP-012 Reconciliation:** Formally accepted by repository owner on **2026-11-28** (including targeted single-transaction idempotency hardening and API/PostgreSQL regression & boundary tests: 49/49 unit test files [728/728 tests], 9/9 PostgreSQL integration test files [98/98 tests], typecheck, lint, format, docs/boundary checks, and Next.js production build).
 - **Authoritative Roadmap Sequence (per `docs/architecture/17-implementation-roadmap.md`):**
   - **STEP-010 — Database Foundation** (Accepted 2026-11-26)
-  - **STEP-011 — Identity and Sessions** (Current — Complete & Verified; Awaiting Formal Owner Review)
-  - **STEP-012 — Case and Revision Use-Cases + API** (Next — Strictly Unauthorized)
-- **Strict Boundary Constraint:** Do not begin STEP-012 until explicitly authorized by the repository owner.
+  - **STEP-011 — Identity and Sessions** (Complete & Verified; Awaiting Formal Owner Review)
+  - **STEP-012 — Case and Revision Use-Cases + API** (Accepted 2026-11-28)
+  - **STEP-013 — Calculation Use-Case + API** (Next — Strictly Unauthorized)
+- **Strict Boundary Constraint:** Do not begin STEP-013 until explicitly authorized by the repository owner.

@@ -35,25 +35,29 @@ describe('Database Foundation — Migration Runner Tests', () => {
   it('runs migration 001 on an empty database successfully', async () => {
     const report = await runMigrations(pool, { migrationsDir: MIGRATIONS_DIR });
 
-    expect(report.totalMigrations).toBe(1);
-    expect(report.appliedCount).toBe(1);
+    expect(report.totalMigrations).toBe(2);
+    expect(report.appliedCount).toBe(2);
     expect(report.skippedCount).toBe(0);
-    expect(report.migrations).toHaveLength(1);
+    expect(report.migrations).toHaveLength(2);
     expect(report.migrations[0]?.version).toBe(1);
     expect(report.migrations[0]?.status).toBe('applied');
+    expect(report.migrations[1]?.version).toBe(2);
+    expect(report.migrations[1]?.status).toBe('applied');
 
     // Verify metadata table was created in nimphy_meta
     const client = await pool.connect();
     try {
       const res = await client.query(
-        'SELECT version, name, checksum, applied_at FROM nimphy_meta.schema_migrations;',
+        'SELECT version, name, checksum, applied_at FROM nimphy_meta.schema_migrations ORDER BY version ASC;',
       );
-      expect(res.rows).toHaveLength(1);
+      expect(res.rows).toHaveLength(2);
       const row = res.rows[0];
       expect(row.version).toBe(1);
       expect(row.name).toBe('initial_schema');
       expect(row.checksum).toMatch(/^[a-f0-9]{64}$/);
       expect(row.applied_at).toBeInstanceOf(Date);
+      expect(res.rows[1].version).toBe(2);
+      expect(res.rows[1].name).toBe('idempotency_keys');
     } finally {
       client.release();
     }
@@ -63,17 +67,18 @@ describe('Database Foundation — Migration Runner Tests', () => {
     const report = await runMigrations(pool, { migrationsDir: MIGRATIONS_DIR });
 
     expect(report.appliedCount).toBe(0);
-    expect(report.skippedCount).toBe(1);
-    expect(report.totalMigrations).toBe(1);
+    expect(report.skippedCount).toBe(2);
+    expect(report.totalMigrations).toBe(2);
     expect(report.migrations[0]?.status).toBe('skipped');
+    expect(report.migrations[1]?.status).toBe('skipped');
 
-    // Confirm schema_migrations table still has exactly 1 row
+    // Confirm schema_migrations table still has exactly 2 rows
     const client = await pool.connect();
     try {
       const res = await client.query(
         'SELECT COUNT(*)::int as count FROM nimphy_meta.schema_migrations;',
       );
-      expect(res.rows[0].count).toBe(1);
+      expect(res.rows[0].count).toBe(2);
     } finally {
       client.release();
     }
